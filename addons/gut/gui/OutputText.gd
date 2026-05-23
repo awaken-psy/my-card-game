@@ -305,8 +305,7 @@ func _set_font(font_name, custom_name):
 	if(font_name == null):
 		rtl.remove_theme_font_override(custom_name)
 	else:
-		var dyn_font = FontFile.new()
-		dyn_font.load_dynamic_font('res://addons/gut/fonts/' + font_name + '.ttf')
+		var dyn_font = load('res://addons/gut/fonts/' + font_name + '.ttf') as FontFile
 		rtl.add_theme_font_override(custom_name, dyn_font)
 
 
