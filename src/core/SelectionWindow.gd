@@ -23,7 +23,7 @@ var is_cancelled := false
 var _card_dupe_map := {}
 
 @onready var _card_grid = $GridContainer
-@onready var _tween: Tween
+var _tween: Tween
 
 
 func _ready() -> void:
@@ -168,10 +168,10 @@ func initiate_selection(
 	await get_tree().create_timer(0.2).timeout
 	if _tween:
 		_tween.kill()
+	_tween = create_tween()
 	# We do a nice alpha-modulate tween
 	_tween.tween_property(self,'modulate:a', 1, 0.5).from(0)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	_tween.start()
 	emit_signal(
 			"selection_window_opened",
 			self,

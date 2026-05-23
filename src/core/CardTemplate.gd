@@ -1088,7 +1088,7 @@ func set_card_rotation(
 				and not get_parent().is_in_group("hands") \
 				and cfc.game_settings.hand_use_oval_shape \
 				and $Control.rotation != 0.0 \
-				and not _tween.is_running: #.is_running():
+				and not (_tween.get_ref() and (_tween.get_ref() as Tween).is_running()): #.is_running():
 			if tween:
 				tween.kill()
 			tween = create_tween()
@@ -2438,6 +2438,9 @@ func _process_card_state() -> void:
 					_fancy_move_second_part = true
 				# We need to check again, just in case it's been reorganized instead.
 				if state == CardState.MOVING_TO_CONTAINER:
+					tween = create_tween()
+					tween.stop()
+					_tween = weakref(tween)
 					_add_tween_position(position, _target_position,
 						to_container_tween_duration, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
 					_add_tween_rotation($Control.rotation,_target_rotation,

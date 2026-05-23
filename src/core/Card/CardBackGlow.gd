@@ -14,10 +14,7 @@ var _pulse_values := [Color(1.05,1.05,1.05),Color(0.9,0.9,0.9)]
 
 
 func _ready() -> void:
-	# warning-ignore:return_value_discarded
-	_tween = create_tween()
-	_tween.stop()
-	_tween.connect("finished", Callable(self, "_on_Pulse_completed"))
+	pass
 
 
 # Reverses the card back pulse and starts it again
@@ -35,7 +32,7 @@ func _on_Pulse_completed() -> void:
 func start_card_back_animation():
 	_tween = create_tween().set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
 	_tween.tween_property(self,'modulate', _pulse_values[1], 2).from(_pulse_values[0])
-	_tween.play()
+	_tween.connect("finished", Callable(self, "_on_Pulse_completed"))
 
 
 # Disables the looping card back pulse
