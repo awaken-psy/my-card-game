@@ -64,7 +64,7 @@ const FOCUS_STYLE = CFInt.FocusStyle.BOTH
 # 
 # Generally if the standard card size is large, this can stay as 'scale'
 # If the standard card size is small, then resize tends to work better.
-const VIEWPORT_FOCUS_ZOOM_TYPE = "resize"
+const VIEWPORT_FOCUS_ZOOM_TYPE = "scale"
 # If set to true, the hand will be presented in the form of an oval shape
 # If set to false, the hand will be presented with all cards
 # horizontally aligned

@@ -72,8 +72,12 @@ func _process(_delta) -> void:
 		$VBC.position.x = get_viewport().size.x - $VBC.size.x
 		$VBC.position.y = 0
 	# The below performs some garbage collection on previously focused cards.
-	for c in _previously_focused_cards:
+	for c in _previously_focused_cards.keys():
+		if not is_instance_valid(c):
+			_previously_focused_cards.erase(c)
+			continue
 		if not is_instance_valid(_previously_focused_cards[c]):
+			_previously_focused_cards.erase(c)
 			continue
 		var current_dupe_focus: Card = _previously_focused_cards[c]
 		# We don't delete old dupes, to avoid overhead to the engine
@@ -210,16 +214,13 @@ func _extra_dupe_preparation(dupe_focus: Card, card: Card) -> void:
 func _extra_dupe_ready(dupe_focus: Card, card: Card) -> void:
 	if CFConst.VIEWPORT_FOCUS_ZOOM_TYPE == "scale":
 		dupe_focus.scale = Vector2(1,1) * dupe_focus.focused_scale * cfc.curr_scale
-	else:
-		dupe_focus.resize_recursively(dupe_focus._control, dupe_focus.focused_scale * cfc.curr_scale)
-		dupe_focus.card_front.scale_to(dupe_focus.focused_scale * cfc.curr_scale)
 
 
 func _input(event):
 	# We use this to allow the developer to take card screenshots
 	# for any number of purposes
 	if event.is_action_pressed("screenshot_card"):
-		var img = _focus_viewport.get_texture().get_data()
+		var img = _focus_viewport.get_texture().get_image()
 		await get_tree().idle_frame
 		await get_tree().idle_frame
 		img.convert(Image.FORMAT_RGBA8)

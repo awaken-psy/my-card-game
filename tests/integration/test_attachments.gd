@@ -257,7 +257,7 @@ class TestAttachmentNodeOrder:
 			"Multiple attachments in front of host are correctly ordered relative to host in parent node heirarchy")
 			
 		#attachments are covering the card origin, so click with an offset
-		var click_offset = Vector2(0, (host_card.card_size.y * CFConst.PLAY_AREA_SCALE) - 20)
+		var click_offset = Vector2(0, (host_card.canonical_size.y * CFConst.PLAY_AREA_SCALE) - 20)
 		board._UT_interpolate_mouse_move(host_card.global_position + click_offset,
 				board._UT_mouse_position)
 		await yield_for(0.5)

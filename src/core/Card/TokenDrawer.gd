@@ -58,7 +58,7 @@ func token_drawer(requested_state := true) -> void:
 			# To avoid tween deadlocks
 			# warning-ignore:return_value_discarded
 			_tween.tween_property(
-					td,'position', Vector2(owner_card.card_size.x,td.position.y), 0.3)\
+					td,'position', Vector2(owner_card.canonical_size.x,td.position.y), 0.3)\
 					.from(td.position).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 			# We make all tokens display names
 			for token in $Drawer/VBoxContainer.get_children():
@@ -73,7 +73,7 @@ func token_drawer(requested_state := true) -> void:
 		else:
 			# warning-ignore:return_value_discarded
 			_tween.tween_property(
-					td,'position', Vector2(owner_card.card_size.x - 35,td.position.y), 0.2)\
+					td,'position', Vector2(owner_card.canonical_size.x - 35,td.position.y), 0.2)\
 					.from(td.position).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_IN)
 			# warning-ignore:return_value_discarded
 			_tween.play()

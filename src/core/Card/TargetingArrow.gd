@@ -105,7 +105,7 @@ func _draw_targeting_arrow() -> void:
 	if "size" in owner_object:
 		card_half_size = owner_object.size/2
 	else: 
-		card_half_size = owner_object.card_size/2
+		card_half_size = owner_object.canonical_size/2
 	var centerpos = global_position + card_half_size * scale
 	# We want the line to be drawn anew every frame
 	clear_points()
