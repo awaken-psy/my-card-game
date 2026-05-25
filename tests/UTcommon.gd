@@ -162,16 +162,30 @@ func target_card(source: Card,
 
 func table_move(card: Card, pos: Vector2) -> void:
 	card.move_to(board, -1, pos)
-	if card._tween:
-		await yield_to(card._tween, "finished", 0.5)
-	if cfc.game_settings.fancy_movement and card._tween:
-		await yield_to(card._tween, "finished", 0.5)
+	await wait_card_tween(card, 0.5)
+	if cfc.game_settings.fancy_movement:
+		await wait_card_tween(card, 0.5)
 
 func move_mouse(target_position: Vector2, interpolation_speed := "fast") -> void:
 	var mouse_speed = MOUSE_SPEED[interpolation_speed][0]
 	var mouse_yield_wait = MOUSE_SPEED[interpolation_speed][1]
 	board._UT_interpolate_mouse_move(target_position,board._UT_mouse_position,mouse_speed)
 	await yield_for(mouse_yield_wait)
+
+# Waits for a card's active tween to finish (Godot 4 compatible).
+# Replaces the old Godot 3 pattern: yield_to(card.get_node('Tween'), "finished", timeout)
+func wait_card_tween(card, timeout := 1.0) -> void:
+	# Yield enough for _process to handle state transitions and start the new tween.
+	# The state machine (REORGANIZING→IN_HAND) creates scale/position tweens in _process,
+	# so we need at least one frame before we can capture the correct tween reference.
+	await yield_for(0.15)
+	# Now poll for the tween to finish, checking periodically
+	for i in range(int(timeout / 0.05)):
+		var tween_ref = card._tween.get_ref() if card._tween else null
+		if tween_ref == null or not tween_ref.is_valid() or not tween_ref.is_running():
+			return
+		await yield_for(0.05)
+
 
 func execute_with_yield(card: Card) -> void:
 	await card.execute_scripts()

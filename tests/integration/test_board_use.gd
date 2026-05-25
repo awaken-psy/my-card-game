@@ -14,23 +14,23 @@ class TestCardBoardDrop:
 		await drag_card(card, Vector2(300,300))
 		await move_mouse(Vector2(500,200))
 		drop_card(card,board._UT_mouse_position)
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_almost_eq(Vector2(500, 200),card.global_position,Vector2(2,2),
 				"Card dragged in correct global position")
 		card.card_rotation = 90
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_almost_eq(90.0,card.get_node("Control").rotation,2.0,
 				"Card rotates 90")
 		card.card_rotation = 180
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_almost_eq(180.0,card.get_node("Control").rotation,2.0,
 				"Card rotates 180")
 		card.set_card_rotation(180,false)
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_almost_eq(180.0,card.get_node("Control").rotation,2.0,
 				"Card rotation doesn't revert without toggle")
 		card.set_card_rotation(180,true)
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_almost_eq(0.0,card.get_node("Control").rotation,2.0,
 				"Card rotation toggle works to reset to 0")
 		assert_eq(2,card.set_card_rotation(111),
@@ -45,8 +45,8 @@ class TestCardBoardDrop:
 				"Rotation remains while card is being dragged")
 		await move_mouse(cfc.NMAP.discard.position)
 		drop_card(card,board._UT_mouse_position)
-		await yield_to(card._tween, "finished", 0.5)
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_eq(0.0,card.get_node("Control").rotation,
 				"Rotation reset to 0 while card is moving to hand")
 		cfc.game_settings.hand_use_oval_shape = true
@@ -59,8 +59,8 @@ class TestCardBoardDrop:
 		await table_move(card, Vector2(100,200))
 		card.card_rotation = 180
 		await drag_drop(card, Vector2(400,600))
-		await yield_to(card._tween, "finished", 0.5)
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_almost_eq(12.461,card.get_node("Control").rotation,2.0,
 				"Rotation reset to a hand angle when card moved back to hand")
 		cfc.game_settings.hand_use_oval_shape = true
@@ -82,8 +82,8 @@ class TestDropRecovery:
 		await drag_card(card, Vector2(100,100))
 		await move_mouse(Vector2(200,620))
 		drop_card(card,board._UT_mouse_position)
-		await yield_to(card._tween, "finished", 0.5)
-		await yield_to(card._tween, "finished", 0.5)
+		await wait_card_tween(card, 0.5)
+		await wait_card_tween(card, 0.5)
 		assert_eq(hand.get_card_count(),5,
 				"Card dragged back in hand remains in hand")
 

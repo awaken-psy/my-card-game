@@ -8,7 +8,7 @@ class TestMoveToContainer:
 		card = cards[2]
 		await drag_drop(card, cfc.NMAP.discard.position)
 		if card._tween:
-			await yield_to(card._tween, "finished", 0.5) 
+			await wait_card_tween(card, 0.5) 
 		assert_almost_eq(card.global_position,cfc.NMAP.discard.position,Vector2(2,2),
 				"Card's final position matches pile's position")
 		assert_eq(1,cfc.NMAP.discard.get_card_count(),
@@ -23,8 +23,8 @@ class TestMoveToContainer:
 		await move_mouse(Vector2(500,300))
 		await drag_drop(cards[0], cfc.NMAP.deck.position + Vector2(10,10))
 		if cards[0]._tween:
-			await yield_to(cards[0]._tween, "finished", 0.5) 
-		#await yield_to(cards[0]._tween, "finished", 0.5) 
+			await wait_card_tween(cards[0], 0.5) 
+		await wait_card_tween(cards[0]) 
 		assert_almost_eq(cards[2].global_position,
 				cfc.NMAP.discard.global_position,Vector2(2,2),
 				"Card 2 final position matches pile's position")
@@ -51,11 +51,11 @@ class TestMoveToContainer:
 		await drag_drop(card, Vector2(1000,100))
 		await drag_drop(card, cfc.NMAP.deck.position)
 		if card._tween:
-			await yield_to(card._tween, "finished", 0.5) 
+			await wait_card_tween(card, 0.5) 
 	# warning-ignore:return_value_discarded
 		hand.draw_card()
 		if card._tween:
-			await yield_to(card._tween, "finished", 0.5) 
+			await wait_card_tween(card, 0.5) 
 		assert_almost_eq(hand.to_global(card.recalculate_position()),
 				card.global_position,Vector2(2,2),
 				"Card finished move to hand from deck from board")
@@ -67,12 +67,12 @@ class TestPileFacing:
 		var card: Card = cfc.NMAP.deck.get_top_card()
 		card.move_to(cfc.NMAP.discard)
 		if card._tween:
-			await yield_to(card._tween, "finished", 0.5) 
+			await wait_card_tween(card, 0.5) 
 		assert_true(card.is_faceup, "Card should be faceup in discard")
 		card = cards[0]
 		card.move_to(cfc.NMAP.deck)
 		if card._tween:
-			await yield_to(card._tween, "finished", 0.5) 
+			await wait_card_tween(card, 0.5) 
 		assert_false(card.is_faceup,"Card should be facedown in deck")
 
 class TestPopupView:
@@ -112,7 +112,7 @@ class TestPopupView:
 		var deck = cfc.NMAP.deck
 		var card: Card = deck.get_top_card()
 		deck._on_View_Button_pressed()
-		#await yield_to(deck.get_node('ViewPopup/Tween'), "finished", 0.5) 
+		await yield_for(0.5)  # ViewPopup tween 
 		card.move_to(deck)
 		await yield_for(0.3) 
 		assert_eq(Vector2(0,0),card.position,
@@ -134,13 +134,13 @@ class TestStacking:
 		var card: Card = cards[4]
 		card.move_to(deck)
 		if card._tween:
-			await yield_to(card._tween, "finished", 0.5) 
+			await wait_card_tween(card, 0.5) 
 		assert_eq(deck.get_stack_position(card),card.position,
 				"Card moved in, placed in stack position")
 		card = cards[2]
 		card.move_to(deck)
 		if card._tween:
-			await yield_to(card._tween, "finished", 0.5) 
+			await wait_card_tween(card, 0.5) 
 		assert_eq(deck.get_stack_position(card),card.position,
 				"Card moved in, placed in stack position")
 		deck.shuffle_cards(false)

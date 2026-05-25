@@ -200,8 +200,8 @@ class TestAskIntegerWithCardMoves:
 		var ask_integer = board.get_node("AskInteger")
 		ask_integer.number = 2
 		ask_integer.hide()
-		await yield_to(target._tween, "finished", 0.5)
-		await yield_to(target._tween, "finished", 0.5)
+		await wait_card_tween(target, 0.5)
+		await wait_card_tween(target, 0.5)
 		assert_eq(2,discard.get_card_count(), "2 cards should have been discarded")
 
 class TestAskIntegerWithModTokens:

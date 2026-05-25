@@ -40,7 +40,7 @@ func test_placement_slots():
 			grid.get_slot(0).get_node("Highlight").modulate,
 			"First slot highlighted with new colour")
 	drop_card(card,board._UT_mouse_position)
-	await yield_to(card._tween, "finished", 0.5)
+	await wait_card_tween(card, 0.5)
 	assert_almost_eq(grid.get_slot(0).global_position, card.global_position, Vector2(2,2),
 			"Card moved to the slot placement")
 	assert_eq(card._placement_slot, grid.get_slot(0),
@@ -77,7 +77,7 @@ func test_any_grid_placement():
 	assert_eq(card.get_parent(), board,
 		"Card moved to board")
 	await drag_drop(card,Vector2(1000,300))
-	await yield_to(card._tween, "finished", 0.5)
+	await wait_card_tween(card, 0.5)
 	assert_almost_eq(grid.get_slot(2).global_position, card.global_position, Vector2(2,2),
 			"Card returned back to the slot")
 
@@ -95,7 +95,7 @@ func test_specific_grid_placement():
 	card.mandatory_grid_name = grid.name_label.text
 	await move_mouse(Vector2(300,200))
 	await drag_drop(card,Vector2(500,300))
-	await yield_to(card._tween, "finished", 0.5) 
+	await wait_card_tween(card, 0.5) 
 	assert_eq(card.get_parent(), board,
 		"Card moved to correct grid name")
 
@@ -111,7 +111,7 @@ func test_occupied_slot():
 	await drag_card(card, Vector2(500,300))
 	assert_null(grid.get_highlighted_slot(),"No slot highlighted")
 	drop_card(card,board._UT_mouse_position)
-	await yield_to(card._tween, "finished", 0.5) 
+	await wait_card_tween(card, 0.5) 
 	assert_eq(card.get_parent(), hand,
 		"Card not moved to board when slot is occupied")
 
@@ -132,7 +132,7 @@ func test_move_script_placed_card_out_of_grid():
 	cards[0].execute_scripts()
 	await yield_for(0.1) 
 	card.execute_scripts()
-	await yield_to(card._tween, "finished", 0.5) 
+	await wait_card_tween(card, 0.5) 
 	gut.p(card.board_placement)
 	await drag_drop(card,Vector2(1000,0))
 	await move_mouse(Vector2(0,0))
@@ -155,7 +155,7 @@ func test_grid_auto_placement():
 	card.mandatory_grid_name = grid.name_label.text
 	await move_mouse(Vector2(300,200))
 	await drag_drop(card,Vector2(1000,300))
-	await yield_to(card._tween, "finished", 0.5) 
+	await wait_card_tween(card, 0.5) 
 	assert_eq(card.get_parent(), board,
 		"Card moved to correct grid name")
 	#assert_eq(card._placement_slot. get_grid_name(), grid.name_label.text,

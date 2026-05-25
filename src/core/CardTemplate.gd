@@ -2250,7 +2250,7 @@ func _add_tween_scale(
 		trans_type = Tween.TRANS_CUBIC,
 		ease_type = Tween.EASE_OUT):
 	var tween := _tween.get_ref() as Tween
-	tween.tween_property($Control, "scale",target_scale, runtime).from(expected_scale)
+	tween.tween_property(self, "scale", target_scale, runtime)
 	tween.set_trans(trans_type).set_ease(ease_type)
 
 

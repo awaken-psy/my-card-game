@@ -101,10 +101,10 @@ class TestBoardTokens:
 		await move_mouse(card.global_position)
 		await yield_for(0.6) # Wait to allow drawer to expand
 		card.is_faceup = false
-		#await yield_to(card.get_node('Control/Tokens/Tween'), "finished", 0.5)
+		await yield_for(0.5)  # Token drawer tween
 		assert_eq(0.0, card.get_node("Control/Tokens/Drawer").self_modulate[3],
 				"Drawer closes while Flip is ongoing")
-		#await yield_to(card.get_node('Control/Tokens/Tween'), "finished", 0.5)
+		await yield_for(0.5)  # Token drawer tween
 		assert_eq(0.0, card.get_node("Control/Tokens/Drawer").self_modulate[3],
 				"Drawer reopens once Flip is completed")
 		card.move_to(cfc.NMAP.discard)

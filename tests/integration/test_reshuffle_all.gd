@@ -20,7 +20,7 @@ func test_fancy_reshuffle_all():
 			"Card is not being teleported from where is expect by Tween")
 	assert_almost_eq(Vector2(1000, 10),cards[4].global_position,Vector2(10,10), 
 			"Card is not being teleported from where is expect by Tween")
-	#await yield_to(cards[4].get_node('Tween'), "finished", 1)
+	await wait_card_tween(cards[4])
 
 func test_basic_reshuffle_all():
 	cfc.game_settings.fancy_movement = false
@@ -32,4 +32,4 @@ func test_basic_reshuffle_all():
 			"Card is not being teleported from where is expected by Tween")
 	assert_almost_eq(Vector2(1000, 10),cards[4].global_position,Vector2(10,10), 
 			"Card is not being teleported from where is expected by Tween")
-	#await yield_to(cards[4].get_node('Tween'), "finished", 1)
+	await wait_card_tween(cards[4])

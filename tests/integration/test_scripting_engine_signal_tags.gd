@@ -21,7 +21,7 @@ class TestCardMovedToSignalTags:
 				"filter_tags": "Scripted",
 				"trigger": "another"}}
 		target.move_to(hand)
-		await yield_to(target._tween, "finished", 1)
+		await wait_card_tween(target, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_moved_to_hand",
 					[target,"card_moved_to_hand",
@@ -51,7 +51,7 @@ class TestCardMovedToSignalTags:
 		target = cfc.NMAP.deck.get_top_card()
 		watch_signals(target)
 		cards[4].execute_scripts()
-		await yield_to(target._tween, "finished", 1)
+		await wait_card_tween(target, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_moved_to_hand",
 					[target,"card_moved_to_hand",
@@ -94,7 +94,7 @@ class TestCardRotatedTags:
 				"degrees": 180}]}}
 		await table_move(target, Vector2(500,100))
 		target.card_rotation = 90
-		await yield_to(card._tween, "finished", 1)
+		await wait_card_tween(card, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_rotated",
 					[target,"card_rotated",
@@ -104,7 +104,7 @@ class TestCardRotatedTags:
 		assert_true(cards[2].is_faceup,
 				"Card stayed face-up since filter_tags didn't match")
 		target.execute_scripts()
-		await yield_to(card._tween, "finished", 1)
+		await wait_card_tween(card, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_rotated",
 					[target,"card_rotated",

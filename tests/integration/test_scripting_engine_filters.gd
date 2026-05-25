@@ -22,7 +22,7 @@ class TestFilterGtGeLtLe:
 				}],
 				"degrees": 90}]}}
 		card.execute_scripts()
-		await yield_to(cards[3]._tween, "finished", 0.2)
+		await wait_card_tween(cards[3], 0.2)
 		assert_eq(cards[1].card_rotation, 0,
 				"Card not matching comparison not rotated")
 		assert_eq(cards[2].card_rotation, 0,
@@ -38,7 +38,7 @@ class TestFilterGtGeLtLe:
 				}],
 				"degrees": 180}]}}
 		card.execute_scripts()
-		await yield_to(cards[3]._tween, "finished", 0.2)
+		await wait_card_tween(cards[3], 0.2)
 		assert_eq(cards[1].card_rotation, 0,
 				"Card not matching comparison not rotated")
 		assert_eq(cards[2].card_rotation, 180,
@@ -54,7 +54,7 @@ class TestFilterGtGeLtLe:
 				}],
 				"degrees": 270}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		assert_eq(cards[1].card_rotation, 270,
 				"Card matching comparison rotated")
 		assert_eq(cards[2].card_rotation, 180,
@@ -70,7 +70,7 @@ class TestFilterGtGeLtLe:
 				}],
 				"degrees": 0}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		assert_eq(cards[1].card_rotation, 0,
 				"Card matching comparison rotated")
 		assert_eq(cards[2].card_rotation, 0,
@@ -102,7 +102,7 @@ class TestTokensFilterGtGeLtLe:
 				}],
 				"degrees": 90}]}}
 		card.execute_scripts()
-		await yield_to(cards[3]._tween, "finished", 0.2)
+		await wait_card_tween(cards[3], 0.2)
 		assert_eq(cards[1].card_rotation, 0,
 				"Card not matching comparison not rotated")
 		assert_eq(cards[2].card_rotation, 0,
@@ -124,7 +124,7 @@ class TestTokensFilterGtGeLtLe:
 				}],
 				"degrees": 180}]}}
 		card.execute_scripts()
-		await yield_to(cards[3]._tween, "finished", 0.2)
+		await wait_card_tween(cards[3], 0.2)
 		assert_eq(cards[1].card_rotation, 0,
 				"Card not matching comparison not rotated")
 		assert_eq(cards[2].card_rotation, 0,
@@ -146,7 +146,7 @@ class TestTokensFilterGtGeLtLe:
 				}],
 				"degrees": 270}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		assert_eq(cards[1].card_rotation, 270,
 				"Card matching comparison rotated")
 		assert_eq(cards[2].card_rotation, 270,
@@ -168,7 +168,7 @@ class TestTokensFilterGtGeLtLe:
 				}],
 				"degrees": 0}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		assert_eq(cards[1].card_rotation, 0,
 				"Card matching comparison rotated")
 		assert_eq(cards[2].card_rotation, 0,
@@ -196,7 +196,7 @@ class TestAnd:
 				}],
 				"degrees": 180}]}}
 		cards[1].execute_scripts()
-		await yield_to(target._tween, "finished", 0.2)
+		await wait_card_tween(target, 0.2)
 		assert_eq(cards[0].card_rotation, 180,
 				"Matching both properties will be rotated")
 		assert_eq(cards[4].card_rotation, 0,
@@ -247,7 +247,7 @@ class TestStateFilterRotation:
 				"filter_state_seek": [{"filter_degrees": 0}],
 				"degrees": 270}]}}
 		card.execute_scripts()
-		await yield_to(target._tween, "finished", 0.2)
+		await wait_card_tween(target, 0.2)
 		assert_eq(cards[1].card_rotation, 90,
 				"Card on board matching rotation state should be rotated 90 degrees")
 		assert_eq(cards[2].card_rotation, 90,
@@ -274,7 +274,7 @@ class TestStateFilterRotation:
 				"filter_state_seek":[ {"filter_faceup": true}],
 				"degrees": 270}]}}
 		card.execute_scripts()
-		await yield_to(target._tween, "finished", 0.2)
+		await wait_card_tween(target, 0.2)
 		assert_eq(cards[1].card_rotation, 90,
 				"Card on board matching flip state should be rotated 90 degrees")
 		assert_eq(cards[2].card_rotation, 90,
@@ -297,7 +297,7 @@ class TestFilterTokens:
 						{"filter_token_name": "void"}]}],
 				"degrees": 90}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		card.scripts = {"manual": {"hand": [
 				{"name": "rotate_card",
 				"subject": "boardseek",
@@ -307,7 +307,7 @@ class TestFilterTokens:
 						{"filter_token_name": "industry"}]}],
 				"degrees": 270}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		assert_eq(cards[1].card_rotation, 90,
 				"Card on board matching token name rotated 90 degrees")
 		assert_eq(cards[2].card_rotation, 90,
@@ -325,7 +325,7 @@ class TestFilterTokens:
 				}],
 				"degrees": 0}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		assert_eq(cards[1].card_rotation, 90,
 				"Card on board not matching token count stays 90 degrees")
 		assert_eq(cards[2].card_rotation, 0,
@@ -344,7 +344,7 @@ class TestFilterTokens:
 				}],
 				"degrees": 270}]}}
 		card.execute_scripts()
-		await yield_to(cards[1]._tween, "finished", 0.2)
+		await wait_card_tween(cards[1], 0.2)
 		assert_eq(cards[1].card_rotation, 90,
 				"Card on board not matching tokens stays 90 degrees")
 		assert_eq(cards[2].card_rotation, 270,
@@ -369,7 +369,7 @@ class TestFilterParent:
 				}],
 				"degrees": 180}]}}
 		cards[1].execute_scripts()
-		await yield_to(target._tween, "finished", 0.2)
+		await wait_card_tween(target, 0.2)
 		assert_eq(cards[0].card_rotation, 180,
 				"Matching counter comparison rotated")
 		assert_eq(cards[4].card_rotation, 0,
@@ -383,7 +383,7 @@ class TestFilterParent:
 				}],
 				"degrees": 90}]}}
 		cards[1].execute_scripts()
-		await yield_to(target._tween, "finished", 0.2)
+		await wait_card_tween(target, 0.2)
 		assert_eq(cards[0].card_rotation, 180,
 				"Failing comparison not rotated ")
 		assert_eq(cards[4].card_rotation, 90,

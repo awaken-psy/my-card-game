@@ -103,7 +103,7 @@ class TestStateExecutions:
 		card.execute_scripts()
 		if card._tween.get_ref():
 			var tween = card._tween.get_ref()
-			await yield_to(card._tween, "finished", 1) 
+			await wait_card_tween(card, 1) 
 		assert_eq(Vector2(100,100),card.global_position,
 				"Card should have moved to specified position")
 
@@ -120,7 +120,7 @@ class TestCardScripts:
 		card.execute_scripts()
 		await target_card(card,target,"slow")
 		if target._tween:
-			await yield_to(target._tween, "finished", 1)
+			await wait_card_tween(target, 1)
 		# This also tests the _common_target set
 		assert_false(target.is_faceup,
 				"Test1 script leaves target facedown")
@@ -130,7 +130,7 @@ class TestCardScripts:
 		card.execute_scripts()
 		await target_card(card,cards[4])
 		if cards[4]._tween: 
-			await yield_to(cards[4]._tween, "finished", 1)
+			await wait_card_tween(cards[4], 1)
 		assert_false(cards[4].is_faceup,
 				"Ensure targeting is cleared after first ScriptingEngine")
 

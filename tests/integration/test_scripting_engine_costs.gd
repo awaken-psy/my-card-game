@@ -243,7 +243,7 @@ class TestMoveCardContToCont:
 		card.execute_scripts()
 		if (card._flip_tween and card._flip_tween.is_running()):
 			await yield_to(card._flip_tween, "finished", 0.4)
-			#await yield_to(card._flip_tween, "finished", 0.4)
+			await yield_for(0.4)  # Flip tween
 		assert_false(card.is_faceup,
 				"card should turn face-down because "
 				+ "property change cost could be paid")
@@ -261,7 +261,7 @@ class TestMoveCardContToCont:
 		target.execute_scripts()
 		if (target._flip_tween and target._flip_tween.is_running()):
 			await yield_to(target._flip_tween, "finished", 0.4)
-		#await yield_to(target._flip_tween, "finished", 0.4)
+		await yield_for(0.4)  # Flip tween
 		assert_true(target.is_faceup,
 				"card should stay face-up because "
 				+ "property change cost could not be paid")
@@ -284,7 +284,7 @@ class TestMoveCardContToBoard:
 		card.execute_scripts()
 		if (card._flip_tween and card._flip_tween.is_running()):
 			await yield_to(card._flip_tween, "finished", 0.4)
-		#await yield_to(card._flip_tween, "finished", 0.4)
+		await yield_for(0.4)  # Flip tween
 		assert_false(card.is_faceup,
 				"card should turn face-down because "
 				+ "enough cards could be moved from the deck")
@@ -302,7 +302,7 @@ class TestMoveCardContToBoard:
 		target.execute_scripts()
 		if (target._flip_tween and target._flip_tween.is_running()):
 			await yield_to(target._flip_tween, "finished", 0.4)
-		#await yield_to(target._flip_tween, "finished", 0.4)
+		await yield_for(0.4)  # Flip tween
 		assert_true(target.is_faceup,
 				"card should stay face-up because "
 				+ "not enough cards could be found in the deck")
@@ -325,7 +325,7 @@ class TestMoveCardToGrid:
 		card.execute_scripts()
 		if (card._flip_tween and card._flip_tween.is_running()):
 			await yield_to(card._flip_tween, "finished", 0.4)
-		#await yield_to(card._flip_tween, "finished", 0.4)
+		await yield_for(0.4)  # Flip tween
 		assert_false(card.is_faceup,
 				"card should turn face-down because "
 				+ "grid had enough slots for all cards")
@@ -344,7 +344,7 @@ class TestMoveCardToGrid:
 		target.execute_scripts()
 		if (target._flip_tween and target._flip_tween.is_running()):
 			await yield_to(target._flip_tween, "finished", 0.4)
-		#await yield_to(target._flip_tween, "finished", 0.4)
+		await yield_for(0.4)  # Flip tween
 		assert_true(target.is_faceup,
 				"card should stay face-up because "
 				+ "grid did not have enough slots for all cards")
@@ -353,7 +353,7 @@ class TestMoveCardToGrid:
 		target.execute_scripts()
 		if (target._flip_tween and target._flip_tween.is_running()):
 			await yield_to(target._flip_tween, "finished", 0.4)
-		#await yield_to(target._flip_tween, "finished", 0.4)
+		await yield_for(0.4)  # Flip tween
 		assert_false(target.is_faceup,
 				"card should turn face-down because "
 				+ "grid auto-extended to host all cards")

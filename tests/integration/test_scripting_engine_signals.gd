@@ -181,7 +181,7 @@ class TestCardRotates:
 		await table_move(target, Vector2(500,100))
 		target.card_rotation = 90
 		if card._tween.get_ref():
-			await yield_to(card._tween, "finished", 1)
+			await wait_card_tween(card, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_rotated",
 					[target,"card_rotated",
@@ -279,7 +279,7 @@ class TestCardMovedToHand:
 				"trigger": "another"}}
 		target.move_to(hand)
 		if target._tween.get_ref():
-			await yield_to(target._tween, "finished", 1)
+			await wait_card_tween(target, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_moved_to_hand",
 					[target,"card_moved_to_hand",
@@ -302,7 +302,7 @@ class TestCardMovedToBoard:
 				"trigger": "another"}}
 		target.move_to(board, -1, Vector2(100,100))
 		if target._tween.get_ref():
-			await yield_to(target._tween, "finished", 1)
+			await wait_card_tween(target, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_moved_to_board",
 					[target,"card_moved_to_board",
@@ -369,7 +369,7 @@ class TestCardMovedToPile:
 				"trigger": "another"}}
 		target.move_to(discard)
 		if target._tween.get_ref():
-			await yield_to(target._tween, "finished", 1)
+			await wait_card_tween(target, 1)
 		assert_signal_emitted_with_parameters(
 					target,"card_moved_to_pile",
 					[target,"card_moved_to_pile",

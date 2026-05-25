@@ -18,7 +18,7 @@ class TestAttachAndSwitch:
 				CFConst.HOST_HOVER_COLOUR,
 				"Hovered host has the right colour highlight")
 		drop_card(card,board._UT_mouse_position)
-		await yield_to(card._tween, "finished", 1)
+		await wait_card_tween(card, 1)
 		assert_almost_eq(card.global_position,cards[0].global_position
 				+ Vector2(0,1)
 				* card.get_node('Control').size.y
@@ -62,7 +62,7 @@ class TestAttachAndSwitch:
 		await yield_for(0.4)
 		drop_card(card,board._UT_mouse_position)
 		card._on_Card_mouse_exited()
-		await yield_to(card._tween, "finished", 1)
+		await wait_card_tween(card, 1)
 		await yield_for(0.3)
 		assert_almost_ne(card_prev_pos,cards[3].global_position, Vector2(2,2),
 				"Card drop also drops attachments in the right position")
@@ -77,7 +77,7 @@ class TestAttachAndSwitch:
 			"No card has potential_host highlighted when their parent is moving onto them")
 		drop_card(card,board._UT_mouse_position)
 		card._on_Card_mouse_exited()
-		await yield_to(card._tween, "finished", 1)
+		await wait_card_tween(card, 1)
 		assert_null(card.current_host_card,
 				"Card cannot be hosted in its own attachments")
 
@@ -88,7 +88,7 @@ class TestAttachAndSwitch:
 		assert_almost_ne(card_prev_pos,card.global_position, Vector2(2,2),
 				"Dragging an attached card is allowed")
 		drop_card(card,board._UT_mouse_position)
-		await yield_to(card._tween, "finished", 1)
+		await wait_card_tween(card, 1)
 		assert_almost_eq(card_prev_pos,card.global_position, Vector2(2,2),
 				"After dropping an attached card, it returns to the parent host")
 		await drag_drop(card,Vector2(400,600))
@@ -176,7 +176,7 @@ class TestMultiHostHover:
 		assert_true(cards[1].highlight.visible,
 				"Potential host highlight changes as it changes hover areas")
 		drop_card(card,board._UT_mouse_position)
-		await yield_to(card._tween, "finished", 1)
+		await wait_card_tween(card, 1)
 
 class TestAttachmentNodeOrder:
 	extends "res://tests/Attachment_common.gd"
@@ -276,5 +276,5 @@ class TestAttachmentNodeOrder:
 			"Multiple attachments are correctly ordered relative to host when dragging")
 		await yield_for(0.5)
 		drop_card(host_card,board._UT_mouse_position)
-		await yield_to(host_card._tween, "finished", 1)
+		await wait_card_tween(host_card, 1)
 
