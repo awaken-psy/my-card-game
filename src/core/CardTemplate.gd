@@ -2354,7 +2354,7 @@ func _process_card_state() -> void:
 				tween.stop()
 				_tween = weakref(tween)
 				_add_tween_position(expected_position, _target_position, focus_tween_duration)
-				_add_tween_scale(scale, Vector2(1.5,1.5), focus_tween_duration)
+				_add_tween_scale(scale, Vector2(1,1) * focused_scale, focus_tween_duration)
 
 				if cfc.game_settings.hand_use_oval_shape:
 					_add_tween_rotation($Control.rotation, 0, focus_tween_duration)
@@ -2560,14 +2560,14 @@ func _process_card_state() -> void:
 			# so we tween it to the right location
 			if not (tween and tween.is_running()): #is_running()
 				#$Tween.remove(self,'position') # We make sure to remove other tweens of the same type to avoid a deadlock
-				_target_position = _determine_board_position_from_mouse()
-				# The below ensures the card doesn't leave the viewport dimentions
-				#NOTE: this used to include a call to play_area_scale.x or .y, it didn't work so it was removed
-				var viewport = get_viewport().size
-				if (_target_position.x + canonical_size.x * play_area_scale) > get_viewport().size.x:
-					_target_position.x = get_viewport().size.x - canonical_size.x * play_area_scale
-				if _target_position.y + canonical_size.y * play_area_scale > get_viewport().size.y:
-					_target_position.y = get_viewport().size.y - canonical_size.y * play_area_scale
+#				_target_position = _determine_board_position_from_mouse()
+#				# The below ensures the card doesn't leave the viewport dimentions
+#				#NOTE: this used to include a call to play_area_scale.x or .y, it didn't work so it was removed
+#				var viewport = get_viewport().size
+#				if (_target_position.x + canonical_size.x * play_area_scale) > get_viewport().size.x:
+#					_target_position.x = get_viewport().size.x - canonical_size.x * play_area_scale
+#				if _target_position.y + canonical_size.y * play_area_scale > get_viewport().size.y:
+#					_target_position.y = get_viewport().size.y - canonical_size.y * play_area_scale
 				tween = create_tween()
 				tween.stop()
 				_tween = weakref(tween)
