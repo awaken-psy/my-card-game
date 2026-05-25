@@ -39,19 +39,39 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	#mouse_pointer.global_position = \
-	#		mouse_pointer.determine_global_mouse_pos()
-	get_global_mouse_position()
-
-func _physics_process(delta) -> void:
 	if _UT_interpolation_requested:
 		if _t < 1:
-			_t += delta * _UT_mouse_speed
+			_t += _delta * _UT_mouse_speed
 			_UT_mouse_position = _UT_current_mouse_position.lerp(
 					_UT_target_mouse_position, _t)
 		else:
 			_t = 0
 			_UT_interpolation_requested = false
+	if cfc.ut:
+		mouse_pointer.position = \
+				mouse_pointer.determine_global_mouse_pos()
+		# Manually detect overlaps since physics Area2D detection is
+		# unreliable in headless mode
+		var mp_pos = mouse_pointer.position
+		var changed = false
+		for child in get_children():
+			if child is Card or child is CardContainer:
+				var col = child.get_node_or_null("CollisionShape2D")
+				if col and col.shape is RectangleShape2D:
+					var col_pos = child.position + col.position
+					var half_ext = col.shape.size / 2.0
+					if mp_pos.x >= col_pos.x - half_ext.x and mp_pos.x <= col_pos.x + half_ext.x \
+							and mp_pos.y >= col_pos.y - half_ext.y and mp_pos.y <= col_pos.y + half_ext.y:
+						if child not in mouse_pointer.overlaps:
+							mouse_pointer.overlaps.append(child)
+							changed = true
+					else:
+						if child in mouse_pointer.overlaps:
+							mouse_pointer.overlaps.erase(child)
+							changed = true
+		if changed:
+			mouse_pointer._discover_focus()
+	get_global_mouse_position()
 
 
 # This function is called by unit testing to simulate mouse movement on the board

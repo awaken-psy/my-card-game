@@ -29,6 +29,7 @@ func fake_click(pressed, position, flags=0) -> InputEvent:
 
 func setup_main() -> void:
 	cfc.is_testing = true
+	cfc.ut = true
 	cfc._setup()
 	main = autoqfree(MAIN_SCENE.instantiate())
 	get_tree().get_root().add_child(main)
@@ -44,7 +45,9 @@ func setup_main() -> void:
 
 func setup_board() -> void:
 	cfc.is_testing = true
+	cfc.ut = true
 	cfc._setup()
+	get_viewport().size = CFConst.DESIGN_RESOLUTION
 	board = add_child_autofree(BOARD_SCENE.instantiate())
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE) # Always reveal the mouseon unclick
 	if not cfc.are_all_nodes_mapped:
@@ -95,12 +98,17 @@ func unclick_card_anywhere(card: Card) -> void:
 func drag_card(card: Card, target_position: Vector2, interpolation_speed := "fast") -> void:
 	var mouse_speed = MOUSE_SPEED[interpolation_speed][0]
 	var mouse_yield_wait = MOUSE_SPEED[interpolation_speed][1]
-	var extra_offset = Vector2(20,20)
-	if card.card_rotation in [90,270]:
-		extra_offset = Vector2(10,60)
+	var card_col := card.get_node("CollisionShape2D")
+	var extra_offset = card_col.position
 	board._UT_interpolate_mouse_move(card.global_position + extra_offset,
 			board._UT_mouse_position,mouse_speed)
 	await yield_for(mouse_yield_wait)
+	var mp = board.mouse_pointer
+	if mp.current_focused_card != card:
+		if mp.current_focused_card:
+			mp.current_focused_card._on_Card_mouse_exited()
+		card._on_Card_mouse_entered()
+		mp.current_focused_card = card
 	click_card(card)
 	if interpolation_speed == "debug":
 		await yield_for(4) # Allow for review
@@ -113,12 +121,17 @@ func drag_card(card: Card, target_position: Vector2, interpolation_speed := "fas
 func drop_card(card: Card, drop_location: Vector2) -> void:
 	var fc:= fake_click(false, drop_location)
 	card._on_Card_gui_input(fc)
-	await yield_to(card._tween, "finished", 1)
+	var tween_ref = card._tween.get_ref() if card._tween else null
+	if tween_ref and tween_ref is Tween:
+		await yield_to(tween_ref, "finished", 1)
+	else:
+		await yield_for(0.5)
 
 
 # Takes care of simple drag&drop requests
 func drag_drop(card: Card, target_position: Vector2, interpolation_speed := "fast") -> void:
 	await drag_card(card,target_position,interpolation_speed)
+	card.potential_container = null
 	await drop_card(card,board._UT_mouse_position)
 	await yield_for(0.1) # Wait to allow dragging to start
 	card._on_Card_mouse_exited()
@@ -132,11 +145,9 @@ func target_card(source: Card,
 		# If the target is the same as the source, we need to wait a bit
 		# because otherwise the _is_targeted might not be set yet.
 		await yield_for(0.6)
-	# We need to offset a bit towards the card rect, to ensure the arrow
-	# Area2D collides
-	var extra_offset = Vector2(10,10)
-	if target.card_rotation in [90,270]:
-		extra_offset = Vector2(10,100)
+	# We need to offset to the card collision center for Area2D detection
+	var target_col := target.get_node("CollisionShape2D")
+	var extra_offset = target_col.position
 	board._UT_interpolate_mouse_move(target.global_position + extra_offset,
 			source.global_position,mouse_speed)
 	await yield_for(mouse_yield_wait)
