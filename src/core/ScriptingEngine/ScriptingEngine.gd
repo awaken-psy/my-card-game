@@ -344,6 +344,7 @@ func move_card_to_board(script: ScriptTask) -> int:
 				retcode = CFConst.ReturnCode.FAILED
 			elif not costs_dry_run():
 				for card in script.subjects:
+					if not is_instance_valid(card): continue
 					slot = grid.find_available_slot()
 					# We need a small delay, to allow a potential new slot to instance
 					await script.owner.get_tree().create_timer(0.05).timeout
@@ -362,6 +363,7 @@ func move_card_to_board(script: ScriptTask) -> int:
 		var count = 0
 		for card in script.subjects:
 			# To avoid overlapping on the board, we spawn the cards
+			if not is_instance_valid(card): continue
 			# Next to each other.
 			board_position.x += \
 					count * card.canonical_size.x * card.play_area_scale
