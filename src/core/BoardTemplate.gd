@@ -68,6 +68,7 @@ func _process(_delta: float) -> void:
 							changed = true
 					else:
 						if child in mouse_pointer.overlaps:
+							child.highlight.set_highlight(false)
 							mouse_pointer.overlaps.erase(child)
 							changed = true
 		if changed:

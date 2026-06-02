@@ -1412,7 +1412,7 @@ func move_to(targetHost: Node,
 						* CFConst.ATTACHMENT_OFFSET[attachment_offset].x,
 						(attach_index + 1)* canonical_size.y
 						* CFConst.ATTACHMENT_OFFSET[attachment_offset].y))
-				set_state(CardState.ON_PLAY_BOARD)
+				set_state(CardState.DROPPING_TO_BOARD)
 			else:
 				# When we drop from board to board
 				# We need to ensure the card respects its
@@ -1632,6 +1632,7 @@ func attach_to_host(
 		# also became an attachment here.
 		if current_host_card and not is_following_previous_host:
 			current_host_card.attachments.erase(self)
+			current_host_card._organize_attachments()
 			emit_signal("card_unattached",
 					self,
 					"card_unattached",
@@ -1647,6 +1648,7 @@ func attach_to_host(
 		current_host_card.highlight.set_highlight(false)
 		# We set outselves as an attachment on the target host for easy iteration
 		current_host_card.attachments.append(self)
+		current_host_card._organize_attachments()
 		#print(current_host_card.attachments)
 		# We make existing attachments reattach to the new host directly
 		# Otherwise it becomes too complex to handle attachment indexes
@@ -2002,8 +2004,9 @@ func _organize_attachments() -> void:
 				get_parent().move_child(card, self.get_index()+attach_index)
 
 			# We don't want to try and move it if it's still tweening.
-			# But if it isn't, we make sure it always follows its parent is_running()
-			if not (card._tween.is_running()) and \
+			# But if it isn't, we make sure it always follows its parent
+			var card_tween = card._tween.get_ref() as Tween
+			if not (card_tween and card_tween.is_running()) and \
 					card.state in \
 					[CardState.ON_PLAY_BOARD,CardState.FOCUSED_ON_BOARD]:
 				card.global_position = global_position + \
@@ -2129,6 +2132,7 @@ func _clear_attachment_status(tags := ["Manual"]) -> void:
 				"card_unattached",
 				{"host": current_host_card, "tags": tags})
 		current_host_card.attachments.erase(self)
+		current_host_card._organize_attachments()
 		current_host_card = null
 	for card in attachments:
 		card.current_host_card = null
