@@ -2500,12 +2500,16 @@ func _process_card_state() -> void:
 
 		CardState.DRAGGED:
 			# Used when the card is dragged around the game with the mouse
+			if cfc.game_paused:
+				return
 			set_focus(true)
 			set_control_mouse_filters(true)
 			buttons.set_active(false)
-			if (not (tween and tween.is_running()) and #is_running()
-				not scale.is_equal_approx(CFConst.CARD_SCALE_WHILE_DRAGGING) and
-				get_parent() != cfc.NMAP.board):
+			if (not scale.is_equal_approx(CFConst.CARD_SCALE_WHILE_DRAGGING) and
+					get_parent() != cfc.NMAP.board):
+				# Kill any running tween (e.g. focus scale) to allow drag scale
+				if tween and tween.is_running():
+					tween.kill()
 				tween = create_tween()
 				tween.stop()
 				_tween = weakref(tween)
