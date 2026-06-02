@@ -40,13 +40,14 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if _UT_interpolation_requested:
-		if _t < 1:
-			_t += _delta * _UT_mouse_speed
+		_t += _delta * _UT_mouse_speed
+		if _t >= 1:
+			_t = 0
+			_UT_mouse_position = _UT_target_mouse_position
+			_UT_interpolation_requested = false
+		else:
 			_UT_mouse_position = _UT_current_mouse_position.lerp(
 					_UT_target_mouse_position, _t)
-		else:
-			_t = 0
-			_UT_interpolation_requested = false
 	if cfc.ut:
 		mouse_pointer.position = \
 				mouse_pointer.determine_global_mouse_pos()
