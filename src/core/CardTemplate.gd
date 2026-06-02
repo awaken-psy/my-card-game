@@ -2209,7 +2209,7 @@ func _add_tween_rotation(
 		trans_type = Tween.TRANS_BACK,
 		ease_type = Tween.EASE_IN_OUT):
 	var tween := _tween.get_ref() as Tween
-	tween.tween_property(self, "rotation", target_rotation, runtime)#.from(expected_rotation)\
+	tween.tween_property($Control, "rotation", target_rotation, runtime)#.from(expected_rotation)\
 	tween.set_trans(trans_type).set_ease(ease_type)
 	# We ensure the card_rotation value is also kept up to date
 	# But only if it's one of the expected multiples

@@ -131,7 +131,6 @@ func drop_card(card: Card, drop_location: Vector2) -> void:
 # Takes care of simple drag&drop requests
 func drag_drop(card: Card, target_position: Vector2, interpolation_speed := "fast") -> void:
 	await drag_card(card,target_position,interpolation_speed)
-	card.potential_container = null
 	await drop_card(card,board._UT_mouse_position)
 	await yield_for(0.1) # Wait to allow dragging to start
 	card._on_Card_mouse_exited()
