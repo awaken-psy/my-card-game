@@ -240,10 +240,7 @@ class TestMoveCardContToCont:
 				{"name": "flip_card",
 				"subject": "self",
 				"set_faceup": false}]}}
-		card.execute_scripts()
-		if (card._flip_tween and card._flip_tween.is_running()):
-			await yield_to(card._flip_tween, "finished", 0.4)
-			await yield_for(0.4)  # Flip tween
+		await card.execute_scripts()
 		assert_false(card.is_faceup,
 				"card should turn face-down because "
 				+ "property change cost could be paid")
@@ -258,10 +255,7 @@ class TestMoveCardContToCont:
 				{"name": "flip_card",
 				"subject": "self",
 				"set_faceup": false}]}}
-		target.execute_scripts()
-		if (target._flip_tween and target._flip_tween.is_running()):
-			await yield_to(target._flip_tween, "finished", 0.4)
-		await yield_for(0.4)  # Flip tween
+		await target.execute_scripts()
 		assert_true(target.is_faceup,
 				"card should stay face-up because "
 				+ "property change cost could not be paid")
