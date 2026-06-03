@@ -154,18 +154,18 @@ class TestShuffleRng:
 		var rng_threshold: int = 0
 		var card = deck.get_bottom_card()
 		var prev_index = card.get_my_card_index()
-		deck.shuffle_cards()
-		await yield_for(1) 
+		deck.shuffle_cards(false)
+		await yield_for(0.1) 
 		if prev_index == card.get_my_card_index():
 			rng_threshold += 1
 		prev_index = card.get_my_card_index()
-		deck.shuffle_cards()
-		await yield_for(1) 
+		deck.shuffle_cards(false)
+		await yield_for(0.1) 
 		if prev_index == card.get_my_card_index():
 			rng_threshold += 1
 		prev_index = card.get_my_card_index()
-		deck.shuffle_cards()
-		await yield_for(1) 
+		deck.shuffle_cards(false)
+		await yield_for(0.1) 
 		if prev_index == card.get_my_card_index():
 			rng_threshold += 1
 		prev_index = card.get_my_card_index()
