@@ -1250,7 +1250,11 @@ func move_to(targetHost: Node,
 			scale *= parent_scale * target_scale
 		# We need to remove the current parent node before adding a different one
 		parentHost.remove_child(self)
-		targetHost.add_child(self)
+		# Use call() to force GDScript dynamic dispatch, so Pile.add_child override is invoked
+		targetHost.call("add_child", self)
+		# If the pile's add_child routed this card to its popup, skip further move processing
+		if state == Card.CardState.IN_POPUP:
+			return
 		# The below is used when a specific card position is requested
 		# It converts the requested card position, to absolute node position
 		# between all nodes

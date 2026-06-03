@@ -85,7 +85,7 @@ class TestPopupView:
 		await yield_for(1) 
 		discard._on_View_Button_pressed()
 		await yield_for(1) 
-		assert_eq(6,len(discard.get_children()),
+		assert_eq(4,len(discard.get_children()),
 				"No cards should appear in the pile root after popup")
 		assert_eq(12,discard.get_card_count(),
 				"Cards in popup should be returned with get_all_cards()")

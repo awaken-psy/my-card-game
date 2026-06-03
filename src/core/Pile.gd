@@ -112,11 +112,14 @@ func _on_ViewPopup_popup_hide() -> void:
 	#_tween.tween_property($ViewPopup,'modulate:a', Color(1,1,1,0), 0.5)
 	#_tween.play()
 	#await _tween.finished
+	is_popup_open = false
 	for card in pre_sorted_order:
 		# For each card we have hosted, we check if it's hosted in the popup.
 		# If it is, we move it to the root.
-#		print_debug(card.canonical_name, card.get_parent().name)
-		if "CardPopUpSlot" in card.get_parent().name:
+		# Note: We check if the card's parent is a child of _popup_grid,
+		# not by name, because Godot 4 auto-renames duplicate sibling names.
+		var _card_parent = card.get_parent()
+		if is_instance_valid(_card_parent) and _card_parent.get_parent() == _popup_grid:
 			card.get_parent().remove_child(card)
 			add_child(card)
 			# We need to remember that cards in piles should be left invisible
@@ -133,7 +136,6 @@ func _on_ViewPopup_popup_hide() -> void:
 	if show_manipulation_buttons:
 		manipulation_buttons.visible = true
 	emit_signal("popup_closed")
-	is_popup_open = false
 
 
 ## Populated the popup card viewer with the cards and displays them
