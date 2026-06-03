@@ -61,8 +61,8 @@ func _process(_delta: float) -> void:
 				if col and col.shape is RectangleShape2D:
 					var col_pos = child.position + col.position
 					var half_ext = col.shape.size / 2.0
-					if mp_pos.x >= col_pos.x - half_ext.x and mp_pos.x <= col_pos.x + half_ext.x \
-							and mp_pos.y >= col_pos.y - half_ext.y and mp_pos.y <= col_pos.y + half_ext.y:
+					if mp_pos.x >= col_pos.x - half_ext.x and mp_pos.x < col_pos.x + half_ext.x \
+							and mp_pos.y >= col_pos.y - half_ext.y and mp_pos.y < col_pos.y + half_ext.y:
 						if child not in mouse_pointer.overlaps:
 							mouse_pointer.overlaps.append(child)
 							changed = true
