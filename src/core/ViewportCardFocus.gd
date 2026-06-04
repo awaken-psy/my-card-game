@@ -109,7 +109,11 @@ func focus_card(card: Card, show_preview := true) -> void:
 				# warning-ignore:return_value_discarded
 				dupe_focus.set_is_faceup(!dupe_focus.is_faceup, true)
 			# warning-ignore:return_value_discarded
-			dupe_focus.set_is_faceup(card.is_faceup, true)
+			# When a card is viewed while face-down, the dupe should display the face
+			if card.is_viewed:
+				dupe_focus.set_is_faceup(true, true)
+			else:
+				dupe_focus.set_is_faceup(card.is_faceup, true)
 			dupe_focus.is_viewed = card.is_viewed
 		else:
 			dupe_focus = card.duplicate(DUPLICATE_USE_INSTANTIATION)
