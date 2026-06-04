@@ -2217,8 +2217,7 @@ func _add_tween_rotation(
 		trans_type = Tween.TRANS_BACK,
 		ease_type = Tween.EASE_IN_OUT):
 	var tween := _tween.get_ref() as Tween
-	tween.tween_property($Control, "rotation", target_rotation, runtime)#.from(expected_rotation)\
-	tween.set_trans(trans_type).set_ease(ease_type)
+	tween.tween_property($Control, "rotation", target_rotation, runtime).set_trans(trans_type).set_ease(ease_type) #.from(expected_rotation)
 	# We ensure the card_rotation value is also kept up to date
 	# But only if it's one of the expected multiples
 	if int(target_rotation) != card_rotation \
@@ -2234,8 +2233,7 @@ func _add_tween_position(
 		trans_type = Tween.TRANS_CUBIC,
 		ease_type = Tween.EASE_OUT):
 	var tween := _tween.get_ref() as Tween
-	tween.tween_property(self, "position", target_position, runtime)#.from(expected_position)
-	tween.set_trans(trans_type).set_ease(ease_type)
+	tween.tween_property(self, "position", target_position, runtime).set_trans(trans_type).set_ease(ease_type) #.from(expected_position)
 
 
 # Card global position animation
@@ -2246,8 +2244,7 @@ func _add_tween_global_position(
 		trans_type = Tween.TRANS_BACK,
 		ease_type = Tween.EASE_IN_OUT):
 	var tween := _tween.get_ref() as Tween
-	tween.tween_property(self, "global_position", target_position, runtime)#.from(expected_position)
-	tween.set_trans(trans_type).set_ease(ease_type)
+	tween.tween_property(self, "global_position", target_position, runtime).set_trans(trans_type).set_ease(ease_type) #.from(expected_position)
 
 
 # Card scale animation
@@ -2258,8 +2255,7 @@ func _add_tween_scale(
 		trans_type = Tween.TRANS_CUBIC,
 		ease_type = Tween.EASE_OUT):
 	var tween := _tween.get_ref() as Tween
-	tween.tween_property(self, "scale", target_scale, runtime)
-	tween.set_trans(trans_type).set_ease(ease_type)
+	tween.tween_property(self, "scale", target_scale, runtime).set_trans(trans_type).set_ease(ease_type)
 
 
 # A rudimentary Finite State Engine for cards.

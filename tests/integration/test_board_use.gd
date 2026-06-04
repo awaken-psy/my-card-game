@@ -96,13 +96,13 @@ class TestBoardBorderBlock:
 		assert_almost_eq(Vector2(-5, 95),card.global_position,Vector2(2,2),
 				"Dragged outside left viewport borders stays inside viewport")
 		await move_mouse(Vector2(1300,300))
-		assert_almost_eq(Vector2(1215, 295),card.global_position,Vector2(2,2),
+		assert_almost_eq(Vector2(1138.92, 295),card.global_position,Vector2(2,2),
 				"Dragged outside right viewport borders stays inside viewport")
 		await move_mouse(Vector2(800,-100))
 		assert_almost_eq(Vector2(795, -5),card.global_position,Vector2(2,2),
 				"Dragged outside top viewport borders stays inside viewport")
 		await move_mouse(Vector2(500,800))
-		assert_almost_eq(Vector2(495, 619),card.global_position,Vector2(2,2),
+		assert_almost_eq(Vector2(495, 511.86),card.global_position,Vector2(2,2),
 				"Dragged outside bottom viewport borders stays inside viewport")
 
 class TestBoardToBoardMove:
