@@ -51,9 +51,12 @@ func _process(_delta: float) -> void:
 		else:
 			_UT_mouse_position = _UT_current_mouse_position.lerp(
 					_UT_target_mouse_position, _t)
-	if cfc.ut:
-		mouse_pointer.position = \
+	# Update mouse pointer position in both UT and non-UT modes.
+	# In non-UT mode, this relies on determine_global_mouse_pos()
+	# returning SubViewport-local coordinates via get_global_mouse_position().
+	mouse_pointer.position = \
 				mouse_pointer.determine_global_mouse_pos()
+	if cfc.ut:
 		# Manually detect overlaps since physics Area2D detection is
 		# unreliable in headless mode
 		var mp_pos = mouse_pointer.position
@@ -96,7 +99,6 @@ func _process(_delta: float) -> void:
 				_UT_interpolation_ended = false
 		if changed:
 			mouse_pointer._discover_focus()
-	get_global_mouse_position()
 
 
 # This function is called by unit testing to simulate mouse movement on the board

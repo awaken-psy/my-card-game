@@ -113,20 +113,22 @@ func _on_MousePointer_area_exited(area: Area2D) -> void:
 # or a fake mouse position provided by integration testing
 func determine_global_mouse_pos() -> Vector2:
 	var mouse_position
-	var zoom = Vector2(1,1)
-	# We have to do the below offset hack due to godotengine/godot#30215
-	# This is caused because we're using a viewport node and
-	# scaling the game in full-creen.
-	#if get_viewport() and get_viewport().has_node("Camera2D"):
-		#zoom = get_viewport().get_node("Camera2D").zoom
-	#var offset_mouse_position = \
-		#get_tree().current_scene.get_global_mouse_position() \
-		#- get_viewport_transform().origin
-	#offset_mouse_position *= zoom
-	#var scaling_offset = get_tree().get_root().get_node('Main').get_viewport().get_size_override() * OS.window_size
 	if cfc.ut and cfc.NMAP.get("board"):
 		mouse_position = cfc.NMAP.board._UT_mouse_position
-	else: mouse_position = get_tree().get_root().get_mouse_position()
+	else:
+		# Godot 4 does not auto-convert mouse coords for SubViewports.
+		# We need to manually transform window coords to SubViewport-local.
+		var root_pos = get_tree().get_root().get_mouse_position()
+		var sub_vp = get_viewport()
+		var container = sub_vp.get_parent()
+		if container is SubViewportContainer:
+			var container_rect = container.get_global_rect()
+			var sub_size = sub_vp.get_visible_rect().size
+			var relative = root_pos - container_rect.position
+			var _scale_ratio = sub_size / container_rect.size
+			mouse_position = relative * _scale_ratio
+		else:
+			mouse_position = root_pos
 	return mouse_position
 
 
