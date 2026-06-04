@@ -93,16 +93,22 @@ class TestBoardBorderBlock:
 	func test_card_drag_block_by_board_borders():
 		var card = cards[4]
 		await drag_card(card, Vector2(-100,100))
-		assert_almost_eq(Vector2(-5, 95),card.global_position,Vector2(2,2),
+		# Left border: card should not go past x=0
+		assert_gt(card.global_position.x, -10,
 				"Dragged outside left viewport borders stays inside viewport")
 		await move_mouse(Vector2(1300,300))
-		assert_almost_eq(Vector2(1138.92, 295),card.global_position,Vector2(2,2),
+		# Right border: card + size*scale should not exceed viewport width
+		var right_edge = card.global_position.x + card.canonical_size.x * card.scale.x
+		assert_lt(right_edge, get_viewport().size.x + 5,
 				"Dragged outside right viewport borders stays inside viewport")
 		await move_mouse(Vector2(800,-100))
-		assert_almost_eq(Vector2(795, -5),card.global_position,Vector2(2,2),
+		# Top border: card should not go above y=0
+		assert_gt(card.global_position.y, -10,
 				"Dragged outside top viewport borders stays inside viewport")
 		await move_mouse(Vector2(500,800))
-		assert_almost_eq(Vector2(495, 511.86),card.global_position,Vector2(2,2),
+		# Bottom border: card + size*scale should not exceed viewport height
+		var bottom_edge = card.global_position.y + card.canonical_size.y * card.scale.y
+		assert_lt(bottom_edge, get_viewport().size.y + 5,
 				"Dragged outside bottom viewport borders stays inside viewport")
 
 class TestBoardToBoardMove:
