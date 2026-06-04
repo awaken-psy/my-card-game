@@ -22,6 +22,8 @@ var current_focused_card : Card = null
 #
 # Instead we populate according to signals,which are more immediate
 var overlaps := []
+# Container child cards found by BoardTemplate._process() in UT mode
+var _ut_container_cards := []
 # When set to false, prevents the player from disable interacting with the game.
 var is_disabled := false: set = set_disabled
 
@@ -204,6 +206,12 @@ func _discover_focus() -> void:
 					or (cfc.card_drag_ongoing.disable_dropping_to_cardcontainers
 					and cfc.card_drag_ongoing.get_parent() == area):
 				potential_containers.append(area)
+		# In headless/UT mode, container child cards are detected in
+		# BoardTemplate._process() and stored in _ut_container_cards.
+		if cfc.ut and not cfc.card_drag_ongoing and potential_cards.is_empty():
+			for c in _ut_container_cards:
+				potential_cards.append(c)
+			_ut_container_cards.clear()
 	# Dragging into containers takes priority over draggging onto board
 	if not potential_containers.is_empty():
 		cfc.card_drag_ongoing.potential_container = \

@@ -17,6 +17,8 @@ var _UT_mouse_speed := 3
 var _UT_interpolation_requested := false
 # Used for interpolating
 var _t = 0
+# Set true on the frame interpolation completes (before overlap check)
+var _UT_interpolation_ended := false
 # Used for finding the counters node and modifying them
 # This variable has to exist if the [mod_counters](ScriptingEngine#mod_counters)
 # task is to be used.
@@ -45,6 +47,7 @@ func _process(_delta: float) -> void:
 			_t = 0
 			_UT_mouse_position = _UT_target_mouse_position
 			_UT_interpolation_requested = false
+			_UT_interpolation_ended = true
 		else:
 			_UT_mouse_position = _UT_current_mouse_position.lerp(
 					_UT_target_mouse_position, _t)
@@ -71,6 +74,26 @@ func _process(_delta: float) -> void:
 							child.highlight.set_highlight(false)
 							mouse_pointer.overlaps.erase(child)
 							changed = true
+			# In headless/UT mode, container child cards are never direct children
+			# of Board, so the overlap loop never finds them. Check every frame
+			# so focus is detected early enough for the focus tween to complete.
+			if cfc.ut and not cfc.card_drag_ongoing:
+				var prev_cards = mouse_pointer._ut_container_cards.duplicate()
+				mouse_pointer._ut_container_cards.clear()
+				for cont in get_children():
+					if cont is CardContainer:
+						for subcard in cont.get_children():
+							if subcard is Card:
+								var subcol = subcard.get_node_or_null("CollisionShape2D")
+								if subcol and subcol.shape is RectangleShape2D:
+									var cc = cont.position + subcard.position + subcol.position
+									var hs = subcol.shape.size / 2.0
+									if mp_pos.x >= cc.x - hs.x and mp_pos.x < cc.x + hs.x and mp_pos.y >= cc.y - hs.y and mp_pos.y < cc.y + hs.y:
+										mouse_pointer._ut_container_cards.append(subcard)
+				if prev_cards != mouse_pointer._ut_container_cards:
+					changed = true
+			if _UT_interpolation_ended:
+				_UT_interpolation_ended = false
 		if changed:
 			mouse_pointer._discover_focus()
 	get_global_mouse_position()

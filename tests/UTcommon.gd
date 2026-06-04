@@ -79,6 +79,8 @@ func draw_test_cards(count: int, fast := true) -> Array:
 	for c in cards:
 		c.interruptTweening()
 		c.reorganize_self()
+		if cfc.ut:
+			c.position = c._target_position
 	return cards
 
 func click_card(card: Card, _use_fake_mouse := true, offset:=Vector2(0,0)) -> void:
