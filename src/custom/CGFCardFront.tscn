@@ -2,8 +2,9 @@
 
 [ext_resource type="Script" uid="uid://c6ccefk6gyc6m" path="res://src/custom/CGFCardFront.gd" id="2"]
 [ext_resource type="Theme" uid="uid://b50sjum3qm447" path="res://themes/darktheme/darktheme.theme" id="3"]
-[ext_resource type="Texture2D" uid="uid://dfhhbl7ngw7lk" path="res://assets/icons/fist.png" id="4"]
-[ext_resource type="Texture2D" uid="uid://d1wdlw2fmg237" path="res://assets/icons/rupee.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://d1wdlw2fmg237" path="res://assets/icons/rupee.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/icons/broadsword.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/icons/shield.svg" id="6"]
 
 [sub_resource type="StyleBoxFlat" id="1"]
 bg_color = Color(0.145098, 0.145098, 0.145098, 1)
@@ -11,11 +12,6 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-
-[sub_resource type="StyleBoxFlat" id="2"]
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
 
 [node name="Front" type="Panel"]
 custom_minimum_size = Vector2(150, 240)
@@ -43,12 +39,30 @@ custom_minimum_size = Vector2(0, 139)
 layout_mode = 2
 mouse_filter = 2
 
+[node name="TopBar" type="HBoxContainer" parent="Margin/CardText"]
+custom_minimum_size = Vector2(146, 18)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="CostIcon" type="TextureRect" parent="Margin/CardText/TopBar"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Cost" type="Label" parent="Margin/CardText/TopBar"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.541176, 0, 1)
+text = "0"
+
 [node name="Name" type="Label" parent="Margin/CardText"]
 custom_minimum_size = Vector2(146, 19)
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_colors/font_color = Color(1, 0.4, 0, 1)
-theme_override_styles/normal = SubResource("2")
 text = "Card Name"
 horizontal_alignment = 1
 
@@ -61,64 +75,55 @@ horizontal_alignment = 1
 uppercase = true
 
 [node name="Tags" type="Label" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 17)
+custom_minimum_size = Vector2(146, 13)
 layout_mode = 2
 size_flags_vertical = 1
-text = "Tag1 - Tag2"
+text = "Rarity"
 horizontal_alignment = 1
 uppercase = true
-
-[node name="Requirements" type="Label" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 14)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.290196, 0.752941, 0, 1)
-text = "Requirements"
-horizontal_alignment = 1
 
 [node name="Abilities" type="RichTextLabel" parent="Margin/CardText"]
 layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
 clip_contents = true
-text = "This is the card ability text.
-"
+text = "Card ability text."
 scroll_active = false
 
-[node name="HB" type="HBoxContainer" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 13)
+[node name="BottomBar" type="HBoxContainer" parent="Margin/CardText"]
+custom_minimum_size = Vector2(146, 18)
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = -3
 
-[node name="CostIcon" type="TextureRect" parent="Margin/CardText/HB"]
-custom_minimum_size = Vector2(15, 15)
+[node name="DamageIcon" type="TextureRect" parent="Margin/CardText/BottomBar"]
+custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("5")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Cost" type="Label" parent="Margin/CardText/HB"]
-custom_minimum_size = Vector2(15, 15)
+[node name="Damage" type="Label" parent="Margin/CardText/BottomBar"]
+custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.658824, 0.541176, 0, 1)
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
 text = "0"
 
-[node name="Push" type="Control" parent="Margin/CardText/HB"]
+[node name="Push" type="Control" parent="Margin/CardText/BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="PowerIcon" type="TextureRect" parent="Margin/CardText/HB"]
-custom_minimum_size = Vector2(15, 15)
+[node name="BlockIcon" type="TextureRect" parent="Margin/CardText/BottomBar"]
+custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("4")
+texture = ExtResource("6")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Power" type="Label" parent="Margin/CardText/HB"]
-custom_minimum_size = Vector2(15, 15)
+[node name="Block" type="Label" parent="Margin/CardText/BottomBar"]
+custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.658824, 0.541176, 0, 1)
+theme_override_colors/font_color = Color(0.3, 0.6, 1, 1)
 text = "0"
