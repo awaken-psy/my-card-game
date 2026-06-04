@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="(new)Card Game Framework"
+config/name="My Card Game"
 run/main_scene="res://src/custom/MainMenu.tscn"
 config/features=PackedStringArray("4.6")
 config/icon="res://icon.png"
@@ -22,7 +22,6 @@ config/icon="res://icon.png"
 [autoload]
 
 cfc="*res://src/core/CFControl.gd"
-McpInteractionServer="*res://src/custom/mcp_interaction_server.gd"
 
 [debug]
 
