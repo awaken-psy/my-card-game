@@ -52,7 +52,11 @@ class TestAttachAndSwitch:
 		card_prev_pos = card.global_position
 
 		card = cards[0]
+		var mp = board.mouse_pointer
+		if mp.current_focused_card and mp.current_focused_card != card:
+			mp.current_focused_card._on_Card_mouse_exited()
 		card._on_Card_mouse_entered()
+		mp.current_focused_card = card
 		click_card(card)
 		await yield_for(0.5) # Wait to allow dragging to start
 		board._UT_interpolate_mouse_move(Vector2(700,100),card.global_position)
