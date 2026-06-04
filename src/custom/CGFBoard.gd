@@ -1,4 +1,4 @@
-# Code for a sample playspace, you're expected to provide your own ;)
+# Game board for My Card Game (STS-style Roguelike Deckbuilder)
 extends Board
 
 # Called when the node enters the scene tree for the first time.
@@ -16,14 +16,14 @@ func _ready() -> void:
 	$OvalHandToggle.button_pressed = cfc.game_settings.hand_use_oval_shape
 	$ScalingFocusOptions.selected = cfc.game_settings.focus_style
 	$Debug.button_pressed = cfc._debug
-	# Fill up the deck for demo purposes
+	# Generate game seed
 	if not cfc.ut:
 		cfc.game_rng_seed = CFUtils.generate_random_seed()
 		$SeedLabel.text = "Game Seed is: " + cfc.game_rng_seed
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
 	if not cfc.ut and not get_tree().get_root().has_node('RunFromEditor'):
-		load_test_cards(false)
+		load_starting_deck()
 	# warning-ignore:return_value_discarded
 	$DeckBuilderPopup.connect('popup_hide', Callable(self, '_on_DeckBuilder_hide'))
 
@@ -34,7 +34,6 @@ func _ready() -> void:
 # You can remove this function and the FancyMovementToggle button
 # without issues
 func _on_FancyMovementToggle_toggled(_button_pressed) -> void:
-#	cfc.game_settings.fancy_movement = $FancyMovementToggle.pressed
 	cfc.set_setting('fancy_movement', $FancyMovementToggle.button_pressed)
 
 
@@ -82,53 +81,16 @@ func _on_EnableAttach_toggled(button_pressed: bool) -> void:
 func _on_Debug_toggled(button_pressed: bool) -> void:
 	cfc._debug = button_pressed
 
-# Loads a sample set of cards to use for testing
-func load_test_cards(gut := true) -> void:
-	var extras = 11
-	# Hardcoded the card order because for some reason, GUT on low-powered VMs
-	# ends up with a different card order, even when the seed is the same.
-	var gut_cards := [
-		"Multiple Choices Test Card",
-		"Test Card 2",
-		"Test Card 3",
-		"Test Card 2",
-		"Test Card 2",
-		"Test Card 1",
-		"Test Card 2",
-		"Multiple Choices Test Card",
-		"Test Card 3",
-		"Multiple Choices Test Card",
-		"Multiple Choices Test Card",
-		"Rich Text Card",
-		"Shaking Card", #12
-		"Test Card 1", # 13
-		"Test Card 2", # 14
-		"Test Card 3", # 15
-		"Multiple Choices Test Card",
+# Loads the starting deck: 5 Strike + 4 Defend + 1 Bash
+func load_starting_deck() -> void:
+	var starting_deck := [
+		"Strike", "Strike", "Strike", "Strike", "Strike",
+		"Defend", "Defend", "Defend", "Defend",
+		"Bash",
 	]
-	var test_card_array := []
-	if gut:
-		for card in gut_cards:
-			test_card_array.append(cfc.instance_card(card))
-	else:
-		var test_cards := []
-		for ckey in cfc.card_definitions.keys():
-			if ckey != "Spawn Card":
-				test_cards.append(ckey)
-		for _i in range(extras):
-			if not test_cards.is_empty():
-				var random_card_name = \
-						test_cards[CFUtils.randi() % len(test_cards)]
-				test_card_array.append(cfc.instance_card(random_card_name))
-		# 11 is the cards GUT expects. It's the testing standard
-		if extras == 11:
-		# I ensure there's of each test card, for use in GUT
-			for card_name in test_cards:
-				test_card_array.append(cfc.instance_card(card_name))
-	var d = cfc.NMAP.deck
-	for card in test_card_array:
+	for card_name in starting_deck:
+		var card = cfc.instance_card(card_name)
 		cfc.NMAP.deck.add_child(card)
-		#card.set_is_faceup(false,true)
 		card._determine_idle_state()
 
 func _on_DeckBuilder_pressed() -> void:

@@ -61,7 +61,7 @@ const FOCUS_STYLE = CFInt.FocusStyle.BOTH
 # If set to resize, will resize the card's viewport dupe's dimentions.
 # This prevent blurry text, but needs more setup in the
 # card's front and card back scripts.
-# 
+#
 # Generally if the standard card size is large, this can stay as 'scale'
 # If the standard card size is small, then resize tends to work better.
 const VIEWPORT_FOCUS_ZOOM_TYPE = "scale"
@@ -118,11 +118,11 @@ const PATH_SCRIPTING_ENGINE := PATH_CORE + "ScriptingEngine/ScriptingEngine.gd"
 # And this also allows other developers to extend its functionality
 const PATH_SCRIPT_PER := PATH_CORE + "ScriptingEngine/ScriptPer.gd"
 # This specifies the path to the Alterant Engine. If you wish to extend
-# The alterant engine functionality with your own tasks,
+# the alterant engine functionality with your own tasks,
 # Point this to your own script file.
 const PATH_ALTERANT_ENGINE := PATH_CORE + "ScriptingEngine/AlterantEngine.gd"
 # This specifies the path to the MousePointer. If you wish to extend
-# The mouse pointer functionality with your own code,
+# the mouse pointer functionality with your own code,
 # Point this to your own scene file with a scrip extending Mouse Pointer.
 const PATH_MOUSE_POINTER := PATH_CORE + "MousePointer.tscn"
 # The amount of distance neighboring cards are pushed during card focus
@@ -232,14 +232,12 @@ const SHOW_TOKEN_BUTTONS := false
 #
 # This allows us to reuse a token image for more than 1 token type
 const TOKENS_MAP := {
-	'tech': 'blue.svg',
-	'plasma': 'blue.svg',
-	'bio': 'green.svg',
-	'industry': 'grey.svg',
-	'magic': 'purple.svg',
-	'blood': 'red.svg',
-	'gold coin': 'yellow.svg',
-	'void': 'black.svg',
+	'strength': 'red.svg',
+	'vulnerable': 'orange.svg',
+	'weak': 'blue.svg',
+	'block': 'grey.svg',
+	'energy': 'yellow.svg',
+	'poison': 'green.svg',
 }
 const STATS_URI := "http://127.0.0.1"
 const STATS_PORT := 8000

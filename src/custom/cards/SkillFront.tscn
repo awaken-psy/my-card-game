@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://dhe8l7gromjia" path="res://src/custom/CGFCardFront.tscn" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="1"]
+bg_color = Color(0.06, 0.3, 0.12, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="Front" instance=ExtResource("1")]
+theme_override_styles/panel = SubResource("1")
