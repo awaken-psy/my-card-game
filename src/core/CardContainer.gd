@@ -145,14 +145,13 @@ func _on_Shuffle_Button_pressed() -> void:
 # Called whenever the viewport is changed so ensure all containers
 # are moved to their anchor.
 func _on_viewport_resized() -> void:
-	if ProjectSettings.get("display/window/stretch/mode") == "disabled":
-		re_place()
+	re_place()
 
 
 func are_cards_still_animating() -> bool:
 	for c in get_all_cards():
 		var tt := c._tween.get_ref() as Tween
-		if (tt and tt.is_running): #is_running()
+		if (tt and tt.is_running()): #is_running()
 			return(true)
 	return(false)
 
