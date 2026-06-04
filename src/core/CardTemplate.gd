@@ -1087,14 +1087,14 @@ func set_card_rotation(
 		if not state in [CardState.PREVIEW, CardState.DECKBUILDER_GRID]\
 				and not get_parent().is_in_group("hands") \
 				and cfc.game_settings.hand_use_oval_shape \
-				and $Control.rotation != 0.0 \
+				and $Control.rotation_degrees != 0.0 \
 				and not (_tween.get_ref() and (_tween.get_ref() as Tween).is_running()): #.is_running():
 			if tween:
 				tween.kill()
 			tween = create_tween()
 			tween.stop()
 			_tween = weakref(tween)
-			_add_tween_rotation($Control.rotation,value)
+			_add_tween_rotation($Control.rotation_degrees,value)
 			tween.play()
 	else:
 		# If the toggle was specified then if the card matches the requested
@@ -1119,7 +1119,7 @@ func set_card_rotation(
 			tween = create_tween()
 			tween.stop()
 			_tween = weakref(tween)
-			_add_tween_rotation($Control.rotation,value)
+			_add_tween_rotation($Control.rotation_degrees,value)
 			# We only start the animation if this flag is set to true
 			# This allows us to set the card to rotate on the next
 			# available tween, instead of immediately.
@@ -2217,7 +2217,7 @@ func _add_tween_rotation(
 		trans_type = Tween.TRANS_BACK,
 		ease_type = Tween.EASE_IN_OUT):
 	var tween := _tween.get_ref() as Tween
-	tween.tween_property($Control, "rotation", target_rotation, runtime).set_trans(trans_type).set_ease(ease_type) #.from(expected_rotation)
+	tween.tween_property($Control, "rotation_degrees", target_rotation, runtime).set_trans(trans_type).set_ease(ease_type) #.from(expected_rotation)
 	# We ensure the card_rotation value is also kept up to date
 	# But only if it's one of the expected multiples
 	if int(target_rotation) != card_rotation \
@@ -2280,11 +2280,11 @@ func _process_card_state() -> void:
 			if cfc.game_settings.hand_use_oval_shape:
 				_target_rotation  = _recalculate_rotation()
 				if not tween \
-						and not CFUtils.compare_floats($Control.rotation, _target_rotation):
+						and not CFUtils.compare_floats($Control.rotation_degrees, _target_rotation):
 					tween = create_tween()
 					tween.stop()
 					_tween = weakref(tween)
-					_add_tween_rotation($Control.rotation,_target_rotation,
+					_add_tween_rotation($Control.rotation_degrees,_target_rotation,
 						in_hand_tween_duration)
 					tween.play()
 			if not (tween and tween.is_running()):
@@ -2361,7 +2361,7 @@ func _process_card_state() -> void:
 				_add_tween_scale(scale, Vector2(1,1) * focused_scale, focus_tween_duration)
 
 				if cfc.game_settings.hand_use_oval_shape:
-					_add_tween_rotation($Control.rotation, 0, focus_tween_duration)
+					_add_tween_rotation($Control.rotation_degrees, 0, focus_tween_duration)
 				else:
 					# warning-ignore:return_value_discarded
 					set_card_rotation(0)
@@ -2447,7 +2447,7 @@ func _process_card_state() -> void:
 					_tween = weakref(tween)
 					_add_tween_position(position, _target_position,
 						to_container_tween_duration, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
-					_add_tween_rotation($Control.rotation,_target_rotation,
+					_add_tween_rotation($Control.rotation_degrees,_target_rotation,
 						to_container_tween_duration)
 					tween.play()
 					await tween.finished
@@ -2473,7 +2473,7 @@ func _process_card_state() -> void:
 				_add_tween_position(position, _target_position, reorganization_tween_duration)
 				if not scale.is_equal_approx(Vector2(1,1)):
 					_add_tween_scale(scale, Vector2(1,1), reorganization_tween_duration)
-				_add_tween_rotation($Control.rotation,_target_rotation,
+				_add_tween_rotation($Control.rotation_degrees,_target_rotation,
 					reorganization_tween_duration)
 				tween.play()
 				set_state(CardState.IN_HAND)
@@ -2493,7 +2493,7 @@ func _process_card_state() -> void:
 				_tween = weakref(tween)
 				_add_tween_position(position, _target_position,
 					pushed_aside_tween_duration, Tween.TRANS_QUART, Tween.EASE_IN)
-				_add_tween_rotation($Control.rotation, _target_rotation,
+				_add_tween_rotation($Control.rotation_degrees, _target_rotation,
 					pushed_aside_tween_duration)
 				if not scale.is_equal_approx(Vector2(1,1)):
 					_add_tween_scale(scale, Vector2(1,1), pushed_aside_tween_duration,
@@ -2584,8 +2584,8 @@ func _process_card_state() -> void:
 				# retain a slight rotation.
 				# We check if the card already has been rotated to a different
 				# card_cotation
-				if not int($Control.rotation) in [0,90,180,270]:
-					_add_tween_rotation($Control.rotation, _target_rotation, to_board_tween_duration)
+				if not int($Control.rotation_degrees) in [0,90,180,270]:
+					_add_tween_rotation($Control.rotation_degrees, _target_rotation, to_board_tween_duration)
 				# We want cards on the board to be slightly smaller than in hand.
 				if not scale.is_equal_approx(Vector2(1,1) * play_area_scale):
 					_add_tween_scale(scale, Vector2(1,1) * play_area_scale, to_board_tween_duration,
@@ -2674,7 +2674,7 @@ func _process_card_state() -> void:
 			buttons.set_active(false)
 			# warning-ignore:return_value_discarded
 			set_card_rotation(0)
-			$Control.rotation = 0
+			$Control.rotation_degrees = 0
 			targeting_arrow.complete_targeting()
 			$Control/Tokens.visible = false
 			# We scale the card dupe to allow the player a better viewing experience
@@ -2706,7 +2706,7 @@ func _process_card_state() -> void:
 			buttons.set_active(false)
 			# warning-ignore:return_value_discarded
 			set_card_rotation(0)
-			$Control.rotation = 0
+			$Control.rotation_degrees = 0
 			# We scale the card to allow the player a better viewing experience
 			#if CFConst.VIEWPORT_FOCUS_ZOOM_TYPE == "scale":
 			scale = Vector2(1,1) * preview_scale * cfc.curr_scale
@@ -2725,7 +2725,7 @@ func _process_card_state() -> void:
 			buttons.set_active(false)
 			# warning-ignore:return_value_discarded
 			set_card_rotation(0)
-			$Control.rotation = 0
+			$Control.rotation_degrees = 0
 			# We scale the card to allow the player a better viewing experience
 			#if CFConst.VIEWPORT_FOCUS_ZOOM_TYPE == "scale":
 			scale = Vector2(1,1) * thumbnail_scale * cfc.curr_scale

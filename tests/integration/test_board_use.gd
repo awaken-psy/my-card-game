@@ -19,19 +19,19 @@ class TestCardBoardDrop:
 				"Card dragged in correct global position")
 		card.card_rotation = 90
 		await wait_card_tween(card, 0.5)
-		assert_almost_eq(90.0,card.get_node("Control").rotation,2.0,
+		assert_almost_eq(90.0,card.get_node("Control").rotation_degrees,2.0,
 				"Card rotates 90")
 		card.card_rotation = 180
 		await wait_card_tween(card, 0.5)
-		assert_almost_eq(180.0,card.get_node("Control").rotation,2.0,
+		assert_almost_eq(180.0,card.get_node("Control").rotation_degrees,2.0,
 				"Card rotates 180")
 		card.set_card_rotation(180,false)
 		await wait_card_tween(card, 0.5)
-		assert_almost_eq(180.0,card.get_node("Control").rotation,2.0,
+		assert_almost_eq(180.0,card.get_node("Control").rotation_degrees,2.0,
 				"Card rotation doesn't revert without toggle")
 		card.set_card_rotation(180,true)
 		await wait_card_tween(card, 0.5)
-		assert_almost_eq(0.0,card.get_node("Control").rotation,2.0,
+		assert_almost_eq(0.0,card.get_node("Control").rotation_degrees,2.0,
 				"Card rotation toggle works to reset to 0")
 		assert_eq(2,card.set_card_rotation(111),
 				"Setting rotation to an invalid value fails")
@@ -47,7 +47,7 @@ class TestCardBoardDrop:
 		drop_card(card,board._UT_mouse_position)
 		await wait_card_tween(card, 0.5)
 		await wait_card_tween(card, 0.5)
-		assert_eq(0.0,card.get_node("Control").rotation,
+		assert_eq(0.0,card.get_node("Control").rotation_degrees,
 				"Rotation reset to 0 while card is moving to hand")
 		cfc.game_settings.hand_use_oval_shape = true
 
@@ -61,7 +61,7 @@ class TestCardBoardDrop:
 		await drag_drop(card, Vector2(400,600))
 		await wait_card_tween(card, 0.5)
 		await wait_card_tween(card, 0.5)
-		assert_almost_eq(12.461,card.get_node("Control").rotation,2.0,
+		assert_almost_eq(12.461,card.get_node("Control").rotation_degrees,2.0,
 				"Rotation reset to a hand angle when card moved back to hand")
 		cfc.game_settings.hand_use_oval_shape = true
 
@@ -121,7 +121,7 @@ class TestBoardToBoardMove:
 		await table_move(card, Vector2(100,200))
 		card.card_rotation = 90
 		await drag_drop(card, Vector2(800,200))
-		assert_eq(90.0,card.get_node("Control").rotation,
+		assert_eq(90.0,card.get_node("Control").rotation_degrees,
 				"Card should stay in the same rotation when moved around the board")
 
 class TestBoardPause:

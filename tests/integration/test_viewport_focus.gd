@@ -16,7 +16,7 @@ func test_single_card_focus():
 			"Duplicate card has been added for viewport focus")
 	assert_eq(focus_dupe.scale,Vector2(1,1),
 			"Duplicate card is scaled correctly")
-	assert_eq(focus_dupe.get_node("Control").rotation,0.0,
+	assert_eq(focus_dupe.get_node("Control").rotation_degrees,0.0,
 			"Duplicate card is rotated correctly")
 	assert_false(focus_dupe.is_in_group("cards"),
 			"Duplicate card does not belong to the 'cards' group")
