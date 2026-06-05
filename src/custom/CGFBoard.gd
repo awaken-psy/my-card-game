@@ -87,37 +87,38 @@ func _setup_combat() -> void:
 	combat_manager.start_combat()
 
 
+
 func _create_combat_ui() -> void:
 	var viewport_size: Vector2 = Vector2(get_viewport().size)
 
-	# Energy label (top-center area)
+	# --- Energy label (bottom-left, near player — STS style) ---
 	_energy_label = Label.new()
 	_energy_label.name = "EnergyLabel"
 	_energy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_energy_label.position = Vector2(viewport_size.x / 2 - 60, 10)
+	_energy_label.position = Vector2(20, viewport_size.y - 200)
 	_energy_label.size = Vector2(120, 40)
 	_energy_label.add_theme_font_size_override("font_size", 28)
-	# Use a distinctive color for energy
 	_energy_label.add_theme_color_override("font_color", Color(1, 0.85, 0))
 	_energy_label.text = "⚡ 0/3"
 	add_child(_energy_label)
 
-	# Turn label (top-center, below energy)
+	# Turn label (below energy, bottom-left)
 	_turn_label = Label.new()
 	_turn_label.name = "TurnLabel"
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_turn_label.position = Vector2(viewport_size.x / 2 - 60, 50)
-	_turn_label.size = Vector2(120, 25)
+	_turn_label.position = Vector2(30, viewport_size.y - 160)
+	_turn_label.size = Vector2(100, 25)
 	_turn_label.add_theme_font_size_override("font_size", 16)
 	_turn_label.text = "Turn 0"
 	add_child(_turn_label)
 
-	# --- Enemy stats (top-center, below turn label) ---
-	var enemy_x := viewport_size.x / 2 - 100
+	# --- Enemy stats (right side, vertically centered — STS style) ---
+	var enemy_x := viewport_size.x / 2 + 120
+	var enemy_cy := viewport_size.y / 2 - 60
 	_enemy_name_label = Label.new()
 	_enemy_name_label.name = "EnemyNameLabel"
 	_enemy_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_name_label.position = Vector2(enemy_x, 82)
+	_enemy_name_label.position = Vector2(enemy_x, enemy_cy)
 	_enemy_name_label.size = Vector2(200, 20)
 	_enemy_name_label.add_theme_font_size_override("font_size", 16)
 	_enemy_name_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
@@ -127,17 +128,16 @@ func _create_combat_ui() -> void:
 	_enemy_hp_label = Label.new()
 	_enemy_hp_label.name = "EnemyHpLabel"
 	_enemy_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_hp_label.position = Vector2(enemy_x, 102)
+	_enemy_hp_label.position = Vector2(enemy_x, enemy_cy + 22)
 	_enemy_hp_label.size = Vector2(200, 20)
 	_enemy_hp_label.add_theme_font_size_override("font_size", 16)
 	_enemy_hp_label.text = "❤️ %d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
 	add_child(_enemy_hp_label)
 
-	# Block on its own line below HP to avoid overlapping the HP text
 	_enemy_block_label = Label.new()
 	_enemy_block_label.name = "EnemyBlockLabel"
 	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_block_label.position = Vector2(enemy_x, 122)
+	_enemy_block_label.position = Vector2(enemy_x, enemy_cy + 44)
 	_enemy_block_label.size = Vector2(200, 18)
 	_enemy_block_label.add_theme_font_size_override("font_size", 13)
 	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
@@ -147,20 +147,20 @@ func _create_combat_ui() -> void:
 	_enemy_status_label = Label.new()
 	_enemy_status_label.name = "EnemyStatusLabel"
 	_enemy_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_status_label.position = Vector2(enemy_x, 140)
+	_enemy_status_label.position = Vector2(enemy_x, enemy_cy + 64)
 	_enemy_status_label.size = Vector2(200, 18)
 	_enemy_status_label.add_theme_font_size_override("font_size", 12)
 	_enemy_status_label.text = ""
 	add_child(_enemy_status_label)
 
-	# --- Player stats (bottom-center, above hand area) ---
-	var player_x := viewport_size.x / 2 - 100
-	var player_y := viewport_size.y - 230
+	# --- Player stats (left side, vertically centered — STS style) ---
+	var player_x := 20
+	var player_cy := viewport_size.y / 2 - 40
 
 	_player_hp_label = Label.new()
 	_player_hp_label.name = "PlayerHpLabel"
-	_player_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_hp_label.position = Vector2(player_x, player_y)
+	_player_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_player_hp_label.position = Vector2(player_x, player_cy)
 	_player_hp_label.size = Vector2(200, 22)
 	_player_hp_label.add_theme_font_size_override("font_size", 16)
 	_player_hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
@@ -170,8 +170,8 @@ func _create_combat_ui() -> void:
 	_player_block_label = Label.new()
 	_player_block_label.name = "PlayerBlockLabel"
 	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_player_block_label.position = Vector2(player_x + 140, player_y)
-	_player_block_label.size = Vector2(60, 22)
+	_player_block_label.position = Vector2(player_x, player_cy + 24)
+	_player_block_label.size = Vector2(200, 22)
 	_player_block_label.add_theme_font_size_override("font_size", 16)
 	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
 	_player_block_label.text = ""
@@ -179,14 +179,14 @@ func _create_combat_ui() -> void:
 
 	_player_status_label = Label.new()
 	_player_status_label.name = "PlayerStatusLabel"
-	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_status_label.position = Vector2(player_x, player_y + 22)
+	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_player_status_label.position = Vector2(player_x, player_cy + 48)
 	_player_status_label.size = Vector2(200, 18)
 	_player_status_label.add_theme_font_size_override("font_size", 12)
 	_player_status_label.text = ""
 	add_child(_player_status_label)
 
-	# End Turn button (bottom-right, near discard pile)
+	# End Turn button (center-right, above hand area)
 	_end_turn_button = Button.new()
 	_end_turn_button.name = "EndTurnButton"
 	_end_turn_button.text = "End Turn"
@@ -194,7 +194,6 @@ func _create_combat_ui() -> void:
 	_end_turn_button.size = Vector2(120, 50)
 	_end_turn_button.add_theme_font_size_override("font_size", 18)
 	_end_turn_button.connect("pressed", Callable(self, "_on_EndTurn_pressed"))
-	# Disabled until first turn starts
 	_end_turn_button.disabled = true
 	add_child(_end_turn_button)
 
