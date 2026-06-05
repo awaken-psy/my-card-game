@@ -83,7 +83,7 @@ func _process(_delta) -> void:
 		# We don't delete old dupes, to avoid overhead to the engine
 		# insteas, we just hide them.
 		if _current_focus_source != c\
-				and not _tween.is_running():
+				and (not _tween or not _tween.is_running()):
 			current_dupe_focus.visible = false
 	if not is_instance_valid(_current_focus_source)\
 			and $VBC/Focus.modulate.a != 0\
