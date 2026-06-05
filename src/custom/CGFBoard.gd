@@ -18,6 +18,7 @@ var _enemy_name_label: Label
 var _enemy_hp_label: Label
 var _enemy_block_label: Label
 var _enemy_status_label: Label
+var _enemy_intent_label: Label
 
 
 # Called when the node enters the scene tree for the first time.
@@ -64,6 +65,7 @@ func _setup_combat() -> void:
 	combat_manager.connect("turn_started", Callable(self, "_on_turn_started"))
 	combat_manager.connect("turn_ended", Callable(self, "_on_turn_ended"))
 	combat_manager.connect("combat_ended", Callable(self, "_on_combat_ended"))
+	combat_manager.connect("enemy_intent_changed", Callable(self, "_on_enemy_intent_changed"))
 
 	# Connect entity signals for UI updates
 	combat_manager.player.connect("hp_changed", Callable(self, "_on_player_hp_changed"))
@@ -125,6 +127,17 @@ func _create_combat_ui() -> void:
 	enemy_style.set_corner_radius_all(50)
 	enemy_circle.add_theme_stylebox_override("panel", enemy_style)
 	add_child(enemy_circle)
+
+	# Intent label (above enemy name, shown during player's turn)
+	_enemy_intent_label = Label.new()
+	_enemy_intent_label.name = "EnemyIntentLabel"
+	_enemy_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - 45)
+	_enemy_intent_label.size = Vector2(200, 20)
+	_enemy_intent_label.add_theme_font_size_override("font_size", 14)
+	_enemy_intent_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
+	_enemy_intent_label.text = ""
+	add_child(_enemy_intent_label)
 
 	_enemy_name_label = Label.new()
 	_enemy_name_label.name = "EnemyNameLabel"
@@ -293,6 +306,9 @@ func _on_EndTurn_pressed() -> void:
 func _on_combat_ended() -> void:
 	if _end_turn_button:
 		_end_turn_button.disabled = true
+	# Clear enemy intent display
+	if _enemy_intent_label:
+		_enemy_intent_label.text = ""
 	# TODO: M7 will show victory/game-over screen
 	if combat_manager.enemy.is_dead():
 		push_warning("Combat ended: enemy defeated!")
@@ -353,6 +369,14 @@ func _on_enemy_stats_changed() -> void:
 		_enemy_status_label.text = _format_status_text(e)
 
 
+func _on_enemy_intent_changed(intent_info: Dictionary) -> void:
+	if _enemy_intent_label:
+		if intent_info.is_empty():
+			_enemy_intent_label.text = ""
+		else:
+			_enemy_intent_label.text = _format_intent_text(intent_info)
+
+
 # Format status effects as a compact string.
 # Shows only non-zero values: "⚔️2 🔻3 ❄️1"
 static func _format_status_text(entity) -> String:
@@ -364,6 +388,23 @@ static func _format_status_text(entity) -> String:
 	if entity.weak > 0:
 		parts.append("❄️%d" % entity.weak)
 	return "  ".join(parts)
+
+
+# Format enemy intent as a compact string for display.
+# Shows move name + relevant values: "Chomp ⚔️11"
+static func _format_intent_text(intent: Dictionary) -> String:
+	var parts: Array = []
+	if intent.get("damage", 0) > 0:
+		parts.append("⚔️%d" % intent["damage"])
+	if intent.get("block", 0) > 0:
+		parts.append("🛡️%d" % intent["block"])
+	if intent.get("strength", 0) > 0:
+		parts.append("⬆️+%d⚔️" % intent["strength"])
+	var text := " ".join(parts)
+	# Prepend move name if there's content
+	if text != "":
+		text = intent.get("name", "") + " " + text
+	return text
 
 
 # --- Original CGFBoard methods (kept for compatibility) ---

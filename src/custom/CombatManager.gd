@@ -1,9 +1,10 @@
 # Manages the STS-style combat flow: turns, energy, draw/discard cycle,
-# and card effect resolution (M4).
+# card effect resolution (M4), and enemy turns with intent display (M5).
 #
 # Lifecycle: start_combat() -> [start_turn() <-> end_turn()] loop
 # Cards are played via click (see CGFCardTemplate.gd override).
 # Effects are resolved in order: Block -> Damage -> Special effects.
+# Enemy AI executes at end of each player turn.
 extends Node
 
 signal turn_started(turn_number)
@@ -11,13 +12,17 @@ signal turn_ended
 signal energy_changed(current_energy, max_energy)
 signal combat_ended
 signal entity_damaged(entity, amount)
+signal enemy_intent_changed(intent_info)
 
 const MAX_ENERGY := 3
 const DRAW_PER_TURN := 5
 
+const _EnemyAI = preload("res://src/custom/EnemyAI.gd")
+
 var current_energy: int = 0
 var turn_number: int = 0
 var is_player_turn: bool = false
+var enemy_ai: RefCounted
 
 # True while a card's effects are being resolved (prevents double-play).
 var _is_resolving: bool = false
@@ -41,6 +46,8 @@ func start_combat() -> void:
 	turn_number = 0
 	current_energy = 0
 	is_player_turn = false
+	# Create enemy AI
+	enemy_ai = _EnemyAI.new()
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
 	# Shuffle the deck (SNAP style avoids the framework's return tween bug)
@@ -58,6 +65,9 @@ func start_turn() -> void:
 	# Refill energy
 	current_energy = MAX_ENERGY
 	emit_signal("energy_changed", current_energy, MAX_ENERGY)
+	# Choose enemy intent for this round (displayed during player's turn)
+	var intent := enemy_ai.choose_intent()
+	emit_signal("enemy_intent_changed", intent)
 	emit_signal("turn_started", turn_number)
 	# Draw cards one by one with animation delay
 	await draw_cards(DRAW_PER_TURN)
@@ -71,10 +81,26 @@ func end_turn() -> void:
 	emit_signal("turn_ended")
 	# Discard all cards currently in hand
 	await discard_hand()
-	# TODO: M5 will insert enemy turn here
-	# For now, immediately start next player turn
+	# Enemy turn
+	await _enemy_turn()
+	# Continue to next player turn if combat hasn't ended
+	if not enemy.is_dead() and not player.is_dead():
+		start_turn()
+
+
+# Execute the enemy's pre-chosen intent.
+func _enemy_turn() -> void:
+	# Enemy resets block and ticks status at start of their turn
+	enemy.reset_block()
+	enemy.tick_status()
+	# Brief pause to let player see the intent before execution
+	await get_tree().create_timer(0.8).timeout
+	# Execute the pre-chosen intent
+	enemy_ai.execute_intent(enemy, player, self)
+	# Clear intent display after execution
+	emit_signal("enemy_intent_changed", {})
+	# Brief pause after execution for visual feedback
 	await get_tree().create_timer(0.5).timeout
-	start_turn()
 
 
 # Check if a card can be played (enough energy + player turn + not resolving).
