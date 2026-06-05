@@ -459,7 +459,7 @@ class SignalPropagator:
 	# This method requirses that each signal also passes its own name in the
 	# trigger variable, is this is the key sought in the CardScriptDefinitions
 	func _on_signal_received(
-			trigger_card: Card, trigger: String, details: Dictionary):
+			trigger_card: Node, trigger: String, details: Dictionary):
 		# We use Godot groups to ask every card to check if they
 		# have [ScriptingEngine] triggers for this signal.
 		#
