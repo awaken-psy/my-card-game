@@ -331,7 +331,11 @@ var _tween := WeakRef.new()
 func _ready() -> void:
 	targeting_arrow = targeting_arrow_scene.instantiate()
 	add_child(targeting_arrow)
-	#set_card_size(canonical_size)
+	# Initialize Highlight to extend 3px over card edges
+	var hl_size := canonical_size + Vector2(6, 6)
+	highlight.position = Vector2(-3, -3)
+	highlight.custom_minimum_size = hl_size
+	highlight.call_deferred("set_size", hl_size)
 	_init_card_layout()
 	# The below call ensures out canonical_name variable is set.
 	# Normally the setup() function should be used to set it,
@@ -1307,6 +1311,7 @@ func move_to(targetHost: Node,
 				var tween := _tween.get_ref() as Tween
 				if tween:
 					tween.kill()
+					tween = null  # Don't await a killed tween
 				# We need to adjust the end position based on the local rect inside
 				# the container control node
 				# So we transform global coordinates to container rect coordinates.
@@ -1331,15 +1336,9 @@ func move_to(targetHost: Node,
 				# card is moving to the CardContainer
 				if set_is_faceup(targetHost.faceup_cards) == CFConst.ReturnCode.FAILED:
 					printerr("ERROR: Something went unexpectedly in set_is_faceup")
-				# If we have fancy movement, we need to wait for 2 tweens to finish
-				# before we reorganize the stack.
-				# One for the fancy move, and then the move to the final position.
-				# If we don't then the card will appear to teleport
-				# to the pile before starting animation
-				if tween:
-					await tween.finished
-				#if cfc.game_settings.fancy_movement:
-					#await tween.finished
+				# Note: The old tween was killed above, so we don't await it.
+				# The state machine (_process_card_state) handles the move animation
+				# via a new tween. Reorganize the pile stack immediately.
 				targetHost.reorganize_stack()
 		else:
 			interruptTweening()
