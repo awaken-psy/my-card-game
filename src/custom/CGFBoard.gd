@@ -241,7 +241,7 @@ func _create_combat_ui() -> void:
 	_enemy_intent_label = Label.new()
 	_enemy_intent_label.name = "EnemyIntentLabel"
 	_enemy_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - 68)
+	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - 88)
 	_enemy_intent_label.size = Vector2(200, 20)
 	_enemy_intent_label.add_theme_font_size_override("font_size", 14)
 	_enemy_intent_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
@@ -283,7 +283,7 @@ func _create_combat_ui() -> void:
 	_enemy_hp_text = Label.new()
 	_enemy_hp_text.name = "EnemyHpText"
 	_enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 96)
+	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 100)
 	_enemy_hp_text.size = Vector2(200, 18)
 	_enemy_hp_text.add_theme_font_size_override("font_size", 13)
 	_enemy_hp_text.text = "%d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
@@ -363,7 +363,7 @@ func _create_combat_ui() -> void:
 	_player_hp_text = Label.new()
 	_player_hp_text.name = "PlayerHpText"
 	_player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_hp_text.position = Vector2(player_x, player_cy + 96)
+	_player_hp_text.position = Vector2(player_x, player_cy + 100)
 	_player_hp_text.size = Vector2(200, 18)
 	_player_hp_text.add_theme_font_size_override("font_size", 13)
 	_player_hp_text.text = "%d/%d" % [combat_manager.player.hp, combat_manager.player.max_hp]
@@ -648,13 +648,15 @@ func _on_entity_damaged(entity, amount: int) -> void:
 
 # Update HP bar fill color based on ratio (green → yellow → red).
 func _update_hp_bar_color(bar: ProgressBar, ratio: float) -> void:
+	ratio = clampf(ratio, 0.0, 1.0)
 	var fill: StyleBoxFlat = bar.get_theme_stylebox("fill")
-	if ratio > 0.6:
-		fill.bg_color = Color(0.2, 0.8, 0.2)
-	elif ratio > 0.3:
-		fill.bg_color = Color(0.9, 0.7, 0.1)
+	var green := Color(0.2, 0.8, 0.2)
+	var yellow := Color(0.9, 0.7, 0.1)
+	var red := Color(0.9, 0.2, 0.2)
+	if ratio > 0.5:
+		fill.bg_color = green.lerp(yellow, (1.0 - ratio) * 2.0)
 	else:
-		fill.bg_color = Color(0.9, 0.2, 0.2)
+		fill.bg_color = yellow.lerp(red, (0.5 - ratio) * 2.0)
 
 
 # --- Drag targeting ---

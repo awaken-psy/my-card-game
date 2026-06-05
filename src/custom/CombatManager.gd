@@ -56,6 +56,7 @@ func start_combat() -> void:
 		await cfc.all_nodes_mapped
 	# Shuffle the deck (SNAP style avoids the framework's return tween bug)
 	await cfc.NMAP.deck.shuffle_cards()
+	await get_tree().create_timer(0.5).timeout
 	start_turn()
 
 

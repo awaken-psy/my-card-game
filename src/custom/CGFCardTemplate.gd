@@ -143,8 +143,8 @@ func _is_valid_drag_drop() -> bool:
 		if not board:
 			return false
 		var drop_rect: Rect2 = board.get_enemy_drop_rect()
-		var card_center: Vector2 = global_position + $Control.size / 2.0
-		return drop_rect.has_point(card_center)
+		var mouse_pos: Vector2 = get_global_mouse_position()
+		return drop_rect.has_point(mouse_pos)
 	else:
 		# Defense/Power cards can be dropped anywhere
 		return true
