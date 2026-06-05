@@ -1,6 +1,9 @@
 # Game board for My Card Game (STS-style Roguelike Deckbuilder)
 extends Board
 
+# Play mode: "drag" (STS classic, default) or "click"
+var play_mode: String = "drag"
+
 var combat_manager: Node
 var _energy_orb: Panel
 var _energy_label: Label
@@ -35,6 +38,9 @@ var _encounter_label: Label
 
 # References to dynamically created combat UI nodes (for cleanup)
 var _combat_ui_nodes: Array = []
+
+# Enemy highlight tween (for drag targeting visual feedback)
+var _enemy_highlight_tween: Tween = null
 
 
 # Called when the node enters the scene tree.
@@ -649,6 +655,37 @@ func _update_hp_bar_color(bar: ProgressBar, ratio: float) -> void:
 		fill.bg_color = Color(0.9, 0.7, 0.1)
 	else:
 		fill.bg_color = Color(0.9, 0.2, 0.2)
+
+
+# --- Drag targeting ---
+
+
+# Toggle the enemy area highlight (pulsing glow when dragging attack cards).
+func _set_enemy_highlight(enabled: bool) -> void:
+	if not _enemy_visual:
+		return
+	var style: StyleBoxFlat = _enemy_visual.get_theme_stylebox("panel")
+	if enabled:
+		style.set_border_width_all(4)
+		if _enemy_highlight_tween:
+			_enemy_highlight_tween.kill()
+		_enemy_highlight_tween = create_tween()
+		_enemy_highlight_tween.set_loops()
+		_enemy_highlight_tween.tween_property(style, "border_color", Color(1.0, 0.9, 0.2), 0.35)
+		_enemy_highlight_tween.tween_property(style, "border_color", Color(1.0, 0.5, 0.2), 0.35)
+	else:
+		if _enemy_highlight_tween:
+			_enemy_highlight_tween.kill()
+			_enemy_highlight_tween = null
+		style.set_border_width_all(2)
+		style.border_color = Color(0.85, 0.25, 0.25)
+
+
+# Get the enemy drop target rect (expanded for easier targeting).
+func get_enemy_drop_rect() -> Rect2:
+	if not _enemy_visual:
+		return Rect2()
+	return Rect2(_enemy_visual.global_position, _enemy_visual.size).grow(30)
 
 
 # Format status effects as a compact string.

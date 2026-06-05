@@ -17,10 +17,17 @@ var _focus_tracking: bool = false
 
 func _ready() -> void:
 	super._ready()
-	# Disable framework's drag-from-hand behavior (we use click-to-play)
-	disable_dragging_from_hand = true
-	# Prevent cards from being placed on the board
-	board_placement = BoardPlacement.NONE
+	_apply_play_mode()
+
+
+# Configure drag/click interaction based on the board's play_mode setting.
+func _apply_play_mode() -> void:
+	if cfc.NMAP.has("board") and cfc.NMAP.board.play_mode == "drag":
+		disable_dragging_from_hand = false
+		board_placement = BoardPlacement.ANYWHERE
+	else:
+		disable_dragging_from_hand = true
+		board_placement = BoardPlacement.NONE
 
 
 func _process(delta) -> void:
@@ -58,27 +65,35 @@ func _on_Card_mouse_exited() -> void:
 	super._on_Card_mouse_exited()
 
 
-# STS-style click-to-play override.
-# Instead of the framework's drag-and-drop, a single left-click on a
-# focused card in hand will attempt to play it (if enough energy).
+# Route card interaction based on play_mode:
+# - "click": click to play (STS alternative)
+# - "drag": drag to target zone (STS classic, default)
 func _on_Card_gui_input(event) -> void:
 	if event is InputEventMouseButton and cfc.NMAP.has("board"):
+		var board = cfc.NMAP.board
 		# Z-index check: forward input to the actually focused card
-		if cfc.NMAP.board.mouse_pointer.current_focused_card \
-				and self != cfc.NMAP.board.mouse_pointer.current_focused_card:
-			cfc.NMAP.board.mouse_pointer.current_focused_card._on_Card_gui_input(event)
+		if board.mouse_pointer.current_focused_card \
+				and self != board.mouse_pointer.current_focused_card:
+			board.mouse_pointer.current_focused_card._on_Card_gui_input(event)
 			return
 
 		if event.get_button_index() == 1:
-			# Left click: play card on release while focused in hand
-			if not event.is_pressed() and state == CardState.FOCUSED_IN_HAND:
-				_try_play_card()
-			# For other states (on board, in pile), let framework handle it
-			elif state not in [CardState.IN_HAND, CardState.FOCUSED_IN_HAND]:
+			if board.play_mode == "click":
+				# --- Click mode: play on click release ---
+				if not event.is_pressed() and state == CardState.FOCUSED_IN_HAND:
+					_try_play_card()
+				elif state not in [CardState.IN_HAND, CardState.FOCUSED_IN_HAND]:
+					super._on_Card_gui_input(event)
+				return
+			else:
+				# --- Drag mode: intercept release while DRAGGED ---
+				if not event.is_pressed() and state == CardState.DRAGGED:
+					_handle_drag_drop()
+					return
+				# Let framework handle press (starts drag after 0.1s hold)
 				super._on_Card_gui_input(event)
-			return
+				return
 
-		# Right-click: targeting arrow (for future M4/M5)
 		if event.get_button_index() == 2:
 			if event.is_pressed():
 				targeting_arrow.initiate_targeting()
@@ -87,6 +102,62 @@ func _on_Card_gui_input(event) -> void:
 			return
 	# For other event types, use framework default
 	super._on_Card_gui_input(event)
+
+
+# --- Drag mode handlers ---
+
+
+# Called when a card is released while in DRAGGED state.
+# Validates the drop target and either plays the card or snaps it back.
+func _handle_drag_drop() -> void:
+	z_index = 0
+	cfc.card_drag_ongoing = null
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	$Control.set_default_cursor_shape(Input.CURSOR_ARROW)
+	# Disable enemy highlight
+	if cfc.NMAP.board:
+		cfc.NMAP.board._set_enemy_highlight(false)
+	# Validate drop target
+	if _is_valid_drag_drop():
+		_try_play_card()
+	else:
+		# Snap back to hand position
+		set_state(CardState.IN_HAND)
+		if get_parent().is_in_group("hands"):
+			for c in get_parent().get_all_cards():
+				c.interruptTweening()
+				c.reorganize_self()
+
+
+# Check if the current drop position is valid for this card type.
+# - Attack: must land on enemy area
+# - Defense/Power: can land anywhere on board
+# Always checks energy and turn state.
+func _is_valid_drag_drop() -> bool:
+	if not combat_manager or not combat_manager.can_play_card(self):
+		return false
+	var card_type: String = properties.get("Type", "")
+	if card_type == "Attack":
+		# Attack cards must land on the enemy area
+		var board = cfc.NMAP.board
+		if not board:
+			return false
+		var drop_rect := board.get_enemy_drop_rect()
+		var card_center := global_position + $Control.size / 2.0
+		return drop_rect.has_point(card_center)
+	else:
+		# Defense/Power cards can be dropped anywhere
+		return true
+
+
+# Override to show enemy highlight when dragging an attack card.
+func _start_dragging(drag_offset: Vector2) -> void:
+	super._start_dragging(drag_offset)
+	if properties.get("Type", "") == "Attack" and cfc.NMAP.board:
+		cfc.NMAP.board._set_enemy_highlight(true)
+
+
+# --- Card play ---
 
 
 # Attempt to play this card via the combat manager.
@@ -107,19 +178,16 @@ func check_play_costs() -> Color:
 		return CFConst.CostsState.IMPOSSIBLE
 
 
-# Sample code on how to ensure costs are paid when a card
-# is dragged from hand to the table (kept for compatibility)
+# --- Compatibility stubs (framework template expects these) ---
+
+
 func common_move_scripts(new_container: Node, old_container: Node) -> void:
-	if new_container == cfc.NMAP.board and old_container == cfc.NMAP.hand:
-		pay_play_costs()
+	pass
 
 
-# Sample code on how to figure out costs of a card
 func get_modified_credits_cost() -> int:
-	var modified_cost : int = properties.get("Cost", 0)
-	return(modified_cost)
+	return properties.get("Cost", 0)
 
 
-# This sample function ensures all costs defined by a card are paid.
 func pay_play_costs() -> void:
-	cfc.NMAP.board.counters.mod_counter("credits", -get_modified_credits_cost())
+	pass
