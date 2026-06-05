@@ -257,6 +257,11 @@ func draw_cards(count: int) -> void:
 		if card:
 			# Small delay between draws for animation
 			await get_tree().create_timer(0.15).timeout
+	# Ensure all cards finished their move animation and are properly positioned
+	await get_tree().create_timer(0.3).timeout
+	for c in cfc.NMAP.hand.get_all_cards():
+		c.interruptTweening()
+		c.reorganize_self()
 
 
 # Discard all cards currently in hand.
