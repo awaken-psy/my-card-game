@@ -7,6 +7,7 @@ var _turn_label: Label
 var _end_turn_button: Button
 # Player stat labels
 var _player_hp_label: Label
+var _player_name_label: Label
 
 # Preload combat entity script (class_name removed due to load-order issues)
 const _CombatEntity = preload("res://src/custom/CombatEntity.gd")
@@ -40,8 +41,6 @@ func _ready() -> void:
 		_setup_combat()
 	# warning-ignore:return_value_discarded
 	$DeckBuilderPopup.connect('popup_hide', Callable(self, '_on_DeckBuilder_hide'))
-
-
 # Set up the combat system and UI.
 func _setup_combat() -> void:
 	# Force game settings for STS-style gameplay
@@ -95,7 +94,7 @@ func _create_combat_ui() -> void:
 	_energy_label = Label.new()
 	_energy_label.name = "EnergyLabel"
 	_energy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_energy_label.position = Vector2(20, viewport_size.y - 200)
+	_energy_label.position = Vector2(cfc.NMAP.deck.position.x + 15, cfc.NMAP.deck.position.y - 75)
 	_energy_label.size = Vector2(120, 40)
 	_energy_label.add_theme_font_size_override("font_size", 28)
 	_energy_label.add_theme_color_override("font_color", Color(1, 0.85, 0))
@@ -106,15 +105,27 @@ func _create_combat_ui() -> void:
 	_turn_label = Label.new()
 	_turn_label.name = "TurnLabel"
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_turn_label.position = Vector2(30, viewport_size.y - 160)
+	_turn_label.position = Vector2(cfc.NMAP.deck.position.x + 25, cfc.NMAP.deck.position.y - 40)
 	_turn_label.size = Vector2(100, 25)
-	_turn_label.add_theme_font_size_override("font_size", 16)
+	_turn_label.add_theme_font_size_override("font_size", 22)
 	_turn_label.text = "Turn 0"
 	add_child(_turn_label)
 
 	# --- Enemy stats (right side, vertically centered — STS style) ---
 	var enemy_x := viewport_size.x / 2 + 120
-	var enemy_cy := viewport_size.y / 2 - 60
+	var enemy_cy := viewport_size.y / 2 - 50
+
+	# Debug circle for enemy position
+	var enemy_circle := Panel.new()
+	enemy_circle.name = "DebugEnemyCircle"
+	enemy_circle.position = Vector2(enemy_x + 50, enemy_cy - 30)
+	enemy_circle.size = Vector2(100, 100)
+	var enemy_style := StyleBoxFlat.new()
+	enemy_style.bg_color = Color(1, 0.3, 0.3, 0.3)
+	enemy_style.set_corner_radius_all(50)
+	enemy_circle.add_theme_stylebox_override("panel", enemy_style)
+	add_child(enemy_circle)
+
 	_enemy_name_label = Label.new()
 	_enemy_name_label.name = "EnemyNameLabel"
 	_enemy_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -154,13 +165,34 @@ func _create_combat_ui() -> void:
 	add_child(_enemy_status_label)
 
 	# --- Player stats (left side, vertically centered — STS style) ---
-	var player_x := 20
-	var player_cy := viewport_size.y / 2 - 40
+	var player_x := viewport_size.x / 2 - 320
+	var player_cy := viewport_size.y / 2 - 50
+
+	# Debug circle for player position
+	var player_circle := Panel.new()
+	player_circle.name = "DebugPlayerCircle"
+	player_circle.position = Vector2(player_x + 50, player_cy - 30)
+	player_circle.size = Vector2(100, 100)
+	var player_style := StyleBoxFlat.new()
+	player_style.bg_color = Color(0.3, 0.3, 1, 0.3)
+	player_style.set_corner_radius_all(50)
+	player_circle.add_theme_stylebox_override("panel", player_style)
+	add_child(player_circle)
+
+	_player_name_label = Label.new()
+	_player_name_label.name = "PlayerNameLabel"
+	_player_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_name_label.position = Vector2(player_x, player_cy)
+	_player_name_label.size = Vector2(200, 20)
+	_player_name_label.add_theme_font_size_override("font_size", 16)
+	_player_name_label.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
+	_player_name_label.text = "Player"
+	add_child(_player_name_label)
 
 	_player_hp_label = Label.new()
 	_player_hp_label.name = "PlayerHpLabel"
-	_player_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_player_hp_label.position = Vector2(player_x, player_cy)
+	_player_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_hp_label.position = Vector2(player_x, player_cy + 22)
 	_player_hp_label.size = Vector2(200, 22)
 	_player_hp_label.add_theme_font_size_override("font_size", 16)
 	_player_hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
@@ -169,8 +201,8 @@ func _create_combat_ui() -> void:
 
 	_player_block_label = Label.new()
 	_player_block_label.name = "PlayerBlockLabel"
-	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_player_block_label.position = Vector2(player_x, player_cy + 24)
+	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_block_label.position = Vector2(player_x, player_cy + 44)
 	_player_block_label.size = Vector2(200, 22)
 	_player_block_label.add_theme_font_size_override("font_size", 16)
 	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
@@ -179,8 +211,8 @@ func _create_combat_ui() -> void:
 
 	_player_status_label = Label.new()
 	_player_status_label.name = "PlayerStatusLabel"
-	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_player_status_label.position = Vector2(player_x, player_cy + 48)
+	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_status_label.position = Vector2(player_x, player_cy + 66)
 	_player_status_label.size = Vector2(200, 18)
 	_player_status_label.add_theme_font_size_override("font_size", 12)
 	_player_status_label.text = ""
@@ -190,7 +222,7 @@ func _create_combat_ui() -> void:
 	_end_turn_button = Button.new()
 	_end_turn_button.name = "EndTurnButton"
 	_end_turn_button.text = "End Turn"
-	_end_turn_button.position = Vector2(viewport_size.x / 2 + 200, viewport_size.y - 230)
+	_end_turn_button.position = Vector2(viewport_size.x / 2 + 300, viewport_size.y - 260)
 	_end_turn_button.size = Vector2(120, 50)
 	_end_turn_button.add_theme_font_size_override("font_size", 18)
 	_end_turn_button.connect("pressed", Callable(self, "_on_EndTurn_pressed"))
@@ -199,6 +231,8 @@ func _create_combat_ui() -> void:
 
 	# Hide demo buttons that aren't needed for combat
 	_hide_demo_buttons()
+
+
 
 
 func _hide_demo_buttons() -> void:
