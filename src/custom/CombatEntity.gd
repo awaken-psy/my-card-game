@@ -21,10 +21,10 @@ var vulnerable: int = 0  # turns remaining
 var weak: int = 0        # turns remaining
 
 
-func _init(entity_name: String, max_health: int) -> void:
+func _init(entity_name: String, max_health: int, initial_hp: int = -1) -> void:
 	display_name = entity_name
 	max_hp = max_health
-	hp = max_health
+	hp = initial_hp if initial_hp > 0 else max_health
 
 
 # Add to block pool. Block absorbs incoming damage before HP.
@@ -86,3 +86,14 @@ func tick_status() -> void:
 func reset_block() -> void:
 	block = 0
 	block_changed.emit(0)
+
+
+# Reset temporary combat status (vulnerable, weak, block).
+# Strength persists across combats (Power cards). Called when setting up
+# a new encounter in a multi-fight run.
+func reset_combat_status() -> void:
+	vulnerable = 0
+	weak = 0
+	block = 0
+	block_changed.emit(0)
+	stats_changed.emit()

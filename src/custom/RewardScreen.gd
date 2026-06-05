@@ -1,10 +1,11 @@
 # Post-combat reward screen for My Card Game.
 #
-# Victory: shows 3 random reward cards from the pool (non-Starter),
-#          player picks one or skips, then sees victory message.
-# Defeat:  shows Game Over message.
+# Victory (non-final): shows 3 random reward cards, player picks one or skips,
+#                       then sees a "Continue" button to proceed to next encounter.
+# Victory (final):      shows run complete screen with remaining HP.
+# Defeat:               shows Game Over message.
 #
-# Both end with a "Return to Main Menu" button.
+# Both non-run states end with a "Return to Main Menu" button.
 #
 # TODO (M8): Replace text-based card panels with real card instances for
 #            richer visuals.
@@ -12,6 +13,7 @@ extends Control
 
 signal reward_selected(card_name: String)
 signal reward_skipped
+signal continue_run
 signal return_to_menu
 
 const _SetDefinition = preload("res://src/custom/cards/sets/SetDefinition_MyCardGame.gd")
@@ -30,10 +32,19 @@ func setup(viewport_size: Vector2) -> void:
 
 
 # Show the reward selection screen (victory path).
-func show_victory_rewards() -> void:
+# is_final_encounter: if true, the continue button text changes accordingly.
+func show_victory_rewards(is_final_encounter: bool = false) -> void:
 	_clear_ui()
 	_build_overlay()
-	_build_reward_selection()
+	_build_reward_selection(is_final_encounter)
+	visible = true
+
+
+# Show the run complete screen (all 3 encounters won).
+func show_run_complete(remaining_hp: int, max_hp: int) -> void:
+	_clear_ui()
+	_build_overlay()
+	_build_run_complete_screen(remaining_hp, max_hp)
 	visible = true
 
 
@@ -64,7 +75,7 @@ func _build_overlay() -> void:
 	add_child(overlay)
 
 
-func _build_reward_selection() -> void:
+func _build_reward_selection(is_final_encounter: bool) -> void:
 	var center_x: float = _viewport_size.x / 2.0
 	var start_y: float = 60.0
 
@@ -134,16 +145,69 @@ func _build_result_screen(is_victory: bool, selected_card: String) -> void:
 			subtitle.text = "%s added to your deck!" % selected_card
 		else:
 			subtitle.text = "Reward skipped."
+
+		# Continue button (proceeds to next encounter or run complete)
+		var continue_button := Button.new()
+		continue_button.text = "Continue"
+		continue_button.position = Vector2(center_x - 120, center_y + 20)
+		continue_button.size = Vector2(240, 50)
+		continue_button.add_theme_font_size_override("font_size", 18)
+		continue_button.connect("pressed", Callable(self, "_on_continue_pressed"))
+		add_child(continue_button)
 	else:
 		title.text = "Game Over"
 		title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 		subtitle.text = "You have been defeated."
 		subtitle.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 
+		# Return to Main Menu button
+		var return_button := Button.new()
+		return_button.text = "Return to Main Menu"
+		return_button.position = Vector2(center_x - 120, center_y + 20)
+		return_button.size = Vector2(240, 50)
+		return_button.add_theme_font_size_override("font_size", 18)
+		return_button.connect("pressed", Callable(self, "_on_return_pressed"))
+		add_child(return_button)
+
+
+func _build_run_complete_screen(remaining_hp: int, max_hp: int) -> void:
+	var center_x: float = _viewport_size.x / 2.0
+	var center_y: float = _viewport_size.y / 2.0
+
+	# Title
+	var title := Label.new()
+	title.text = "🎉 Run Complete! 🎉"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(center_x - 200, center_y - 80)
+	title.size = Vector2(400, 50)
+	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	add_child(title)
+
+	# Subtitle
+	var subtitle := Label.new()
+	subtitle.text = "You defeated all 3 encounters!"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.position = Vector2(center_x - 200, center_y - 25)
+	subtitle.size = Vector2(400, 30)
+	subtitle.add_theme_font_size_override("font_size", 20)
+	subtitle.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+	add_child(subtitle)
+
+	# HP display
+	var hp_label := Label.new()
+	hp_label.text = "Remaining HP: %d/%d" % [remaining_hp, max_hp]
+	hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hp_label.position = Vector2(center_x - 150, center_y + 20)
+	hp_label.size = Vector2(300, 30)
+	hp_label.add_theme_font_size_override("font_size", 18)
+	hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
+	add_child(hp_label)
+
 	# Return to Main Menu button
 	var return_button := Button.new()
 	return_button.text = "Return to Main Menu"
-	return_button.position = Vector2(center_x - 120, center_y + 20)
+	return_button.position = Vector2(center_x - 120, center_y + 70)
 	return_button.size = Vector2(240, 50)
 	return_button.add_theme_font_size_override("font_size", 18)
 	return_button.connect("pressed", Callable(self, "_on_return_pressed"))
@@ -278,6 +342,10 @@ func _on_skip_pressed() -> void:
 	_clear_ui()
 	_build_overlay()
 	_build_result_screen(true, "")
+
+
+func _on_continue_pressed() -> void:
+	emit_signal("continue_run")
 
 
 func _on_return_pressed() -> void:

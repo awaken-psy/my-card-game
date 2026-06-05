@@ -11,6 +11,7 @@ var _player_name_label: Label
 
 # Preload combat entity script (class_name removed due to load-order issues)
 const _CombatEntity = preload("res://src/custom/CombatEntity.gd")
+const _RunState = preload("res://src/custom/RunState.gd")
 var _player_block_label: Label
 var _player_status_label: Label
 # Enemy stat labels
@@ -20,6 +21,15 @@ var _enemy_block_label: Label
 var _enemy_status_label: Label
 var _enemy_intent_label: Label
 var _reward_screen: Control
+
+# Run state persists across encounters within the same run.
+var run_state: RefCounted
+
+# Encounter progress label (e.g. "Battle 2/3")
+var _encounter_label: Label
+
+# References to dynamically created combat UI nodes (for cleanup)
+var _combat_ui_nodes: Array = []
 
 
 # Called when the node enters the scene tree for the first time.
@@ -40,9 +50,20 @@ func _ready() -> void:
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
 	if not cfc.ut and not get_tree().get_root().has_node('RunFromEditor'):
-		_setup_combat()
+		_start_run()
 	# warning-ignore:return_value_discarded
 	$DeckBuilderPopup.connect('popup_hide', Callable(self, '_on_DeckBuilder_hide'))
+
+
+# --- Run lifecycle ---
+
+
+# Start a new run (fresh RunState + first encounter).
+func _start_run() -> void:
+	run_state = _RunState.new()
+	_setup_combat()
+
+
 # Set up the combat system and UI.
 func _setup_combat() -> void:
 	# Force game settings for STS-style gameplay
@@ -57,9 +78,13 @@ func _setup_combat() -> void:
 	combat_manager.board = self
 	add_child(combat_manager)
 
-	# Initialize combat entities (before UI so signals can be connected)
-	combat_manager.player = _CombatEntity.new("Player", 80)
-	combat_manager.enemy = _CombatEntity.new("Jaw Worm", 42)
+	# Get encounter config from RunState
+	var encounter: Dictionary = run_state.get_current_encounter()
+
+	# Initialize combat entities
+	# Player HP inherits from run_state; max_hp is always PLAYER_MAX_HP
+	combat_manager.player = _CombatEntity.new("Player", run_state.player_max_hp, run_state.player_hp)
+	combat_manager.enemy = _CombatEntity.new(encounter["name"], encounter["hp"])
 
 	# Connect combat signals
 	combat_manager.connect("energy_changed", Callable(self, "_on_energy_changed"))
@@ -77,21 +102,88 @@ func _setup_combat() -> void:
 	combat_manager.enemy.connect("stats_changed", Callable(self, "_on_enemy_stats_changed"))
 
 	# Auto-inject combat_manager into all newly instanced cards
-	cfc.connect("new_card_instanced", Callable(self, "inject_combat_manager"))
+	if not cfc.is_connected("new_card_instanced", Callable(self, "inject_combat_manager")):
+		cfc.connect("new_card_instanced", Callable(self, "inject_combat_manager"))
 
 	# Create combat UI elements
 	_create_combat_ui()
 
-	# Load starting deck, then start combat
-	load_starting_deck()
+	# Load deck from run state, then start combat
+	_load_deck_from_run_state()
 	# Wait a frame for cards to settle
 	await get_tree().process_frame
 	combat_manager.start_combat()
 
 
+# Clean up combat state to prepare for the next encounter.
+# Removes combat UI, combat manager, and all cards from containers.
+func _cleanup_combat() -> void:
+	# Disconnect the combat_ended signal to prevent double-firing during cleanup
+	if combat_manager and is_instance_valid(combat_manager):
+		if combat_manager.is_connected("combat_ended", Callable(self, "_on_combat_ended")):
+			combat_manager.disconnect("combat_ended", Callable(self, "_on_combat_ended"))
+
+	# Remove all cards from deck, hand, discard
+	var all_cards := cfc.NMAP.hand.get_all_cards().duplicate()
+	all_cards.append_array(cfc.NMAP.discard.get_all_cards().duplicate())
+	all_cards.append_array(cfc.NMAP.deck.get_all_cards().duplicate())
+	for card in all_cards:
+		if is_instance_valid(card):
+			var parent = card.get_parent()
+			if parent == cfc.NMAP.hand:
+				cfc.NMAP.hand.remove_child(card)
+			elif parent == cfc.NMAP.discard:
+				cfc.NMAP.discard.remove_child(card)
+			elif parent == cfc.NMAP.deck:
+				cfc.NMAP.deck.remove_child(card)
+			card.queue_free()
+
+	# Remove reward screen if present
+	if _reward_screen and is_instance_valid(_reward_screen):
+		_reward_screen.queue_free()
+		_reward_screen = null
+
+	# Remove dynamically created combat UI nodes
+	for node in _combat_ui_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_combat_ui_nodes.clear()
+
+	# Remove combat manager
+	if combat_manager and is_instance_valid(combat_manager):
+		combat_manager.queue_free()
+		combat_manager = null
+
+
+# Transition to the next encounter after reward selection.
+func _advance_to_next_encounter() -> void:
+	# Save current HP to run state
+	run_state.player_hp = combat_manager.player.hp
+	# Advance encounter counter
+	run_state.advance_encounter()
+	# Clean up current combat
+	_cleanup_combat()
+	# Setup next combat
+	_setup_combat()
+
+
+# --- Combat UI ---
+
 
 func _create_combat_ui() -> void:
 	var viewport_size: Vector2 = Vector2(get_viewport().size)
+
+	# --- Encounter progress label (top center) ---
+	_encounter_label = Label.new()
+	_encounter_label.name = "EncounterLabel"
+	_encounter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_encounter_label.position = Vector2(viewport_size.x / 2 - 80, 10)
+	_encounter_label.size = Vector2(160, 30)
+	_encounter_label.add_theme_font_size_override("font_size", 20)
+	_encounter_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	_encounter_label.text = "Battle %d/%d" % [run_state.get_encounter_number(), run_state.get_total_encounters()]
+	add_child(_encounter_label)
+	_combat_ui_nodes.append(_encounter_label)
 
 	# --- Energy label (bottom-left, near player — STS style) ---
 	_energy_label = Label.new()
@@ -103,6 +195,7 @@ func _create_combat_ui() -> void:
 	_energy_label.add_theme_color_override("font_color", Color(1, 0.85, 0))
 	_energy_label.text = "⚡ 0/3"
 	add_child(_energy_label)
+	_combat_ui_nodes.append(_energy_label)
 
 	# Turn label (below energy, bottom-left)
 	_turn_label = Label.new()
@@ -113,6 +206,7 @@ func _create_combat_ui() -> void:
 	_turn_label.add_theme_font_size_override("font_size", 22)
 	_turn_label.text = "Turn 0"
 	add_child(_turn_label)
+	_combat_ui_nodes.append(_turn_label)
 
 	# --- Enemy stats (right side, vertically centered — STS style) ---
 	var enemy_x := viewport_size.x / 2 + 120
@@ -128,6 +222,7 @@ func _create_combat_ui() -> void:
 	enemy_style.set_corner_radius_all(50)
 	enemy_circle.add_theme_stylebox_override("panel", enemy_style)
 	add_child(enemy_circle)
+	_combat_ui_nodes.append(enemy_circle)
 
 	# Intent label (above enemy name, shown during player's turn)
 	_enemy_intent_label = Label.new()
@@ -139,6 +234,7 @@ func _create_combat_ui() -> void:
 	_enemy_intent_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
 	_enemy_intent_label.text = ""
 	add_child(_enemy_intent_label)
+	_combat_ui_nodes.append(_enemy_intent_label)
 
 	_enemy_name_label = Label.new()
 	_enemy_name_label.name = "EnemyNameLabel"
@@ -149,6 +245,7 @@ func _create_combat_ui() -> void:
 	_enemy_name_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	_enemy_name_label.text = combat_manager.enemy.display_name
 	add_child(_enemy_name_label)
+	_combat_ui_nodes.append(_enemy_name_label)
 
 	_enemy_hp_label = Label.new()
 	_enemy_hp_label.name = "EnemyHpLabel"
@@ -158,6 +255,7 @@ func _create_combat_ui() -> void:
 	_enemy_hp_label.add_theme_font_size_override("font_size", 16)
 	_enemy_hp_label.text = "❤️ %d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
 	add_child(_enemy_hp_label)
+	_combat_ui_nodes.append(_enemy_hp_label)
 
 	_enemy_block_label = Label.new()
 	_enemy_block_label.name = "EnemyBlockLabel"
@@ -168,6 +266,7 @@ func _create_combat_ui() -> void:
 	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
 	_enemy_block_label.text = ""
 	add_child(_enemy_block_label)
+	_combat_ui_nodes.append(_enemy_block_label)
 
 	_enemy_status_label = Label.new()
 	_enemy_status_label.name = "EnemyStatusLabel"
@@ -177,6 +276,7 @@ func _create_combat_ui() -> void:
 	_enemy_status_label.add_theme_font_size_override("font_size", 12)
 	_enemy_status_label.text = ""
 	add_child(_enemy_status_label)
+	_combat_ui_nodes.append(_enemy_status_label)
 
 	# --- Player stats (left side, vertically centered — STS style) ---
 	var player_x := viewport_size.x / 2 - 320
@@ -192,6 +292,7 @@ func _create_combat_ui() -> void:
 	player_style.set_corner_radius_all(50)
 	player_circle.add_theme_stylebox_override("panel", player_style)
 	add_child(player_circle)
+	_combat_ui_nodes.append(player_circle)
 
 	_player_name_label = Label.new()
 	_player_name_label.name = "PlayerNameLabel"
@@ -202,6 +303,7 @@ func _create_combat_ui() -> void:
 	_player_name_label.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
 	_player_name_label.text = "Player"
 	add_child(_player_name_label)
+	_combat_ui_nodes.append(_player_name_label)
 
 	_player_hp_label = Label.new()
 	_player_hp_label.name = "PlayerHpLabel"
@@ -212,6 +314,7 @@ func _create_combat_ui() -> void:
 	_player_hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	_player_hp_label.text = "❤️ %d/%d" % [combat_manager.player.hp, combat_manager.player.max_hp]
 	add_child(_player_hp_label)
+	_combat_ui_nodes.append(_player_hp_label)
 
 	_player_block_label = Label.new()
 	_player_block_label.name = "PlayerBlockLabel"
@@ -222,6 +325,7 @@ func _create_combat_ui() -> void:
 	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
 	_player_block_label.text = ""
 	add_child(_player_block_label)
+	_combat_ui_nodes.append(_player_block_label)
 
 	_player_status_label = Label.new()
 	_player_status_label.name = "PlayerStatusLabel"
@@ -231,6 +335,7 @@ func _create_combat_ui() -> void:
 	_player_status_label.add_theme_font_size_override("font_size", 12)
 	_player_status_label.text = ""
 	add_child(_player_status_label)
+	_combat_ui_nodes.append(_player_status_label)
 
 	# End Turn button (center-right, above hand area)
 	_end_turn_button = Button.new()
@@ -242,11 +347,10 @@ func _create_combat_ui() -> void:
 	_end_turn_button.connect("pressed", Callable(self, "_on_EndTurn_pressed"))
 	_end_turn_button.disabled = true
 	add_child(_end_turn_button)
+	_combat_ui_nodes.append(_end_turn_button)
 
 	# Hide demo buttons that aren't needed for combat
 	_hide_demo_buttons()
-
-
 
 
 func _hide_demo_buttons() -> void:
@@ -310,23 +414,40 @@ func _on_combat_ended() -> void:
 	# Clear enemy intent display
 	if _enemy_intent_label:
 		_enemy_intent_label.text = ""
-	# Show reward or game over screen based on result
+	# Route based on combat result
 	if combat_manager.combat_result == "victory":
-		_show_reward_screen()
+		# Save HP before showing any screen
+		run_state.player_hp = combat_manager.player.hp
+		if run_state.is_final_encounter():
+			# Last encounter won — show run complete screen
+			_show_run_complete_screen()
+		else:
+			# Non-final victory — show reward screen
+			_show_reward_screen()
 	else:
 		_show_game_over_screen()
 
 
-# Show the reward selection screen (victory).
+# Show the reward selection screen (non-final victory).
 func _show_reward_screen() -> void:
 	_reward_screen = Control.new()
 	_reward_screen.set_script(load("res://src/custom/RewardScreen.gd"))
 	_reward_screen.setup(Vector2(get_viewport().size))
 	_reward_screen.connect("reward_selected", Callable(self, "_on_reward_card_selected"))
 	_reward_screen.connect("reward_skipped", Callable(self, "_on_reward_skipped"))
+	_reward_screen.connect("continue_run", Callable(self, "_on_continue_run"))
+	add_child(_reward_screen)
+	_reward_screen.show_victory_rewards(false)
+
+
+# Show the run complete screen (final victory).
+func _show_run_complete_screen() -> void:
+	_reward_screen = Control.new()
+	_reward_screen.set_script(load("res://src/custom/RewardScreen.gd"))
+	_reward_screen.setup(Vector2(get_viewport().size))
 	_reward_screen.connect("return_to_menu", Callable(self, "_on_return_to_menu"))
 	add_child(_reward_screen)
-	_reward_screen.show_victory_rewards()
+	_reward_screen.show_run_complete(run_state.player_hp, run_state.player_max_hp)
 
 
 # Show the game over screen (defeat).
@@ -339,18 +460,25 @@ func _show_game_over_screen() -> void:
 	_reward_screen.show_game_over()
 
 
-# Add the selected reward card to the deck pile.
+# Add the selected reward card to the deck and run state.
 func _on_reward_card_selected(card_name: String) -> void:
 	var card = cfc.instance_card(card_name)
 	inject_combat_manager(card)
 	cfc.NMAP.deck.add_child(card)
 	card._determine_idle_state()
+	# Persist in run state so next encounter loads it
+	run_state.deck_card_names.append(card_name)
 	push_warning("Reward: %s added to deck" % card_name)
 
 
 # Player skipped the reward.
 func _on_reward_skipped() -> void:
 	push_warning("Reward skipped")
+
+
+# Player clicked "Continue" after reward — advance to next encounter.
+func _on_continue_run() -> void:
+	_advance_to_next_encounter()
 
 
 # Return to the main menu scene.
@@ -502,19 +630,14 @@ func _on_EnableAttach_toggled(button_pressed: bool) -> void:
 func _on_Debug_toggled(button_pressed: bool) -> void:
 	cfc._debug = button_pressed
 
-# Loads the starting deck: 5 Strike + 4 Defend + 1 Bash
-func load_starting_deck() -> void:
-	var starting_deck := [
-		"Strike", "Strike", "Strike", "Strike", "Strike",
-		"Defend", "Defend", "Defend", "Defend",
-		"Bash",
-	]
-	for card_name in starting_deck:
+# Load the deck from run_state's card name list.
+func _load_deck_from_run_state() -> void:
+	for card_name in run_state.deck_card_names:
 		var card = cfc.instance_card(card_name)
-		# Inject combat_manager into each card for click-to-play
 		inject_combat_manager(card)
 		cfc.NMAP.deck.add_child(card)
 		card._determine_idle_state()
+
 
 func _on_DeckBuilder_pressed() -> void:
 	cfc.game_paused = true
