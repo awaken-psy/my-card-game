@@ -222,6 +222,13 @@ func _hide_demo_buttons() -> void:
 		var node := get_node_or_null(node_name)
 		if node:
 			node.visible = false
+	# Hide manipulation buttons on Pile/Hand containers
+	for container_name in ["deck", "discard", "hand"]:
+		var container = cfc.NMAP.get(container_name) if cfc.NMAP else null
+		if container:
+			var mb = container.get_node_or_null("Control/ManipulationButtons")
+			if mb:
+				mb.visible = false
 
 
 # --- Combat signal handlers ---
