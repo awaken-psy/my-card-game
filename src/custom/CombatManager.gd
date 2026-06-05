@@ -137,31 +137,23 @@ func play_card(card: Card) -> void:
 	_is_resolving = false
 
 
-# Animate the card flying toward its target (enemy for attacks, player for others).
+# Animate the card being played: pulse scale + flash, then shrink away.
+# Does NOT modify global_position (conflicts with framework hand management).
 func _animate_card_to_target(card: Card) -> void:
-	var card_type: String = card.properties.get("Type", "")
-	var target: Control
-	if card_type == "Attack" and board and board._enemy_visual:
-		target = board._enemy_visual
-	elif board and board._player_visual:
-		target = board._player_visual
-	else:
-		return  # No visual target, skip animation
-
-	var target_pos: Vector2 = target.global_position + target.size / 2.0
-
-	# Fly toward target
-	var tween := card.create_tween()
-	tween.tween_property(card, "global_position",
-		target_pos - card.size / 2.0, 0.25)\
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	# Pulse up + white flash
+	var tween := card.create_tween().set_parallel(true)
+	tween.tween_property(card, "scale", Vector2(1.15, 1.15), 0.1)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card, "modulate", Color(2.0, 2.0, 2.0), 0.08)
 	await tween.finished
-
-	# Hit flash
-	var flash := card.create_tween()
-	flash.tween_property(card, "modulate", Color(2.0, 2.0, 2.0), 0.04)
-	flash.tween_property(card, "modulate", Color.WHITE, 0.12)
-	await flash.finished
+	# Shrink + fade + restore color
+	var shrink := card.create_tween().set_parallel(true)
+	shrink.tween_property(card, "scale", Vector2(0.3, 0.3), 0.15)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	shrink.tween_property(card, "modulate", Color.WHITE, 0.15)
+	await shrink.finished
+	# Reset scale for framework move_to
+	card.scale = Vector2.ONE
 
 
 # --- Effect Resolution ---
