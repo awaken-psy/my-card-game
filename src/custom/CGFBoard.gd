@@ -2,24 +2,29 @@
 extends Board
 
 var combat_manager: Node
+var _energy_orb: Panel
 var _energy_label: Label
 var _turn_label: Label
 var _end_turn_button: Button
-# Player stat labels
-var _player_hp_label: Label
+# Player stat UI
+var _player_hp_bar: ProgressBar
+var _player_hp_text: Label
 var _player_name_label: Label
+var _player_visual: Control
 
 # Preload combat entity script (class_name removed due to load-order issues)
 const _CombatEntity = preload("res://src/custom/CombatEntity.gd")
 const _RunState = preload("res://src/custom/RunState.gd")
 var _player_block_label: Label
 var _player_status_label: Label
-# Enemy stat labels
+# Enemy stat UI
 var _enemy_name_label: Label
-var _enemy_hp_label: Label
+var _enemy_hp_bar: ProgressBar
+var _enemy_hp_text: Label
 var _enemy_block_label: Label
 var _enemy_status_label: Label
 var _enemy_intent_label: Label
+var _enemy_visual: Control
 var _reward_screen: Control
 
 # Run state persists across encounters within the same run.
@@ -32,18 +37,15 @@ var _encounter_label: Label
 var _combat_ui_nodes: Array = []
 
 
-# Called when the node enters the scene tree for the first time.
+# Called when the node enters the scene tree.
 func _ready() -> void:
 	super._ready()
 	counters = $Counters
 	cfc.map_node(self)
-	# We use the below while to wait until all the nodes we need have been mapped
-	# "hand" should be one of them.
 	$FancyMovementToggle.button_pressed = cfc.game_settings.fancy_movement
 	$OvalHandToggle.button_pressed = cfc.game_settings.hand_use_oval_shape
 	$ScalingFocusOptions.selected = cfc.game_settings.focus_style
 	$Debug.button_pressed = cfc._debug
-	# Generate game seed
 	if not cfc.ut:
 		cfc.game_rng_seed = CFUtils.generate_random_seed()
 		$SeedLabel.text = "Game Seed is: " + cfc.game_rng_seed
@@ -66,7 +68,6 @@ func _start_run() -> void:
 
 # Set up the combat system and UI.
 func _setup_combat() -> void:
-	# Force game settings for STS-style gameplay
 	cfc.set_setting("hand_use_oval_shape", true)
 	cfc.set_setting("fancy_movement", true)
 	$OvalHandToggle.button_pressed = true
@@ -82,7 +83,6 @@ func _setup_combat() -> void:
 	var encounter: Dictionary = run_state.get_current_encounter()
 
 	# Initialize combat entities
-	# Player HP inherits from run_state; max_hp is always PLAYER_MAX_HP
 	combat_manager.player = _CombatEntity.new("Player", run_state.player_max_hp, run_state.player_hp)
 	combat_manager.enemy = _CombatEntity.new(encounter["name"], encounter["hp"])
 
@@ -110,20 +110,16 @@ func _setup_combat() -> void:
 
 	# Load deck from run state, then start combat
 	_load_deck_from_run_state()
-	# Wait a frame for cards to settle
 	await get_tree().process_frame
 	combat_manager.start_combat()
 
 
 # Clean up combat state to prepare for the next encounter.
-# Removes combat UI, combat manager, and all cards from containers.
 func _cleanup_combat() -> void:
-	# Disconnect the combat_ended signal to prevent double-firing during cleanup
 	if combat_manager and is_instance_valid(combat_manager):
 		if combat_manager.is_connected("combat_ended", Callable(self, "_on_combat_ended")):
 			combat_manager.disconnect("combat_ended", Callable(self, "_on_combat_ended"))
 
-	# Remove all cards from deck, hand, discard
 	var all_cards: Array = cfc.NMAP.hand.get_all_cards().duplicate()
 	all_cards.append_array(cfc.NMAP.discard.get_all_cards().duplicate())
 	all_cards.append_array(cfc.NMAP.deck.get_all_cards().duplicate())
@@ -138,18 +134,15 @@ func _cleanup_combat() -> void:
 				cfc.NMAP.deck.remove_child(card)
 			card.queue_free()
 
-	# Remove reward screen if present
 	if _reward_screen and is_instance_valid(_reward_screen):
 		_reward_screen.queue_free()
 		_reward_screen = null
 
-	# Remove dynamically created combat UI nodes
 	for node in _combat_ui_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
 	_combat_ui_nodes.clear()
 
-	# Remove combat manager
 	if combat_manager and is_instance_valid(combat_manager):
 		combat_manager.queue_free()
 		combat_manager = null
@@ -157,13 +150,9 @@ func _cleanup_combat() -> void:
 
 # Transition to the next encounter after reward selection.
 func _advance_to_next_encounter() -> void:
-	# Save current HP to run state
 	run_state.player_hp = combat_manager.player.hp
-	# Advance encounter counter
 	run_state.advance_encounter()
-	# Clean up current combat
 	_cleanup_combat()
-	# Setup next combat
 	_setup_combat()
 
 
@@ -185,50 +174,65 @@ func _create_combat_ui() -> void:
 	add_child(_encounter_label)
 	_combat_ui_nodes.append(_encounter_label)
 
-	# --- Energy label (bottom-left, near player — STS style) ---
+	# --- Energy orb (bottom-left, near deck — STS style) ---
+	_energy_orb = Panel.new()
+	_energy_orb.name = "EnergyOrb"
+	_energy_orb.position = Vector2(cfc.NMAP.deck.position.x + 25, cfc.NMAP.deck.position.y - 95)
+	_energy_orb.size = Vector2(70, 70)
+	var orb_style := StyleBoxFlat.new()
+	orb_style.bg_color = Color(0.08, 0.18, 0.45, 0.95)
+	orb_style.border_color = Color(0.3, 0.6, 1.0)
+	orb_style.set_border_width_all(3)
+	orb_style.set_corner_radius_all(35)
+	_energy_orb.add_theme_stylebox_override("panel", orb_style)
+
 	_energy_label = Label.new()
 	_energy_label.name = "EnergyLabel"
+	_energy_label.text = "0"
 	_energy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_energy_label.position = Vector2(cfc.NMAP.deck.position.x + 15, cfc.NMAP.deck.position.y - 75)
-	_energy_label.size = Vector2(120, 40)
-	_energy_label.add_theme_font_size_override("font_size", 28)
-	_energy_label.add_theme_color_override("font_color", Color(1, 0.85, 0))
-	_energy_label.text = "⚡ 0/3"
-	add_child(_energy_label)
-	_combat_ui_nodes.append(_energy_label)
+	_energy_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_energy_label.anchor_right = 1.0
+	_energy_label.anchor_bottom = 1.0
+	_energy_label.add_theme_font_size_override("font_size", 26)
+	_energy_label.add_theme_color_override("font_color", Color(1, 0.9, 0.3))
+	_energy_orb.add_child(_energy_label)
+	add_child(_energy_orb)
+	_combat_ui_nodes.append(_energy_orb)
 
-	# Turn label (below energy, bottom-left)
+	# Turn label (below energy orb)
 	_turn_label = Label.new()
 	_turn_label.name = "TurnLabel"
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_turn_label.position = Vector2(cfc.NMAP.deck.position.x + 25, cfc.NMAP.deck.position.y - 40)
-	_turn_label.size = Vector2(100, 25)
-	_turn_label.add_theme_font_size_override("font_size", 22)
+	_turn_label.position = Vector2(cfc.NMAP.deck.position.x + 15, cfc.NMAP.deck.position.y - 22)
+	_turn_label.size = Vector2(90, 25)
+	_turn_label.add_theme_font_size_override("font_size", 18)
 	_turn_label.text = "Turn 0"
 	add_child(_turn_label)
 	_combat_ui_nodes.append(_turn_label)
 
-	# --- Enemy stats (right side, vertically centered — STS style) ---
+	# --- Enemy area (right side — STS style) ---
 	var enemy_x := viewport_size.x / 2 + 120
 	var enemy_cy := viewport_size.y / 2 - 50
 
-	# Debug circle for enemy position
-	var enemy_circle := Panel.new()
-	enemy_circle.name = "DebugEnemyCircle"
-	enemy_circle.position = Vector2(enemy_x + 50, enemy_cy - 30)
-	enemy_circle.size = Vector2(100, 100)
-	var enemy_style := StyleBoxFlat.new()
-	enemy_style.bg_color = Color(1, 0.3, 0.3, 0.3)
-	enemy_style.set_corner_radius_all(50)
-	enemy_circle.add_theme_stylebox_override("panel", enemy_style)
-	add_child(enemy_circle)
-	_combat_ui_nodes.append(enemy_circle)
+	# Enemy visual (geometric placeholder: red rounded rectangle)
+	_enemy_visual = Panel.new()
+	_enemy_visual.name = "EnemyVisual"
+	_enemy_visual.position = Vector2(enemy_x + 25, enemy_cy - 50)
+	_enemy_visual.size = Vector2(150, 120)
+	var ev_style := StyleBoxFlat.new()
+	ev_style.bg_color = Color(0.5, 0.1, 0.1, 0.9)
+	ev_style.border_color = Color(0.85, 0.25, 0.25)
+	ev_style.set_border_width_all(2)
+	ev_style.set_corner_radius_all(12)
+	_enemy_visual.add_theme_stylebox_override("panel", ev_style)
+	add_child(_enemy_visual)
+	_combat_ui_nodes.append(_enemy_visual)
 
-	# Intent label (above enemy name, shown during player's turn)
+	# Intent label (above enemy visual)
 	_enemy_intent_label = Label.new()
 	_enemy_intent_label.name = "EnemyIntentLabel"
 	_enemy_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - 45)
+	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - 68)
 	_enemy_intent_label.size = Vector2(200, 20)
 	_enemy_intent_label.add_theme_font_size_override("font_size", 14)
 	_enemy_intent_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
@@ -239,7 +243,7 @@ func _create_combat_ui() -> void:
 	_enemy_name_label = Label.new()
 	_enemy_name_label.name = "EnemyNameLabel"
 	_enemy_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_name_label.position = Vector2(enemy_x, enemy_cy)
+	_enemy_name_label.position = Vector2(enemy_x, enemy_cy - 68)
 	_enemy_name_label.size = Vector2(200, 20)
 	_enemy_name_label.add_theme_font_size_override("font_size", 16)
 	_enemy_name_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
@@ -247,20 +251,40 @@ func _create_combat_ui() -> void:
 	add_child(_enemy_name_label)
 	_combat_ui_nodes.append(_enemy_name_label)
 
-	_enemy_hp_label = Label.new()
-	_enemy_hp_label.name = "EnemyHpLabel"
-	_enemy_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_hp_label.position = Vector2(enemy_x, enemy_cy + 22)
-	_enemy_hp_label.size = Vector2(200, 20)
-	_enemy_hp_label.add_theme_font_size_override("font_size", 16)
-	_enemy_hp_label.text = "❤️ %d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
-	add_child(_enemy_hp_label)
-	_combat_ui_nodes.append(_enemy_hp_label)
+	# Enemy HP bar (below enemy visual)
+	_enemy_hp_bar = ProgressBar.new()
+	_enemy_hp_bar.name = "EnemyHpBar"
+	_enemy_hp_bar.position = Vector2(enemy_x + 25, enemy_cy + 78)
+	_enemy_hp_bar.size = Vector2(150, 16)
+	_enemy_hp_bar.min_value = 0
+	_enemy_hp_bar.max_value = combat_manager.enemy.max_hp
+	_enemy_hp_bar.value = combat_manager.enemy.hp
+	_enemy_hp_bar.show_percentage = false
+	var ehp_bg := StyleBoxFlat.new()
+	ehp_bg.bg_color = Color(0.15, 0.15, 0.15)
+	ehp_bg.set_corner_radius_all(4)
+	var ehp_fill := StyleBoxFlat.new()
+	ehp_fill.bg_color = Color(0.2, 0.8, 0.2)
+	ehp_fill.set_corner_radius_all(4)
+	_enemy_hp_bar.add_theme_stylebox_override("background", ehp_bg)
+	_enemy_hp_bar.add_theme_stylebox_override("fill", ehp_fill)
+	add_child(_enemy_hp_bar)
+	_combat_ui_nodes.append(_enemy_hp_bar)
+
+	_enemy_hp_text = Label.new()
+	_enemy_hp_text.name = "EnemyHpText"
+	_enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 96)
+	_enemy_hp_text.size = Vector2(200, 18)
+	_enemy_hp_text.add_theme_font_size_override("font_size", 13)
+	_enemy_hp_text.text = "%d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
+	add_child(_enemy_hp_text)
+	_combat_ui_nodes.append(_enemy_hp_text)
 
 	_enemy_block_label = Label.new()
 	_enemy_block_label.name = "EnemyBlockLabel"
 	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_block_label.position = Vector2(enemy_x, enemy_cy + 44)
+	_enemy_block_label.position = Vector2(enemy_x, enemy_cy + 114)
 	_enemy_block_label.size = Vector2(200, 18)
 	_enemy_block_label.add_theme_font_size_override("font_size", 13)
 	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
@@ -271,33 +295,35 @@ func _create_combat_ui() -> void:
 	_enemy_status_label = Label.new()
 	_enemy_status_label.name = "EnemyStatusLabel"
 	_enemy_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_status_label.position = Vector2(enemy_x, enemy_cy + 64)
+	_enemy_status_label.position = Vector2(enemy_x, enemy_cy + 132)
 	_enemy_status_label.size = Vector2(200, 18)
 	_enemy_status_label.add_theme_font_size_override("font_size", 12)
 	_enemy_status_label.text = ""
 	add_child(_enemy_status_label)
 	_combat_ui_nodes.append(_enemy_status_label)
 
-	# --- Player stats (left side, vertically centered — STS style) ---
+	# --- Player area (left side — STS style) ---
 	var player_x := viewport_size.x / 2 - 320
 	var player_cy := viewport_size.y / 2 - 50
 
-	# Debug circle for player position
-	var player_circle := Panel.new()
-	player_circle.name = "DebugPlayerCircle"
-	player_circle.position = Vector2(player_x + 50, player_cy - 30)
-	player_circle.size = Vector2(100, 100)
-	var player_style := StyleBoxFlat.new()
-	player_style.bg_color = Color(0.3, 0.3, 1, 0.3)
-	player_style.set_corner_radius_all(50)
-	player_circle.add_theme_stylebox_override("panel", player_style)
-	add_child(player_circle)
-	_combat_ui_nodes.append(player_circle)
+	# Player visual (geometric placeholder: blue rounded rectangle)
+	_player_visual = Panel.new()
+	_player_visual.name = "PlayerVisual"
+	_player_visual.position = Vector2(player_x + 25, player_cy - 50)
+	_player_visual.size = Vector2(150, 120)
+	var pv_style := StyleBoxFlat.new()
+	pv_style.bg_color = Color(0.1, 0.12, 0.4, 0.9)
+	pv_style.border_color = Color(0.3, 0.5, 0.9)
+	pv_style.set_border_width_all(2)
+	pv_style.set_corner_radius_all(12)
+	_player_visual.add_theme_stylebox_override("panel", pv_style)
+	add_child(_player_visual)
+	_combat_ui_nodes.append(_player_visual)
 
 	_player_name_label = Label.new()
 	_player_name_label.name = "PlayerNameLabel"
 	_player_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_name_label.position = Vector2(player_x, player_cy)
+	_player_name_label.position = Vector2(player_x, player_cy - 68)
 	_player_name_label.size = Vector2(200, 20)
 	_player_name_label.add_theme_font_size_override("font_size", 16)
 	_player_name_label.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
@@ -305,21 +331,40 @@ func _create_combat_ui() -> void:
 	add_child(_player_name_label)
 	_combat_ui_nodes.append(_player_name_label)
 
-	_player_hp_label = Label.new()
-	_player_hp_label.name = "PlayerHpLabel"
-	_player_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_hp_label.position = Vector2(player_x, player_cy + 22)
-	_player_hp_label.size = Vector2(200, 22)
-	_player_hp_label.add_theme_font_size_override("font_size", 16)
-	_player_hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
-	_player_hp_label.text = "❤️ %d/%d" % [combat_manager.player.hp, combat_manager.player.max_hp]
-	add_child(_player_hp_label)
-	_combat_ui_nodes.append(_player_hp_label)
+	# Player HP bar (below player visual)
+	_player_hp_bar = ProgressBar.new()
+	_player_hp_bar.name = "PlayerHpBar"
+	_player_hp_bar.position = Vector2(player_x + 25, player_cy + 78)
+	_player_hp_bar.size = Vector2(150, 16)
+	_player_hp_bar.min_value = 0
+	_player_hp_bar.max_value = combat_manager.player.max_hp
+	_player_hp_bar.value = combat_manager.player.hp
+	_player_hp_bar.show_percentage = false
+	var php_bg := StyleBoxFlat.new()
+	php_bg.bg_color = Color(0.15, 0.15, 0.15)
+	php_bg.set_corner_radius_all(4)
+	var php_fill := StyleBoxFlat.new()
+	php_fill.bg_color = Color(0.2, 0.8, 0.2)
+	php_fill.set_corner_radius_all(4)
+	_player_hp_bar.add_theme_stylebox_override("background", php_bg)
+	_player_hp_bar.add_theme_stylebox_override("fill", php_fill)
+	add_child(_player_hp_bar)
+	_combat_ui_nodes.append(_player_hp_bar)
+
+	_player_hp_text = Label.new()
+	_player_hp_text.name = "PlayerHpText"
+	_player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_hp_text.position = Vector2(player_x, player_cy + 96)
+	_player_hp_text.size = Vector2(200, 18)
+	_player_hp_text.add_theme_font_size_override("font_size", 13)
+	_player_hp_text.text = "%d/%d" % [combat_manager.player.hp, combat_manager.player.max_hp]
+	add_child(_player_hp_text)
+	_combat_ui_nodes.append(_player_hp_text)
 
 	_player_block_label = Label.new()
 	_player_block_label.name = "PlayerBlockLabel"
 	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_block_label.position = Vector2(player_x, player_cy + 44)
+	_player_block_label.position = Vector2(player_x, player_cy + 114)
 	_player_block_label.size = Vector2(200, 22)
 	_player_block_label.add_theme_font_size_override("font_size", 16)
 	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
@@ -330,7 +375,7 @@ func _create_combat_ui() -> void:
 	_player_status_label = Label.new()
 	_player_status_label.name = "PlayerStatusLabel"
 	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_status_label.position = Vector2(player_x, player_cy + 66)
+	_player_status_label.position = Vector2(player_x, player_cy + 132)
 	_player_status_label.size = Vector2(200, 18)
 	_player_status_label.add_theme_font_size_override("font_size", 12)
 	_player_status_label.text = ""
@@ -349,12 +394,10 @@ func _create_combat_ui() -> void:
 	add_child(_end_turn_button)
 	_combat_ui_nodes.append(_end_turn_button)
 
-	# Hide demo buttons that aren't needed for combat
 	_hide_demo_buttons()
 
 
 func _hide_demo_buttons() -> void:
-	# Hide CGF demo/debug UI — they still exist for development but aren't shown
 	var demo_nodes := [
 		"Counters",
 		"FancyMovementToggle",
@@ -373,7 +416,6 @@ func _hide_demo_buttons() -> void:
 		var node := get_node_or_null(node_name)
 		if node:
 			node.visible = false
-	# Hide manipulation buttons on Pile/Hand containers
 	for container_name in ["deck", "discard", "hand"]:
 		var container = cfc.NMAP.get(container_name) if cfc.NMAP else null
 		if container:
@@ -384,10 +426,18 @@ func _hide_demo_buttons() -> void:
 
 # --- Combat signal handlers ---
 
+
 func _on_energy_changed(current: int, max_energy: int) -> void:
 	if _energy_label:
-		_energy_label.text = "⚡ %d/%d" % [current, max_energy]
-	# Update all hand cards' cost display
+		_energy_label.text = "%d" % current
+	if _energy_orb:
+		var style: StyleBoxFlat = _energy_orb.get_theme_stylebox("panel")
+		if current < max_energy:
+			style.bg_color = Color(0.04, 0.08, 0.2, 0.95)
+			style.border_color = Color(0.2, 0.4, 0.7)
+		else:
+			style.bg_color = Color(0.08, 0.18, 0.45, 0.95)
+			style.border_color = Color(0.3, 0.6, 1.0)
 	_notify_hand_cards_cost_update()
 
 
@@ -411,18 +461,13 @@ func _on_EndTurn_pressed() -> void:
 func _on_combat_ended() -> void:
 	if _end_turn_button:
 		_end_turn_button.disabled = true
-	# Clear enemy intent display
 	if _enemy_intent_label:
 		_enemy_intent_label.text = ""
-	# Route based on combat result
 	if combat_manager.combat_result == "victory":
-		# Save HP before showing any screen
 		run_state.player_hp = combat_manager.player.hp
 		if run_state.is_final_encounter():
-			# Last encounter won — show run complete screen
 			_show_run_complete_screen()
 		else:
-			# Non-final victory — show reward screen
 			_show_reward_screen()
 	else:
 		_show_game_over_screen()
@@ -466,7 +511,6 @@ func _on_reward_card_selected(card_name: String) -> void:
 	inject_combat_manager(card)
 	cfc.NMAP.deck.add_child(card)
 	card._determine_idle_state()
-	# Persist in run state so next encounter loads it
 	run_state.deck_card_names.append(card_name)
 	push_warning("Reward: %s added to deck" % card_name)
 
@@ -488,19 +532,16 @@ func _on_return_to_menu() -> void:
 
 
 # After energy changes, re-check costs for all cards in hand
-# so the card border color reflects affordability.
 func _notify_hand_cards_cost_update() -> void:
 	if not cfc.NMAP.has("hand"):
 		return
 	for card in cfc.NMAP.hand.get_all_cards():
 		if is_instance_valid(card):
-			# Trigger a re-check by toggling focus (framework refreshes glow)
 			if card.state == Card.CardState.FOCUSED_IN_HAND:
 				card.set_focus(true, card.check_play_costs())
 
 
 # Inject combat_manager reference into newly instanced cards.
-# Connected to cfc.new_card_instanced signal for automatic injection.
 func inject_combat_manager(card: Card) -> void:
 	if combat_manager and is_instance_valid(card):
 		card.combat_manager = combat_manager
@@ -508,9 +549,16 @@ func inject_combat_manager(card: Card) -> void:
 
 # --- Entity UI update handlers ---
 
+
 func _on_player_hp_changed(current, maximum) -> void:
-	if _player_hp_label:
-		_player_hp_label.text = "❤️ %d/%d" % [maxi(current, 0), maximum]
+	var clamped := maxi(current, 0)
+	if _player_hp_bar:
+		var ratio: float = float(clamped) / float(maximum)
+		_update_hp_bar_color(_player_hp_bar, ratio)
+		var tween := create_tween()
+		tween.tween_property(_player_hp_bar, "value", clamped, 0.3)
+	if _player_hp_text:
+		_player_hp_text.text = "%d/%d" % [clamped, maximum]
 
 
 func _on_player_block_changed(new_block) -> void:
@@ -525,8 +573,14 @@ func _on_player_stats_changed() -> void:
 
 
 func _on_enemy_hp_changed(current, maximum) -> void:
-	if _enemy_hp_label:
-		_enemy_hp_label.text = "❤️ %d/%d" % [maxi(current, 0), maximum]
+	var clamped := maxi(current, 0)
+	if _enemy_hp_bar:
+		var ratio: float = float(clamped) / float(maximum)
+		_update_hp_bar_color(_enemy_hp_bar, ratio)
+		var tween := create_tween()
+		tween.tween_property(_enemy_hp_bar, "value", clamped, 0.3)
+	if _enemy_hp_text:
+		_enemy_hp_text.text = "%d/%d" % [clamped, maximum]
 
 
 func _on_enemy_block_changed(new_block) -> void:
@@ -548,8 +602,18 @@ func _on_enemy_intent_changed(intent_info: Dictionary) -> void:
 			_enemy_intent_label.text = _format_intent_text(intent_info)
 
 
+# Update HP bar fill color based on ratio (green → yellow → red).
+func _update_hp_bar_color(bar: ProgressBar, ratio: float) -> void:
+	var fill: StyleBoxFlat = bar.get_theme_stylebox("fill")
+	if ratio > 0.6:
+		fill.bg_color = Color(0.2, 0.8, 0.2)
+	elif ratio > 0.3:
+		fill.bg_color = Color(0.9, 0.7, 0.1)
+	else:
+		fill.bg_color = Color(0.9, 0.2, 0.2)
+
+
 # Format status effects as a compact string.
-# Shows only non-zero values: "⚔️2 🔻3 ❄️1"
 static func _format_status_text(entity) -> String:
 	var parts: Array = []
 	if entity.strength != 0:
@@ -562,7 +626,6 @@ static func _format_status_text(entity) -> String:
 
 
 # Format enemy intent as a compact string for display.
-# Shows move name + relevant values: "Chomp ⚔️11"
 static func _format_intent_text(intent: Dictionary) -> String:
 	var parts: Array = []
 	if intent.get("damage", 0) > 0:
@@ -572,7 +635,6 @@ static func _format_intent_text(intent: Dictionary) -> String:
 	if intent.get("strength", 0) > 0:
 		parts.append("⬆️+%d⚔️" % intent["strength"])
 	var text := " ".join(parts)
-	# Prepend move name if there's content
 	if text != "":
 		text = intent.get("name", "") + " " + text
 	return text
@@ -580,8 +642,6 @@ static func _format_intent_text(intent: Dictionary) -> String:
 
 # --- Original CGFBoard methods (kept for compatibility) ---
 
-# This function is to avoid relating the logic in the card objects
-# to a node which might not be there in another game
 func _on_FancyMovementToggle_toggled(_button_pressed) -> void:
 	cfc.set_setting('fancy_movement', $FancyMovementToggle.button_pressed)
 
@@ -592,7 +652,6 @@ func _on_OvalHandToggle_toggled(_button_pressed: bool) -> void:
 		c.reorganize_self()
 
 
-# Reshuffles all Card objects created back into the deck
 func _on_ReshuffleAllDeck_pressed() -> void:
 	reshuffle_all_in_pile(cfc.NMAP.deck)
 
@@ -605,7 +664,6 @@ func reshuffle_all_in_pile(pile: Pile = cfc.NMAP.deck):
 		if c.get_parent() != pile and c.state != Card.CardState.DECKBUILDER_GRID:
 			c.move_to(pile)
 			await get_tree().create_timer(0.1).timeout
-	# Last card in, is the top card of the pile
 	var last_card : Card = pile.get_top_card()
 	if last_card._tween and last_card._tween.is_running():
 		await last_card._tween.finished
@@ -613,12 +671,10 @@ func reshuffle_all_in_pile(pile: Pile = cfc.NMAP.deck):
 	pile.shuffle_cards()
 
 
-# Button to change focus mode
 func _on_ScalingFocusOptions_item_selected(index) -> void:
 	cfc.set_setting('focus_style', index)
 
 
-# Button to make all cards act as attachments
 func _on_EnableAttach_toggled(button_pressed: bool) -> void:
 	for c in get_tree().get_nodes_in_group("cards"):
 		if button_pressed:
