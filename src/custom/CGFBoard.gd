@@ -93,6 +93,9 @@ func _setup_combat() -> void:
 	combat_manager.connect("combat_ended", Callable(self, "_on_combat_ended"))
 	combat_manager.connect("enemy_intent_changed", Callable(self, "_on_enemy_intent_changed"))
 
+	# Connect combat signals for animations
+	combat_manager.connect("entity_damaged", Callable(self, "_on_entity_damaged"))
+
 	# Connect entity signals for UI updates
 	combat_manager.player.connect("hp_changed", Callable(self, "_on_player_hp_changed"))
 	combat_manager.player.connect("block_changed", Callable(self, "_on_player_block_changed"))
@@ -600,6 +603,41 @@ func _on_enemy_intent_changed(intent_info: Dictionary) -> void:
 			_enemy_intent_label.text = ""
 		else:
 			_enemy_intent_label.text = _format_intent_text(intent_info)
+
+
+# Spawn a floating number at the target position, rising and fading out.
+func _spawn_floating_text(text: String, pos: Vector2, color: Color) -> void:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.global_position = pos - Vector2(30, 20)
+	label.z_index = 100
+	add_child(label)
+	# Float up and fade out
+	var tween := create_tween()
+	tween.tween_property(label, "global_position:y", pos.y - 70, 0.8)\
+		.set_trans(Tween.TRANS_CIRC).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(label.queue_free)
+
+
+# Handle entity_damaged signal: spawn floating damage/heal text.
+func _on_entity_damaged(entity, amount: int) -> void:
+	var pos: Vector2
+	var color: Color
+	if entity == combat_manager.enemy and _enemy_visual:
+		pos = _enemy_visual.global_position + _enemy_visual.size / 2.0
+		color = Color(1, 0.3, 0.3)  # Red for enemy damage
+		_spawn_floating_text("-%d" % amount, pos, color)
+	elif entity == combat_manager.player and _player_visual:
+		pos = _player_visual.global_position + _player_visual.size / 2.0
+		color = Color(1, 0.8, 0.2)  # Orange for player damage
+		_spawn_floating_text("-%d" % amount, pos, color)
 
 
 # Update HP bar fill color based on ratio (green → yellow → red).

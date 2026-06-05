@@ -121,18 +121,47 @@ func can_play_card(card: Card) -> bool:
 	return current_energy >= cost
 
 
-# Play a card from hand: spend energy, execute effects, then discard.
+# Play a card from hand: spend energy, fly to target, execute effects, discard.
 func play_card(card: Card) -> void:
 	if not can_play_card(card):
 		return
 	_is_resolving = true
 	var cost: int = card.properties.get("Cost", 0)
 	spend_energy(cost)
+	# Fly card toward its target
+	await _animate_card_to_target(card)
 	# Execute card effects
 	await _resolve_card_effects(card)
 	# Move card to discard pile
 	card.move_to(cfc.NMAP.discard)
 	_is_resolving = false
+
+
+# Animate the card flying toward its target (enemy for attacks, player for others).
+func _animate_card_to_target(card: Card) -> void:
+	var card_type: String = card.properties.get("Type", "")
+	var target: Control
+	if card_type == "Attack" and board and board._enemy_visual:
+		target = board._enemy_visual
+	elif board and board._player_visual:
+		target = board._player_visual
+	else:
+		return  # No visual target, skip animation
+
+	var target_pos: Vector2 = target.global_position + target.size / 2.0
+
+	# Fly toward target
+	var tween := card.create_tween()
+	tween.tween_property(card, "global_position",
+		target_pos - card.size / 2.0, 0.25)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	await tween.finished
+
+	# Hit flash
+	var flash := card.create_tween()
+	flash.tween_property(card, "modulate", Color(2.0, 2.0, 2.0), 0.04)
+	flash.tween_property(card, "modulate", Color.WHITE, 0.12)
+	await flash.finished
 
 
 # --- Effect Resolution ---
