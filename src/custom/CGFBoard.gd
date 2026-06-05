@@ -129,16 +129,17 @@ func _create_combat_ui() -> void:
 	_enemy_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_enemy_hp_label.position = Vector2(enemy_x, 102)
 	_enemy_hp_label.size = Vector2(200, 20)
-	_enemy_hp_label.add_theme_font_size_override("font_size", 14)
+	_enemy_hp_label.add_theme_font_size_override("font_size", 16)
 	_enemy_hp_label.text = "❤️ %d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
 	add_child(_enemy_hp_label)
 
+	# Block on its own line below HP to avoid overlapping the HP text
 	_enemy_block_label = Label.new()
 	_enemy_block_label.name = "EnemyBlockLabel"
-	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_enemy_block_label.position = Vector2(enemy_x + 140, 102)
-	_enemy_block_label.size = Vector2(60, 20)
-	_enemy_block_label.add_theme_font_size_override("font_size", 14)
+	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_enemy_block_label.position = Vector2(enemy_x, 122)
+	_enemy_block_label.size = Vector2(200, 18)
+	_enemy_block_label.add_theme_font_size_override("font_size", 13)
 	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
 	_enemy_block_label.text = ""
 	add_child(_enemy_block_label)
@@ -146,7 +147,7 @@ func _create_combat_ui() -> void:
 	_enemy_status_label = Label.new()
 	_enemy_status_label.name = "EnemyStatusLabel"
 	_enemy_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_status_label.position = Vector2(enemy_x, 122)
+	_enemy_status_label.position = Vector2(enemy_x, 140)
 	_enemy_status_label.size = Vector2(200, 18)
 	_enemy_status_label.add_theme_font_size_override("font_size", 12)
 	_enemy_status_label.text = ""
@@ -154,7 +155,7 @@ func _create_combat_ui() -> void:
 
 	# --- Player stats (bottom-center, above hand area) ---
 	var player_x := viewport_size.x / 2 - 100
-	var player_y := viewport_size.y - 160
+	var player_y := viewport_size.y - 230
 
 	_player_hp_label = Label.new()
 	_player_hp_label.name = "PlayerHpLabel"
@@ -189,7 +190,7 @@ func _create_combat_ui() -> void:
 	_end_turn_button = Button.new()
 	_end_turn_button.name = "EndTurnButton"
 	_end_turn_button.text = "End Turn"
-	_end_turn_button.position = Vector2(viewport_size.x - 170, viewport_size.y - 280)
+	_end_turn_button.position = Vector2(viewport_size.x / 2 + 200, viewport_size.y - 230)
 	_end_turn_button.size = Vector2(120, 50)
 	_end_turn_button.add_theme_font_size_override("font_size", 18)
 	_end_turn_button.connect("pressed", Callable(self, "_on_EndTurn_pressed"))
@@ -204,6 +205,7 @@ func _create_combat_ui() -> void:
 func _hide_demo_buttons() -> void:
 	# Hide CGF demo/debug UI — they still exist for development but aren't shown
 	var demo_nodes := [
+		"Counters",
 		"FancyMovementToggle",
 		"EnableAttach",
 		"ScalingFocusOptions",
