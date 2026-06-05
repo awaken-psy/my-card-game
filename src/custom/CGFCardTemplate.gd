@@ -3,6 +3,17 @@ extends Card
 # CombatManager reference, set by CGFBoard during setup
 var combat_manager: Node = null
 
+# --- Hover oscillation fix ---
+# When the card is at the bottom of the hand and the mouse hovers near its
+# bottom edge, the focus animation moves the card up past the cursor. This
+# causes mouse_exited → unfocus → card drops back → mouse_entered → focus →
+# repeating in an infinite oscillation loop.
+# We fix this by tracking the card's original bounding rect when focus begins,
+# and only unfocusing when the mouse leaves that original area (not the
+# post-animation position).
+var _focus_origin_rect: Rect2 = Rect2()
+var _focus_tracking: bool = false
+
 
 func _ready() -> void:
 	super._ready()
@@ -10,6 +21,41 @@ func _ready() -> void:
 	disable_dragging_from_hand = true
 	# Prevent cards from being placed on the board
 	board_placement = BoardPlacement.NONE
+
+
+func _process(delta) -> void:
+	super._process(delta)
+	# Hover oscillation fix: check if mouse has truly left the card's
+	# original (pre-focus) position before unfocusing.
+	if _focus_tracking and state == CardState.FOCUSED_IN_HAND:
+		var mouse_pos := get_global_mouse_position()
+		if not _focus_origin_rect.has_point(mouse_pos):
+			_focus_tracking = false
+			# Mouse genuinely left the card's original area — unfocus
+			if get_parent().is_in_group("hands"):
+				for c in get_parent().get_all_cards():
+					c.interruptTweening()
+					c.reorganize_self()
+	elif _focus_tracking:
+		_focus_tracking = false
+
+
+# Store the card's original rect before the focus animation moves it.
+func _on_Card_mouse_entered() -> void:
+	_focus_tracking = false
+	if state == CardState.IN_HAND:
+		# Record original bounding rect before focus animation shifts the card
+		_focus_origin_rect = Rect2(global_position, $Control.size).grow(4)
+	super._on_Card_mouse_entered()
+
+
+# Delay unfocus: the focus animation may have moved the card away from the
+# cursor. Let _process decide when the mouse has truly left the original area.
+func _on_Card_mouse_exited() -> void:
+	if state == CardState.FOCUSED_IN_HAND:
+		_focus_tracking = true
+		return
+	super._on_Card_mouse_exited()
 
 
 # STS-style click-to-play override.
