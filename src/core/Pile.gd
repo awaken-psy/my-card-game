@@ -479,6 +479,7 @@ func shuffle_cards(animate = true) -> void:
 			_add_tween_position(position,init_position,0.2)
 			_add_tween_rotation(rotation_degrees,0,0.2)
 			_tween.play()
+			await _tween.finished
 		z_index = 0
 	else:
 		# if we're already running another animation, just shuffle
