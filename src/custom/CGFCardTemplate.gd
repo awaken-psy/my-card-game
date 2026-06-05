@@ -30,6 +30,15 @@ func _apply_play_mode() -> void:
 		board_placement = BoardPlacement.NONE
 
 
+# Catch mouse release at input level (before gui_input) to ensure
+# drag drop is always detected, even when Controls obscure the card.
+func _input(event: InputEvent) -> void:
+	if state == CardState.DRAGGED and event is InputEventMouseButton:
+		if event.get_button_index() == 1 and not event.is_pressed():
+			_handle_drag_drop()
+			get_viewport().set_input_as_handled()
+			return
+
 func _process(delta) -> void:
 	super._process(delta)
 	# Hover oscillation fix: check if mouse has truly left the card's
