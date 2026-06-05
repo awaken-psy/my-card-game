@@ -24,6 +24,9 @@ var turn_number: int = 0
 var is_player_turn: bool = false
 var enemy_ai: RefCounted
 
+# "victory" or "defeat" — set when combat ends.
+var combat_result: String = ""
+
 # True while a card's effects are being resolved (prevents double-play).
 var _is_resolving: bool = false
 
@@ -46,6 +49,7 @@ func start_combat() -> void:
 	turn_number = 0
 	current_energy = 0
 	is_player_turn = false
+	combat_result = ""
 	# Create enemy AI
 	enemy_ai = _EnemyAI.new()
 	if not cfc.are_all_nodes_mapped:
@@ -83,9 +87,13 @@ func end_turn() -> void:
 	await discard_hand()
 	# Enemy turn
 	await _enemy_turn()
-	# Continue to next player turn if combat hasn't ended
-	if not enemy.is_dead() and not player.is_dead():
-		start_turn()
+	# After enemy turn, check if combat should end
+	# (M5 fix: player dying during enemy turn now emits combat_ended)
+	if enemy.is_dead() or player.is_dead():
+		combat_result = "victory" if enemy.is_dead() else "defeat"
+		emit_signal("combat_ended")
+		return
+	start_turn()
 
 
 # Execute the enemy's pre-chosen intent.
@@ -203,9 +211,11 @@ func _resolve_effect(effect_str: String) -> void:
 func _check_combat_end() -> void:
 	if enemy.is_dead():
 		is_player_turn = false
+		combat_result = "victory"
 		emit_signal("combat_ended")
-	if player.is_dead():
+	elif player.is_dead():
 		is_player_turn = false
+		combat_result = "defeat"
 		emit_signal("combat_ended")
 
 

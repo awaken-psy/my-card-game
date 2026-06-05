@@ -19,6 +19,7 @@ var _enemy_hp_label: Label
 var _enemy_block_label: Label
 var _enemy_status_label: Label
 var _enemy_intent_label: Label
+var _reward_screen: Control
 
 
 # Called when the node enters the scene tree for the first time.
@@ -309,11 +310,53 @@ func _on_combat_ended() -> void:
 	# Clear enemy intent display
 	if _enemy_intent_label:
 		_enemy_intent_label.text = ""
-	# TODO: M7 will show victory/game-over screen
-	if combat_manager.enemy.is_dead():
-		push_warning("Combat ended: enemy defeated!")
-	elif combat_manager.player.is_dead():
-		push_warning("Combat ended: player defeated!")
+	# Show reward or game over screen based on result
+	if combat_manager.combat_result == "victory":
+		_show_reward_screen()
+	else:
+		_show_game_over_screen()
+
+
+# Show the reward selection screen (victory).
+func _show_reward_screen() -> void:
+	_reward_screen = Control.new()
+	_reward_screen.set_script(load("res://src/custom/RewardScreen.gd"))
+	_reward_screen.setup(Vector2(get_viewport().size))
+	_reward_screen.connect("reward_selected", Callable(self, "_on_reward_card_selected"))
+	_reward_screen.connect("reward_skipped", Callable(self, "_on_reward_skipped"))
+	_reward_screen.connect("return_to_menu", Callable(self, "_on_return_to_menu"))
+	add_child(_reward_screen)
+	_reward_screen.show_victory_rewards()
+
+
+# Show the game over screen (defeat).
+func _show_game_over_screen() -> void:
+	_reward_screen = Control.new()
+	_reward_screen.set_script(load("res://src/custom/RewardScreen.gd"))
+	_reward_screen.setup(Vector2(get_viewport().size))
+	_reward_screen.connect("return_to_menu", Callable(self, "_on_return_to_menu"))
+	add_child(_reward_screen)
+	_reward_screen.show_game_over()
+
+
+# Add the selected reward card to the deck pile.
+func _on_reward_card_selected(card_name: String) -> void:
+	var card = cfc.instance_card(card_name)
+	inject_combat_manager(card)
+	cfc.NMAP.deck.add_child(card)
+	card._determine_idle_state()
+	push_warning("Reward: %s added to deck" % card_name)
+
+
+# Player skipped the reward.
+func _on_reward_skipped() -> void:
+	push_warning("Reward skipped")
+
+
+# Return to the main menu scene.
+func _on_return_to_menu() -> void:
+	cfc.quit_game()
+	get_tree().change_scene_to_file("res://src/custom/MainMenu.tscn")
 
 
 # After energy changes, re-check costs for all cards in hand
