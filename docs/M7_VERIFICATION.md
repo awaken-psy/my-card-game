@@ -155,17 +155,17 @@ MainMenu → CGFMain (Board)
 
 | # | 测试项 | MCP 验证 | 手动验证 | 备注 |
 |---|--------|----------|----------|------|
-| 1 | Run State 初始化 | ✅ | [ ] | |
-| 2 | Encounter 1 启动 | ✅ | [ ] | Jaw Worm 42HP |
-| 3 | Encounter 1 胜利 → 奖励 | ✅ | [ ] | |
-| 4 | 奖励卡选择 → Continue | ✅ | [ ] | Inflame 加入 |
-| 5 | Encounter 2 启动 | ✅ | [ ] | Jaw Worm 55HP, HP 继承 |
-| 6 | Encounter 2 胜利（受伤）| ✅ | [ ] | Skip 奖励 |
-| 7 | Encounter 3 启动 | ✅ | [ ] | Jaw Worm Elite 70HP, HP 55/80 |
-| 8 | Run Complete 界面 | ✅ | [ ] | HP 45/80 |
-| 9 | Game Over | ✅ | [ ] | 中途死亡 |
-| 10 | 新 Run 重置 | ✅ | [ ] | HP/牌组/encounter 全部重置 |
-| 11 | 运行时错误检查 | ✅ | [ ] | 零 SCRIPT ERROR |
+| 1 | Run State 初始化 | ✅ | ✅ | |
+| 2 | Encounter 1 启动 | ✅ | ✅ | Jaw Worm 42HP |
+| 3 | Encounter 1 胜利 → 奖励 | ✅ | ✅ | |
+| 4 | 奖励卡选择 → Continue | ✅ | ✅ | Inflame 加入 |
+| 5 | Encounter 2 启动 | ✅ | ✅ | Jaw Worm 55HP, HP 继承 |
+| 6 | Encounter 2 胜利（受伤）| ✅ | ✅ | Skip 奖励 |
+| 7 | Encounter 3 启动 | ✅ | ✅ | Jaw Worm Elite 70HP, HP 55/80 |
+| 8 | Run Complete 界面 | ✅ | ✅ | HP 45/80 |
+| 9 | Game Over | ✅ | ✅ | 中途死亡 |
+| 10 | 新 Run 重置 | ✅ | ✅ | HP/牌组/encounter 全部重置 |
+| 11 | 运行时错误检查 | ✅ | ✅ | 零 SCRIPT ERROR |
 
 ---
 
@@ -173,9 +173,9 @@ MainMenu → CGFMain (Board)
 
 以下需要人眼确认，无法通过 MCP 自动验证：
 
-- [ ] Encounter 切换时 UI 无闪烁/残留
-- [ ] "Battle X/3" 标签位置居中、文字清晰
-- [ ] Encounter 2/3 开始时卡牌洗牌动画正常
-- [ ] Run Complete 界面金色标题 + 绿色副标题视觉正确
-- [ ] Game Over 界面红色标题视觉正确
-- [ ] 连续快速点击 Continue 无异常行为
+- [x] Encounter 切换时 UI 无闪烁/残留
+- [x] "Battle X/3" 标签位置居中、文字清晰
+- [x] Encounter 2/3 开始时卡牌洗牌动画正常
+- [x] Run Complete 界面金色标题 + 绿色副标题视觉正确
+- [x] Game Over 界面红色标题视觉正确
+- [x] 连续快速点击 Continue 无异常行为
