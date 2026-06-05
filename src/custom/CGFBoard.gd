@@ -124,7 +124,7 @@ func _cleanup_combat() -> void:
 			combat_manager.disconnect("combat_ended", Callable(self, "_on_combat_ended"))
 
 	# Remove all cards from deck, hand, discard
-	var all_cards := cfc.NMAP.hand.get_all_cards().duplicate()
+	var all_cards: Array = cfc.NMAP.hand.get_all_cards().duplicate()
 	all_cards.append_array(cfc.NMAP.discard.get_all_cards().duplicate())
 	all_cards.append_array(cfc.NMAP.deck.get_all_cards().duplicate())
 	for card in all_cards:
