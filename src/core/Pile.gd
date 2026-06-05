@@ -59,7 +59,7 @@ func _ready():
 	connect("shuffle_completed", 
 		Callable(cfc.signal_propagator, 
 			"_on_signal_received")\
-			.bind(["shuffle_completed",{"source": name}])
+			.bind("shuffle_completed", {"source": name})
 			)
 
 func _process(_delta) -> void:
