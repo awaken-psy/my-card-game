@@ -140,20 +140,12 @@ func play_card(card: Card) -> void:
 # Animate the card being played: pulse scale + flash, then shrink away.
 # Does NOT modify global_position (conflicts with framework hand management).
 func _animate_card_to_target(card: Card) -> void:
-	# Pulse up + white flash
-	var tween := card.create_tween().set_parallel(true)
-	tween.tween_property(card, "scale", Vector2(1.15, 1.15), 0.1)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "modulate", Color(2.0, 2.0, 2.0), 0.08)
+	# Simple flash effect: white pulse on the card (does not touch position/scale).
+	# Uses board tween to avoid framework card._tween conflicts.
+	var tween := board.create_tween()
+	tween.tween_property(card, "modulate", Color(2.0, 2.0, 2.0), 0.06)
+	tween.tween_property(card, "modulate", Color.WHITE, 0.14)
 	await tween.finished
-	# Shrink + fade + restore color
-	var shrink := card.create_tween().set_parallel(true)
-	shrink.tween_property(card, "scale", Vector2(0.3, 0.3), 0.15)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	shrink.tween_property(card, "modulate", Color.WHITE, 0.15)
-	await shrink.finished
-	# Reset scale for framework move_to
-	card.scale = Vector2.ONE
 
 
 # --- Effect Resolution ---
