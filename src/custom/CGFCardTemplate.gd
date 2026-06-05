@@ -142,8 +142,8 @@ func _is_valid_drag_drop() -> bool:
 		var board = cfc.NMAP.board
 		if not board:
 			return false
-		var drop_rect := board.get_enemy_drop_rect()
-		var card_center := global_position + $Control.size / 2.0
+		var drop_rect: Rect2 = board.get_enemy_drop_rect()
+		var card_center: Vector2 = global_position + $Control.size / 2.0
 		return drop_rect.has_point(card_center)
 	else:
 		# Defense/Power cards can be dropped anywhere
