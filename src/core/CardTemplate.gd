@@ -1455,7 +1455,7 @@ func move_to(targetHost: Node,
 # Returns a [ScriptingEngine] object but that it not statically typed
 # As it causes the parser think there's a cyclic dependency.
 func execute_scripts(
-		trigger_card: Card = self,
+		trigger_card: Node = self,
 		trigger: String = "manual",
 		trigger_details: Dictionary = {},
 		only_cost_check := false):

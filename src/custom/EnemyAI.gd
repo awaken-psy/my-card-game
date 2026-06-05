@@ -57,7 +57,7 @@ func execute_intent(enemy, player, combat_manager) -> void:
 
 # Calculate enemy damage with strength, weak, and vulnerable modifiers.
 func _calculate_enemy_damage(base: int, attacker, defender) -> int:
-	var damage := base + attacker.strength
+	var damage: int = base + attacker.strength
 	# Weak: outgoing damage × 0.75
 	if attacker.weak > 0:
 		damage = int(damage * 0.75)

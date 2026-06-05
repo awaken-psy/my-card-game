@@ -66,7 +66,7 @@ func start_turn() -> void:
 	current_energy = MAX_ENERGY
 	emit_signal("energy_changed", current_energy, MAX_ENERGY)
 	# Choose enemy intent for this round (displayed during player's turn)
-	var intent := enemy_ai.choose_intent()
+	var intent: Dictionary = enemy_ai.choose_intent()
 	emit_signal("enemy_intent_changed", intent)
 	emit_signal("turn_started", turn_number)
 	# Draw cards one by one with animation delay
