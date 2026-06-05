@@ -5,6 +5,18 @@ var combat_manager: Node
 var _energy_label: Label
 var _turn_label: Label
 var _end_turn_button: Button
+# Player stat labels
+var _player_hp_label: Label
+
+# Preload combat entity script (class_name removed due to load-order issues)
+const _CombatEntity = preload("res://src/custom/CombatEntity.gd")
+var _player_block_label: Label
+var _player_status_label: Label
+# Enemy stat labels
+var _enemy_name_label: Label
+var _enemy_hp_label: Label
+var _enemy_block_label: Label
+var _enemy_status_label: Label
 
 
 # Called when the node enters the scene tree for the first time.
@@ -44,10 +56,24 @@ func _setup_combat() -> void:
 	combat_manager.board = self
 	add_child(combat_manager)
 
+	# Initialize combat entities (before UI so signals can be connected)
+	combat_manager.player = _CombatEntity.new("Player", 80)
+	combat_manager.enemy = _CombatEntity.new("Jaw Worm", 42)
+
 	# Connect combat signals
 	combat_manager.connect("energy_changed", Callable(self, "_on_energy_changed"))
 	combat_manager.connect("turn_started", Callable(self, "_on_turn_started"))
 	combat_manager.connect("turn_ended", Callable(self, "_on_turn_ended"))
+	combat_manager.connect("combat_ended", Callable(self, "_on_combat_ended"))
+
+	# Connect entity signals for UI updates
+	combat_manager.player.connect("hp_changed", Callable(self, "_on_player_hp_changed"))
+	combat_manager.player.connect("block_changed", Callable(self, "_on_player_block_changed"))
+	combat_manager.player.connect("stats_changed", Callable(self, "_on_player_stats_changed"))
+	combat_manager.enemy.connect("hp_changed", Callable(self, "_on_enemy_hp_changed"))
+	combat_manager.enemy.connect("block_changed", Callable(self, "_on_enemy_block_changed"))
+	combat_manager.enemy.connect("stats_changed", Callable(self, "_on_enemy_stats_changed"))
+
 	# Auto-inject combat_manager into all newly instanced cards
 	cfc.connect("new_card_instanced", Callable(self, "inject_combat_manager"))
 
@@ -85,6 +111,79 @@ func _create_combat_ui() -> void:
 	_turn_label.add_theme_font_size_override("font_size", 16)
 	_turn_label.text = "Turn 0"
 	add_child(_turn_label)
+
+	# --- Enemy stats (top-center, below turn label) ---
+	var enemy_x := viewport_size.x / 2 - 100
+	_enemy_name_label = Label.new()
+	_enemy_name_label.name = "EnemyNameLabel"
+	_enemy_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_enemy_name_label.position = Vector2(enemy_x, 82)
+	_enemy_name_label.size = Vector2(200, 20)
+	_enemy_name_label.add_theme_font_size_override("font_size", 16)
+	_enemy_name_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
+	_enemy_name_label.text = combat_manager.enemy.display_name
+	add_child(_enemy_name_label)
+
+	_enemy_hp_label = Label.new()
+	_enemy_hp_label.name = "EnemyHpLabel"
+	_enemy_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_enemy_hp_label.position = Vector2(enemy_x, 102)
+	_enemy_hp_label.size = Vector2(200, 20)
+	_enemy_hp_label.add_theme_font_size_override("font_size", 14)
+	_enemy_hp_label.text = "❤️ %d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
+	add_child(_enemy_hp_label)
+
+	_enemy_block_label = Label.new()
+	_enemy_block_label.name = "EnemyBlockLabel"
+	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_enemy_block_label.position = Vector2(enemy_x + 140, 102)
+	_enemy_block_label.size = Vector2(60, 20)
+	_enemy_block_label.add_theme_font_size_override("font_size", 14)
+	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
+	_enemy_block_label.text = ""
+	add_child(_enemy_block_label)
+
+	_enemy_status_label = Label.new()
+	_enemy_status_label.name = "EnemyStatusLabel"
+	_enemy_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_enemy_status_label.position = Vector2(enemy_x, 122)
+	_enemy_status_label.size = Vector2(200, 18)
+	_enemy_status_label.add_theme_font_size_override("font_size", 12)
+	_enemy_status_label.text = ""
+	add_child(_enemy_status_label)
+
+	# --- Player stats (bottom-center, above hand area) ---
+	var player_x := viewport_size.x / 2 - 100
+	var player_y := viewport_size.y - 160
+
+	_player_hp_label = Label.new()
+	_player_hp_label.name = "PlayerHpLabel"
+	_player_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_hp_label.position = Vector2(player_x, player_y)
+	_player_hp_label.size = Vector2(200, 22)
+	_player_hp_label.add_theme_font_size_override("font_size", 16)
+	_player_hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
+	_player_hp_label.text = "❤️ %d/%d" % [combat_manager.player.hp, combat_manager.player.max_hp]
+	add_child(_player_hp_label)
+
+	_player_block_label = Label.new()
+	_player_block_label.name = "PlayerBlockLabel"
+	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_player_block_label.position = Vector2(player_x + 140, player_y)
+	_player_block_label.size = Vector2(60, 22)
+	_player_block_label.add_theme_font_size_override("font_size", 16)
+	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
+	_player_block_label.text = ""
+	add_child(_player_block_label)
+
+	_player_status_label = Label.new()
+	_player_status_label.name = "PlayerStatusLabel"
+	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_status_label.position = Vector2(player_x, player_y + 22)
+	_player_status_label.size = Vector2(200, 18)
+	_player_status_label.add_theme_font_size_override("font_size", 12)
+	_player_status_label.text = ""
+	add_child(_player_status_label)
 
 	# End Turn button (bottom-right, near discard pile)
 	_end_turn_button = Button.new()
@@ -149,6 +248,16 @@ func _on_EndTurn_pressed() -> void:
 		combat_manager.end_turn()
 
 
+func _on_combat_ended() -> void:
+	if _end_turn_button:
+		_end_turn_button.disabled = true
+	# TODO: M7 will show victory/game-over screen
+	if combat_manager.enemy.is_dead():
+		push_warning("Combat ended: enemy defeated!")
+	elif combat_manager.player.is_dead():
+		push_warning("Combat ended: player defeated!")
+
+
 # After energy changes, re-check costs for all cards in hand
 # so the card border color reflects affordability.
 func _notify_hand_cards_cost_update() -> void:
@@ -166,6 +275,53 @@ func _notify_hand_cards_cost_update() -> void:
 func inject_combat_manager(card: Card) -> void:
 	if combat_manager and is_instance_valid(card):
 		card.combat_manager = combat_manager
+
+
+# --- Entity UI update handlers ---
+
+func _on_player_hp_changed(current, maximum) -> void:
+	if _player_hp_label:
+		_player_hp_label.text = "❤️ %d/%d" % [maxi(current, 0), maximum]
+
+
+func _on_player_block_changed(new_block) -> void:
+	if _player_block_label:
+		_player_block_label.text = "🛡️ %d" % new_block if new_block > 0 else ""
+
+
+func _on_player_stats_changed() -> void:
+	if _player_status_label and combat_manager:
+		var e = combat_manager.player
+		_player_status_label.text = _format_status_text(e)
+
+
+func _on_enemy_hp_changed(current, maximum) -> void:
+	if _enemy_hp_label:
+		_enemy_hp_label.text = "❤️ %d/%d" % [maxi(current, 0), maximum]
+
+
+func _on_enemy_block_changed(new_block) -> void:
+	if _enemy_block_label:
+		_enemy_block_label.text = "🛡️ %d" % new_block if new_block > 0 else ""
+
+
+func _on_enemy_stats_changed() -> void:
+	if _enemy_status_label and combat_manager:
+		var e = combat_manager.enemy
+		_enemy_status_label.text = _format_status_text(e)
+
+
+# Format status effects as a compact string.
+# Shows only non-zero values: "⚔️2 🔻3 ❄️1"
+static func _format_status_text(entity) -> String:
+	var parts: Array = []
+	if entity.strength != 0:
+		parts.append("⚔️%d" % entity.strength)
+	if entity.vulnerable > 0:
+		parts.append("🔻%d" % entity.vulnerable)
+	if entity.weak > 0:
+		parts.append("❄️%d" % entity.weak)
+	return "  ".join(parts)
 
 
 # --- Original CGFBoard methods (kept for compatibility) ---

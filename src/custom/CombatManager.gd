@@ -1,13 +1,16 @@
-# Manages the STS-style combat flow: turns, energy, draw/discard cycle.
+# Manages the STS-style combat flow: turns, energy, draw/discard cycle,
+# and card effect resolution (M4).
 #
-# Lifecycle: start_combat() → [start_turn() ↔ end_turn()] loop
+# Lifecycle: start_combat() -> [start_turn() <-> end_turn()] loop
 # Cards are played via click (see CGFCardTemplate.gd override).
+# Effects are resolved in order: Block -> Damage -> Special effects.
 extends Node
 
 signal turn_started(turn_number)
 signal turn_ended
 signal energy_changed(current_energy, max_energy)
 signal combat_ended
+signal entity_damaged(entity, amount)
 
 const MAX_ENERGY := 3
 const DRAW_PER_TURN := 5
@@ -16,8 +19,15 @@ var current_energy: int = 0
 var turn_number: int = 0
 var is_player_turn: bool = false
 
+# True while a card's effects are being resolved (prevents double-play).
+var _is_resolving: bool = false
+
 # Reference to the board node (set by CGFBoard)
 var board: Node
+
+# Combat entities (created by CGFBoard._setup_combat before start_combat)
+var player
+var enemy
 
 
 func _ready() -> void:
@@ -25,7 +35,8 @@ func _ready() -> void:
 
 
 # Begin a new combat encounter.
-# Expects deck to already contain all starting cards.
+# Expects deck to already contain all starting cards,
+# and player/enemy entities to be already created.
 func start_combat() -> void:
 	turn_number = 0
 	current_energy = 0
@@ -41,6 +52,10 @@ func start_combat() -> void:
 func start_turn() -> void:
 	turn_number += 1
 	is_player_turn = true
+	# Reset block and tick status at start of turn
+	player.reset_block()
+	player.tick_status()
+	# Refill energy
 	current_energy = MAX_ENERGY
 	emit_signal("energy_changed", current_energy, MAX_ENERGY)
 	emit_signal("turn_started", turn_number)
@@ -62,29 +77,122 @@ func end_turn() -> void:
 	start_turn()
 
 
-# Check if a card can be played (enough energy + player turn).
+# Check if a card can be played (enough energy + player turn + not resolving).
 func can_play_card(card: Card) -> bool:
 	if not is_player_turn:
+		return false
+	if _is_resolving:
 		return false
 	var cost: int = card.properties.get("Cost", 0)
 	return current_energy >= cost
 
 
-# Play a card from hand: spend energy, then move to discard.
+# Play a card from hand: spend energy, execute effects, then discard.
 func play_card(card: Card) -> void:
 	if not can_play_card(card):
 		return
+	_is_resolving = true
 	var cost: int = card.properties.get("Cost", 0)
 	spend_energy(cost)
-	# TODO: M4 will execute card effects here before discard
+	# Execute card effects
+	await _resolve_card_effects(card)
 	# Move card to discard pile
 	card.move_to(cfc.NMAP.discard)
+	_is_resolving = false
+
+
+# --- Effect Resolution ---
+
+
+# Resolve all effects of a card in order: Block -> Damage -> Special effects.
+func _resolve_card_effects(card: Card) -> void:
+	# 1. Block
+	var block_amount: int = card.properties.get("Block", 0)
+	if block_amount > 0:
+		player.gain_block(block_amount)
+
+	# 2. Damage
+	var base_damage: int = card.properties.get("Damage", 0)
+	if base_damage > 0:
+		var effects: Array = card.properties.get("_effects", [])
+		var damage := _calculate_damage(base_damage, player, enemy, effects)
+		enemy.take_damage(damage)
+		emit_signal("entity_damaged", enemy, damage)
+
+	# 3. Special effects from _effects array
+	var effects: Array = card.properties.get("_effects", [])
+	for effect_str in effects:
+		await _resolve_effect(effect_str)
+
+	# Check if combat should end
+	_check_combat_end()
+
+
+# Calculate final damage considering strength, weak, and vulnerable.
+func _calculate_damage(base: int, attacker, defender, effects: Array) -> int:
+	# Apply strength bonus
+	var strength_bonus: int = attacker.strength
+	# Heavy Blow (strength_scaling) gets double strength bonus
+	if "strength_scaling" in effects:
+		strength_bonus *= 2
+	var damage := base + strength_bonus
+
+	# Weak: outgoing damage * 0.75
+	if attacker.weak > 0:
+		damage = int(damage * 0.75)
+
+	# Vulnerable: incoming damage * 1.5
+	if defender.vulnerable > 0:
+		damage = int(damage * 1.5)
+
+	return maxi(damage, 0)
+
+
+# Parse and execute a single effect string from _effects array.
+func _resolve_effect(effect_str: String) -> void:
+	var parts := effect_str.split(":")
+	var effect_name: String = parts[0]
+	var value: int = int(parts[1]) if parts.size() > 1 and parts[1].is_valid_int() else 0
+
+	match effect_name:
+		"draw":
+			await draw_cards(value)
+		"strength":
+			player.add_strength(value)
+		"vulnerable":
+			enemy.add_vulnerable(value)
+		"gain_energy":
+			current_energy += value
+			emit_signal("energy_changed", current_energy, MAX_ENERGY)
+		"lose_hp":
+			player.lose_hp(value)
+			emit_signal("entity_damaged", player, value)
+		"strength_scaling":
+			pass  # Already handled in _calculate_damage
+		_:
+			push_warning("CombatManager: Unknown effect '%s'" % effect_name)
+
+
+# Check if combat should end (enemy or player dead).
+func _check_combat_end() -> void:
+	if enemy.is_dead():
+		is_player_turn = false
+		emit_signal("combat_ended")
+	if player.is_dead():
+		is_player_turn = false
+		emit_signal("combat_ended")
+
+
+# --- Energy ---
 
 
 # Spend energy and emit signal.
 func spend_energy(amount: int) -> void:
 	current_energy = max(0, current_energy - amount)
 	emit_signal("energy_changed", current_energy, MAX_ENERGY)
+
+
+# --- Drawing & Discarding ---
 
 
 # Draw N cards from deck to hand, reshuffling discard if deck is empty.
