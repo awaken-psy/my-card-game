@@ -283,7 +283,7 @@ func _create_combat_ui() -> void:
 	_enemy_hp_text = Label.new()
 	_enemy_hp_text.name = "EnemyHpText"
 	_enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 100)
+	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 110)
 	_enemy_hp_text.size = Vector2(200, 18)
 	_enemy_hp_text.add_theme_font_size_override("font_size", 13)
 	_enemy_hp_text.text = "%d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
@@ -363,7 +363,7 @@ func _create_combat_ui() -> void:
 	_player_hp_text = Label.new()
 	_player_hp_text.name = "PlayerHpText"
 	_player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_hp_text.position = Vector2(player_x, player_cy + 100)
+	_player_hp_text.position = Vector2(player_x, player_cy + 110)
 	_player_hp_text.size = Vector2(200, 18)
 	_player_hp_text.add_theme_font_size_override("font_size", 13)
 	_player_hp_text.text = "%d/%d" % [combat_manager.player.hp, combat_manager.player.max_hp]
@@ -402,6 +402,12 @@ func _create_combat_ui() -> void:
 	_end_turn_button.disabled = true
 	add_child(_end_turn_button)
 	_combat_ui_nodes.append(_end_turn_button)
+
+	# All non-interactive UI elements must pass through mouse events,
+	# otherwise they consume gui_input and prevent card drag release detection.
+	for node in _combat_ui_nodes:
+		if node is Control and node != _end_turn_button:
+			node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_hide_demo_buttons()
 
