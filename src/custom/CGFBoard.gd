@@ -32,6 +32,12 @@ func _ready() -> void:
 
 # Set up the combat system and UI.
 func _setup_combat() -> void:
+	# Force game settings for STS-style gameplay
+	cfc.set_setting("hand_use_oval_shape", true)
+	cfc.set_setting("fancy_movement", true)
+	$OvalHandToggle.button_pressed = true
+	$FancyMovementToggle.button_pressed = true
+
 	# Create CombatManager
 	combat_manager = Node.new()
 	combat_manager.set_script(load("res://src/custom/CombatManager.gd"))

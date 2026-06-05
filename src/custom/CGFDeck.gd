@@ -7,8 +7,13 @@ signal draw_card(deck)
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super._ready()
+	# Use instant shuffle to avoid the framework's shuffle return tween bug
+	# where the pile gets stuck at the shuffle animation midpoint position.
+	# The CORGI/SPLASH animations move the pile toward viewport center,
+	# but the return tween is fire-and-forget and unreliable.
+	shuffle_style = CFConst.ShuffleStyle.SNAP
 	if not cfc.are_all_nodes_mapped:
-		await cfc.all_nodes_mapped
+		await cfc.are_all_nodes_mapped
 	# Keep the draw_card signal connected for compatibility
 	# (CombatManager calls hand.draw_card() directly instead)
 	# warning-ignore:return_value_discarded

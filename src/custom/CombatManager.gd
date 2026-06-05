@@ -32,10 +32,8 @@ func start_combat() -> void:
 	is_player_turn = false
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
-	# Shuffle the deck at combat start
-	cfc.NMAP.deck.shuffle_cards()
-	# Wait for shuffle animation to finish
-	await get_tree().create_timer(1.0).timeout
+	# Shuffle the deck (SNAP style avoids the framework's return tween bug)
+	await cfc.NMAP.deck.shuffle_cards()
 	start_turn()
 
 
@@ -122,6 +120,4 @@ func _reshuffle_discard_into_deck() -> void:
 			card.move_to(cfc.NMAP.deck)
 	# Wait for move animations to complete
 	await get_tree().create_timer(0.3).timeout
-	cfc.NMAP.deck.shuffle_cards()
-	# Wait for shuffle animation
-	await get_tree().create_timer(1.0).timeout
+	await cfc.NMAP.deck.shuffle_cards()
