@@ -298,9 +298,9 @@ func _create_combat_ui() -> void:
 	_enemy_block_label = Label.new()
 	_enemy_block_label.name = "EnemyBlockLabel"
 	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_block_label.position = Vector2(enemy_x, enemy_cy + 114)
-	_enemy_block_label.size = Vector2(200, 18)
-	_enemy_block_label.add_theme_font_size_override("font_size", 13)
+	_enemy_block_label.position = Vector2(enemy_x + 60, enemy_cy + 108)
+	_enemy_block_label.size = Vector2(200, 22)
+	_enemy_block_label.add_theme_font_size_override("font_size", 16)
 	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
 	_enemy_block_label.text = ""
 	add_child(_enemy_block_label)
@@ -381,7 +381,7 @@ func _create_combat_ui() -> void:
 	_player_block_label = Label.new()
 	_player_block_label.name = "PlayerBlockLabel"
 	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_block_label.position = Vector2(player_x, player_cy + 114)
+	_player_block_label.position = Vector2(player_x + 60, player_cy + 108)
 	_player_block_label.size = Vector2(200, 22)
 	_player_block_label.add_theme_font_size_override("font_size", 16)
 	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
@@ -625,6 +625,9 @@ func _animate_defeat() -> void:
 		tween.tween_property(self, "position", orig_pos + offset, 0.04)
 	tween.tween_property(self, "position", orig_pos, 0.06)
 	await tween.finished
+	# Remove defeat overlay immediately (queue_free defers to frame end)
+	overlay.visible = false
+	overlay.queue_free()
 
 
 # Show the reward selection screen (non-final victory).

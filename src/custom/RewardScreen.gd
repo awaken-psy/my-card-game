@@ -30,6 +30,7 @@ func setup(viewport_size: Vector2) -> void:
 
 
 func show_victory_rewards(_is_final_encounter: bool = false) -> void:
+	cfc.game_paused = true
 	_clear_ui()
 	_build_overlay()
 	_build_reward_list()
@@ -37,6 +38,7 @@ func show_victory_rewards(_is_final_encounter: bool = false) -> void:
 
 
 func show_run_complete(remaining_hp: int, max_hp: int) -> void:
+	cfc.game_paused = true
 	_clear_ui()
 	_build_overlay()
 	_build_run_complete_screen(remaining_hp, max_hp)
@@ -44,6 +46,7 @@ func show_run_complete(remaining_hp: int, max_hp: int) -> void:
 
 
 func show_game_over() -> void:
+	cfc.game_paused = true
 	_clear_ui()
 	_build_overlay()
 	_build_result_screen(false, "")
@@ -222,7 +225,7 @@ func _build_card_selection() -> void:
 
 	# Create 3 real card instances
 	_reward_card_names = _pick_3_rewards()
-	var card_scale := 0.75
+	var card_scale := 1.5
 	var card_width: float = _CFConst.CARD_SIZE.x * card_scale
 	var card_height: float = _CFConst.CARD_SIZE.y * card_scale
 	var gap: float = 30.0
@@ -358,10 +361,11 @@ func _select_card(card_name: String) -> void:
 func _on_confirm_card() -> void:
 	if _selected_card_name == "":
 		return
-	emit_signal("reward_selected", _selected_card_name)
+	var chosen := _selected_card_name
+	emit_signal("reward_selected", chosen)
 	_clear_ui()
 	_build_overlay()
-	_build_result_screen(true, _selected_card_name)
+	_build_result_screen(true, chosen)
 	visible = true
 
 
@@ -488,10 +492,12 @@ func _on_skip_pressed() -> void:
 
 
 func _on_continue_pressed() -> void:
+	cfc.game_paused = false
 	emit_signal("continue_run")
 
 
 func _on_return_pressed() -> void:
+	cfc.game_paused = false
 	emit_signal("return_to_menu")
 
 

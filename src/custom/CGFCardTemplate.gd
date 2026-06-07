@@ -61,6 +61,8 @@ func _process(delta) -> void:
 
 # Store the card's original rect before the focus animation moves it.
 func _on_Card_mouse_entered() -> void:
+	if cfc.game_paused:
+		return
 	_focus_tracking = false
 	if state == CardState.IN_HAND:
 		# Record original bounding rect before focus animation shifts the card

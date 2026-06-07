@@ -140,6 +140,8 @@ func play_card(card: Card) -> void:
 	# Move card to discard pile
 	card.move_to(cfc.NMAP.discard)
 	_is_resolving = false
+	# Re-evaluate hand card visuals after resolution lock is released
+	board._notify_hand_cards_cost_update()
 
 
 # Animate the card being played: pulse scale + flash, then shrink away.
@@ -266,6 +268,8 @@ func draw_cards(count: int) -> void:
 	for c in cfc.NMAP.hand.get_all_cards():
 		c.interruptTweening()
 		c.reorganize_self()
+	# Refresh card visuals (energy gray-out) after draw completes
+	board._notify_hand_cards_cost_update()
 
 
 # Discard all cards currently in hand.

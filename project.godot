@@ -21,14 +21,6 @@ config/icon="res://icon.png"
 
 [autoload]
 
-
-
-
-
-
-
-
-
 cfc="*res://src/core/CFControl.gd"
 
 [debug]
@@ -39,7 +31,8 @@ gdscript/warnings/native_method_override=1
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
-window/stretch/mode="disabled"
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
 
 [editor_plugins]
 

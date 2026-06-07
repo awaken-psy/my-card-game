@@ -234,10 +234,12 @@ func _input(event):
 
 # Takes care to resize the child viewport, when the main viewport is resized
 func _on_Viewport_size_changed() -> void:
-	if is_instance_valid(get_viewport()):
-		var vp_size: Vector2 = get_viewport().size
-		$SubViewportContainer.size = vp_size
-		$SubViewportContainer/SubViewport.size = Vector2i(int(vp_size.x), int(vp_size.y))
+	# With canvas_items stretch mode, the canvas scaling handles visual resizing.
+	# We only need to manually resize the SubViewport when stretch is disabled
+	# (i.e. no automatic scaling is applied).
+	if ProjectSettings.get_setting("display/window/stretch/mode") == "disabled" \
+			and is_instance_valid(get_viewport()):
+		$SubViewportContainer.size = get_viewport().size
 #		for c in _previously_focused_cards.values().duplicate():
 #			c.queue_free()
 
