@@ -406,6 +406,7 @@ func _create_combat_ui() -> void:
 	_end_turn_button.position = Vector2(viewport_size.x / 2 + 300, viewport_size.y - 260)
 	_end_turn_button.size = Vector2(120, 50)
 	_end_turn_button.add_theme_font_size_override("font_size", 18)
+	_style_end_turn_button(_end_turn_button)
 	_end_turn_button.connect("pressed", Callable(self, "_on_EndTurn_pressed"))
 	_end_turn_button.disabled = true
 	add_child(_end_turn_button)
@@ -474,6 +475,36 @@ func _on_turn_started(turn_num: int) -> void:
 func _on_turn_ended() -> void:
 	if _end_turn_button:
 		_end_turn_button.disabled = true
+
+
+func _style_end_turn_button(btn: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.15, 0.15, 0.2)
+	normal.border_color = Color(0.7, 0.6, 0.3)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(8)
+	normal.content_margin_left = 10
+	normal.content_margin_right = 10
+	normal.content_margin_top = 8
+	normal.content_margin_bottom = 8
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.2, 0.2, 0.28)
+	hover.border_color = Color(1, 0.85, 0.3)
+	hover.set_border_width_all(3)
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color(0.1, 0.1, 0.15)
+	pressed.border_color = Color(0.5, 0.4, 0.2)
+	var disabled := normal.duplicate()
+	disabled.bg_color = Color(0.08, 0.08, 0.08, 0.5)
+	disabled.border_color = Color(0.3, 0.3, 0.3)
+	disabled.set_border_width_all(1)
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("pressed", pressed)
+	btn.add_theme_stylebox_override("disabled", disabled)
+	btn.add_theme_color_override("font_color", Color.WHITE)
+	btn.add_theme_color_override("font_hover_color", Color(1, 0.85, 0.3))
+	btn.add_theme_color_override("font_disabled_color", Color(0.4, 0.4, 0.4))
 
 
 func _on_EndTurn_pressed() -> void:
@@ -660,8 +691,22 @@ func _notify_hand_cards_cost_update() -> void:
 		return
 	for card in cfc.NMAP.hand.get_all_cards():
 		if is_instance_valid(card):
+			_update_card_playable_visual(card)
 			if card.state == Card.CardState.FOCUSED_IN_HAND:
-				card.set_focus(true, card.check_play_costs())
+					card.set_focus(true, card.check_play_costs())
+
+
+# Update a card's visual to reflect whether it can be played.
+func _update_card_playable_visual(card: Card) -> void:
+	if not is_instance_valid(card):
+		return
+	if not combat_manager or not combat_manager.is_player_turn:
+		card.modulate = Color.WHITE
+		return
+	if combat_manager.can_play_card(card):
+		card.modulate = Color.WHITE
+	else:
+		card.modulate = Color(0.5, 0.5, 0.5, 1.0)
 
 
 # Inject combat_manager reference into newly instanced cards.

@@ -1,14 +1,9 @@
 # Post-combat reward screen for My Card Game.
 #
-# Victory (non-final): shows 3 random reward cards, player picks one or skips,
-#                       then sees a "Continue" button to proceed to next encounter.
-# Victory (final):      shows run complete screen with remaining HP.
-# Defeat:               shows Game Over message.
-#
-# Both non-run states end with a "Return to Main Menu" button.
-#
-# TODO (M8): Replace text-based card panels with real card instances for
-#            richer visuals.
+# Two-phase STS-style reward flow:
+#   Phase A: Reward list (card reward, gold placeholder, etc.)
+#   Phase B: Card selection (3 real Card instances via cfc.instance_card)
+#   Phase C: Result screen (victory/defeat/run complete)
 extends Control
 
 signal reward_selected(card_name: String)
@@ -17,8 +12,11 @@ signal continue_run
 signal return_to_menu
 
 const _SetDefinition = preload("res://src/custom/cards/sets/SetDefinition_MyCardGame.gd")
+const _CFConst = preload("res://src/custom/CFConst.gd")
 
 var _viewport_size: Vector2 = Vector2(1280, 720)
+var _selected_card_name: String = ""
+var _reward_card_names: Array = []
 
 
 # Called by CGFBoard after adding this node to the tree.
@@ -31,16 +29,13 @@ func setup(viewport_size: Vector2) -> void:
 # --- Public API (called by CGFBoard) ---
 
 
-# Show the reward selection screen (victory path).
-# is_final_encounter: if true, the continue button text changes accordingly.
-func show_victory_rewards(is_final_encounter: bool = false) -> void:
+func show_victory_rewards(_is_final_encounter: bool = false) -> void:
 	_clear_ui()
 	_build_overlay()
-	_build_reward_selection(is_final_encounter)
+	_build_reward_list()
 	visible = true
 
 
-# Show the run complete screen (all 3 encounters won).
 func show_run_complete(remaining_hp: int, max_hp: int) -> void:
 	_clear_ui()
 	_build_overlay()
@@ -48,7 +43,6 @@ func show_run_complete(remaining_hp: int, max_hp: int) -> void:
 	visible = true
 
 
-# Show the game over screen (defeat path).
 func show_game_over() -> void:
 	_clear_ui()
 	_build_overlay()
@@ -60,6 +54,8 @@ func show_game_over() -> void:
 
 
 func _clear_ui() -> void:
+	_selected_card_name = ""
+	_reward_card_names = []
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -75,54 +71,314 @@ func _build_overlay() -> void:
 	add_child(overlay)
 
 
-func _build_reward_selection(is_final_encounter: bool) -> void:
+# --- Phase A: Reward List ---
+
+
+func _build_reward_list() -> void:
 	var center_x: float = _viewport_size.x / 2.0
-	var start_y: float = 60.0
+	var center_y: float = _viewport_size.y / 2.0
 
 	# Title
 	var title := Label.new()
 	title.name = "RewardTitle"
-	title.text = "★ Choose a Reward ★"
+	title.text = "★ 战斗奖励 ★"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, start_y)
-	title.size = Vector2(400, 40)
-	title.add_theme_font_size_override("font_size", 28)
+	title.position = Vector2(center_x - 200, center_y - 170)
+	title.size = Vector2(400, 50)
+	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	title.add_theme_constant_override("outline_size", 2)
 	add_child(title)
 
-	# Pick 3 random reward cards (non-duplicate)
-	var reward_cards: Array = _pick_3_rewards()
-	var panel_width: float = 170.0
-	var panel_height: float = 240.0
-	var gap: float = 40.0
-	var total_width: float = 3 * panel_width + 2 * gap
-	var start_x: float = center_x - total_width / 2.0
-	var cards_y: float = start_y + 70.0
+	# Reward entries container
+	var entries_vbox := VBoxContainer.new()
+	entries_vbox.name = "RewardEntries"
+	entries_vbox.position = Vector2(center_x - 160, center_y - 90)
+	entries_vbox.size = Vector2(320, 200)
+	entries_vbox.add_theme_constant_override("separation", 14)
 
-	for i in range(reward_cards.size()):
-		var card_name: String = reward_cards[i]
-		var card_data: Dictionary = _SetDefinition.CARDS[card_name]
-		var panel: Control = _create_card_panel(card_name, card_data)
-		panel.position = Vector2(start_x + i * (panel_width + gap), cards_y)
-		panel.size = Vector2(panel_width, panel_height)
-		add_child(panel)
+	# Card reward entry (clickable)
+	var card_entry := _create_list_entry("🃏  卡牌奖励", "选择一张卡牌加入牌组", true)
+	card_entry.name = "CardRewardEntry"
+	card_entry.connect("pressed", Callable(self, "_on_card_reward_clicked"))
+	entries_vbox.add_child(card_entry)
+
+	# Gold entry (static placeholder for M11)
+	var gold_entry := _create_list_entry("💰  金币 +30", "（未来版本）", false)
+	gold_entry.name = "GoldEntry"
+	entries_vbox.add_child(gold_entry)
+
+	add_child(entries_vbox)
 
 	# Skip button
 	var skip_button := Button.new()
 	skip_button.name = "SkipButton"
-	skip_button.text = "Skip Reward"
-	skip_button.position = Vector2(center_x - 80, cards_y + panel_height + 30)
-	skip_button.size = Vector2(160, 45)
+	skip_button.text = "跳过所有奖励"
+	skip_button.position = Vector2(center_x - 100, center_y + 150)
+	skip_button.size = Vector2(200, 45)
 	skip_button.add_theme_font_size_override("font_size", 16)
+	_style_button_secondary(skip_button)
 	skip_button.connect("pressed", Callable(self, "_on_skip_pressed"))
 	add_child(skip_button)
+
+	# Stagger entry animation (#19)
+	_animate_entries(entries_vbox, center_y)
+
+
+func _create_list_entry(title_text: String, subtitle_text: String, clickable: bool) -> Control:
+	if clickable:
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(320, 70)
+		var normal := StyleBoxFlat.new()
+		normal.bg_color = Color(0.15, 0.15, 0.25)
+		normal.border_color = Color(0.7, 0.6, 0.3)
+		normal.set_border_width_all(2)
+		normal.set_corner_radius_all(10)
+		normal.content_margin_left = 20
+		normal.content_margin_right = 20
+		normal.content_margin_top = 12
+		normal.content_margin_bottom = 12
+		var hover := normal.duplicate()
+		hover.bg_color = Color(0.22, 0.22, 0.38)
+		hover.border_color = Color(1, 0.85, 0.3)
+		hover.set_border_width_all(3)
+		var pressed := normal.duplicate()
+		pressed.bg_color = Color(0.1, 0.1, 0.18)
+		pressed.border_color = Color(0.5, 0.4, 0.2)
+		btn.add_theme_stylebox_override("normal", normal)
+		btn.add_theme_stylebox_override("hover", hover)
+		btn.add_theme_stylebox_override("pressed", pressed)
+		btn.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+		btn.add_theme_color_override("font_hover_color", Color(1, 0.95, 0.5))
+		# Two-line text
+		btn.text = "%s\n[color=gray]%s[/color]" % [title_text, subtitle_text]
+		# Fallback: plain text (BBCode not supported on Button by default)
+		btn.text = title_text
+		btn.add_theme_font_size_override("font_size", 20)
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		return btn
+	else:
+		var panel := Panel.new()
+		panel.custom_minimum_size = Vector2(320, 70)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.1, 0.1, 0.15, 0.7)
+		style.border_color = Color(0.35, 0.35, 0.35)
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(10)
+		style.content_margin_left = 20
+		style.content_margin_right = 20
+		style.content_margin_top = 12
+		style.content_margin_bottom = 12
+		panel.add_theme_stylebox_override("panel", style)
+		var vbox := VBoxContainer.new()
+		vbox.anchor_right = 1.0
+		vbox.anchor_bottom = 1.0
+		vbox.offset_left = 20
+		vbox.offset_right = -20
+		vbox.offset_top = 12
+		vbox.offset_bottom = -12
+		vbox.add_theme_constant_override("separation", 2)
+		var t := Label.new()
+		t.text = title_text
+		t.add_theme_font_size_override("font_size", 18)
+		t.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		vbox.add_child(t)
+		var s := Label.new()
+		s.text = subtitle_text
+		s.add_theme_font_size_override("font_size", 12)
+		s.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
+		vbox.add_child(s)
+		panel.add_child(vbox)
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		return panel
+
+
+func _on_card_reward_clicked() -> void:
+	_clear_ui()
+	_build_overlay()
+	_build_card_selection()
+	visible = true
+
+
+# --- Phase B: Card Selection (real Card instances) ---
+
+
+func _build_card_selection() -> void:
+	var center_x: float = _viewport_size.x / 2.0
+
+	# Title
+	var title := Label.new()
+	title.name = "CardSelectTitle"
+	title.text = "★ 选择一张卡牌 ★"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(center_x - 200, 50)
+	title.size = Vector2(400, 50)
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	title.add_theme_constant_override("outline_size", 2)
+	add_child(title)
+
+	# Create 3 real card instances
+	_reward_card_names = _pick_3_rewards()
+	var card_scale := 0.75
+	var card_width: float = _CFConst.CARD_SIZE.x * card_scale
+	var card_height: float = _CFConst.CARD_SIZE.y * card_scale
+	var gap: float = 30.0
+	var total_width: float = _reward_card_names.size() * card_width + (_reward_card_names.size() - 1) * gap
+	var start_x: float = center_x - total_width / 2.0
+	var target_y: float = 130.0
+
+	var card_nodes: Array = []
+	var target_positions: Array = []
+
+	for i in range(_reward_card_names.size()):
+		var card_name: String = _reward_card_names[i]
+		var card_x: float = start_x + i * (card_width + gap)
+
+		# Create real Card instance
+		var card = cfc.instance_card(card_name)
+		card.name = "RewardCard_" + card_name
+		card.z_index = 5
+		# Prevent framework drag/focus interactions
+		card.state = Card.CardState.VIEWPORT_FOCUS
+		card.set_is_faceup(true, true)
+		# Hide manipulation buttons
+		var mb = card.get_node_or_null("Control/ManipulationButtons")
+		if mb:
+			mb.visible = false
+		add_child(card)
+		# Position after adding to tree (Node2D in Control parent)
+		card.scale = Vector2(card_scale, card_scale)
+		card.position = Vector2(card_x, _viewport_size.y + 50) # start below screen
+		card_nodes.append(card)
+		target_positions.append(Vector2(card_x, target_y))
+
+		# Selection highlight border (initially invisible)
+		var highlight := Panel.new()
+		highlight.name = "Highlight_" + card_name
+		highlight.position = Vector2(card_x - 4, target_y - 4)
+		highlight.size = Vector2(card_width + 8, card_height + 8)
+		var h_style := StyleBoxFlat.new()
+		h_style.bg_color = Color(0, 0, 0, 0)
+		h_style.border_color = Color(1, 0.85, 0.2, 0)
+		h_style.set_border_width_all(4)
+		h_style.set_corner_radius_all(8)
+		highlight.add_theme_stylebox_override("panel", h_style)
+		highlight.z_index = 6
+		highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(highlight)
+
+		# Clickable overlay (captures all mouse events before card can)
+		var click_area := Control.new()
+		click_area.name = "ClickArea_" + card_name
+		click_area.position = Vector2(card_x, target_y)
+		click_area.size = Vector2(card_width, card_height)
+		click_area.z_index = 10
+		click_area.mouse_filter = Control.MOUSE_FILTER_STOP
+		click_area.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		click_area.connect("gui_input", Callable(self, "_on_reward_card_gui_input").bind(card_name))
+		click_area.connect("mouse_entered", Callable(self, "_on_reward_card_hover").bind(card_name, true))
+		click_area.connect("mouse_exited", Callable(self, "_on_reward_card_hover").bind(card_name, false))
+		add_child(click_area)
+
+	# Stagger entry animation (#19): cards slide up from below
+	for i in range(card_nodes.size()):
+		var card = card_nodes[i]
+		var target = target_positions[i]
+		var tween := create_tween()
+		tween.tween_property(card, "position", target, 0.5)\
+			.set_delay(0.15 * i)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+	# Bottom buttons
+	var btn_y: float = target_y + card_height + 30
+
+	var confirm_btn := Button.new()
+	confirm_btn.name = "ConfirmButton"
+	confirm_btn.text = "确认选择"
+	confirm_btn.position = Vector2(center_x - 70, btn_y)
+	confirm_btn.size = Vector2(140, 45)
+	confirm_btn.add_theme_font_size_override("font_size", 16)
+	confirm_btn.disabled = true
+	_style_button_primary(confirm_btn)
+	confirm_btn.connect("pressed", Callable(self, "_on_confirm_card"))
+	add_child(confirm_btn)
+
+	var back_btn := Button.new()
+	back_btn.name = "BackButton"
+	back_btn.text = "返回"
+	back_btn.position = Vector2(center_x - 50, btn_y + 55)
+	back_btn.size = Vector2(100, 35)
+	back_btn.add_theme_font_size_override("font_size", 14)
+	_style_button_secondary(back_btn)
+	back_btn.connect("pressed", Callable(self, "_on_card_selection_back"))
+	add_child(back_btn)
+
+
+func _on_reward_card_gui_input(event: InputEvent, card_name: String) -> void:
+	if event is InputEventMouseButton \
+			and event.button_index == MOUSE_BUTTON_LEFT \
+			and not event.is_pressed():
+		_select_card(card_name)
+
+
+func _on_reward_card_hover(card_name: String, entering: bool) -> void:
+	var card = get_node_or_null("RewardCard_" + card_name)
+	if not card:
+		return
+	if entering and _selected_card_name != card_name:
+		card.modulate = Color(1.15, 1.15, 1.15)
+	elif _selected_card_name != card_name:
+		card.modulate = Color.WHITE
+
+
+func _select_card(card_name: String) -> void:
+	_selected_card_name = card_name
+	# Update highlights and dimming
+	for cn in _reward_card_names:
+		var highlight = get_node_or_null("Highlight_" + cn)
+		var card = get_node_or_null("RewardCard_" + cn)
+		if not highlight or not card:
+			continue
+		var style: StyleBoxFlat = highlight.get_theme_stylebox("panel")
+		if cn == card_name:
+			style.border_color = Color(1, 0.85, 0.2)
+			card.modulate = Color.WHITE
+		else:
+			style.border_color = Color(0.5, 0.5, 0.5, 0.5)
+			card.modulate = Color(0.5, 0.5, 0.5)
+	# Enable confirm button
+	var confirm = get_node_or_null("ConfirmButton")
+	if confirm:
+		confirm.disabled = false
+
+
+func _on_confirm_card() -> void:
+	if _selected_card_name == "":
+		return
+	emit_signal("reward_selected", _selected_card_name)
+	_clear_ui()
+	_build_overlay()
+	_build_result_screen(true, _selected_card_name)
+	visible = true
+
+
+func _on_card_selection_back() -> void:
+	_clear_ui()
+	_build_overlay()
+	_build_reward_list()
+	visible = true
+
+
+# --- Phase C: Result Screen ---
 
 
 func _build_result_screen(is_victory: bool, selected_card: String) -> void:
 	var center_x: float = _viewport_size.x / 2.0
 	var center_y: float = _viewport_size.y / 2.0
 
-	# Title
 	var title := Label.new()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.position = Vector2(center_x - 200, center_y - 100)
@@ -130,7 +386,6 @@ func _build_result_screen(is_victory: bool, selected_card: String) -> void:
 	title.add_theme_font_size_override("font_size", 36)
 	add_child(title)
 
-	# Subtitle
 	var subtitle := Label.new()
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.position = Vector2(center_x - 250, center_y - 40)
@@ -142,30 +397,30 @@ func _build_result_screen(is_victory: bool, selected_card: String) -> void:
 		title.text = "Victory!"
 		title.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
 		if selected_card != "":
-			subtitle.text = "%s added to your deck!" % selected_card
+			subtitle.text = "%s 已加入牌组!" % selected_card
 		else:
-			subtitle.text = "Reward skipped."
+			subtitle.text = "奖励已跳过。"
 
-		# Continue button (proceeds to next encounter or run complete)
 		var continue_button := Button.new()
 		continue_button.text = "Continue"
 		continue_button.position = Vector2(center_x - 120, center_y + 20)
 		continue_button.size = Vector2(240, 50)
 		continue_button.add_theme_font_size_override("font_size", 18)
+		_style_button_primary(continue_button)
 		continue_button.connect("pressed", Callable(self, "_on_continue_pressed"))
 		add_child(continue_button)
 	else:
 		title.text = "Game Over"
 		title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-		subtitle.text = "You have been defeated."
+		subtitle.text = "你已被击败。"
 		subtitle.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 
-		# Return to Main Menu button
 		var return_button := Button.new()
-		return_button.text = "Return to Main Menu"
+		return_button.text = "返回主菜单"
 		return_button.position = Vector2(center_x - 120, center_y + 20)
 		return_button.size = Vector2(240, 50)
 		return_button.add_theme_font_size_override("font_size", 18)
+		_style_button_secondary(return_button)
 		return_button.connect("pressed", Callable(self, "_on_return_pressed"))
 		add_child(return_button)
 
@@ -174,7 +429,6 @@ func _build_run_complete_screen(remaining_hp: int, max_hp: int) -> void:
 	var center_x: float = _viewport_size.x / 2.0
 	var center_y: float = _viewport_size.y / 2.0
 
-	# Title
 	var title := Label.new()
 	title.text = "🎉 Run Complete! 🎉"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -184,9 +438,8 @@ func _build_run_complete_screen(remaining_hp: int, max_hp: int) -> void:
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	add_child(title)
 
-	# Subtitle
 	var subtitle := Label.new()
-	subtitle.text = "You defeated all 3 encounters!"
+	subtitle.text = "你击败了全部 %d 个敌人!" % _SetDefinition.CARDS.size() # placeholder
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.position = Vector2(center_x - 200, center_y - 25)
 	subtitle.size = Vector2(400, 30)
@@ -194,9 +447,8 @@ func _build_run_complete_screen(remaining_hp: int, max_hp: int) -> void:
 	subtitle.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
 	add_child(subtitle)
 
-	# HP display
 	var hp_label := Label.new()
-	hp_label.text = "Remaining HP: %d/%d" % [remaining_hp, max_hp]
+	hp_label.text = "剩余 HP: %d/%d" % [remaining_hp, max_hp]
 	hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hp_label.position = Vector2(center_x - 150, center_y + 20)
 	hp_label.size = Vector2(300, 30)
@@ -204,105 +456,19 @@ func _build_run_complete_screen(remaining_hp: int, max_hp: int) -> void:
 	hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	add_child(hp_label)
 
-	# Return to Main Menu button
 	var return_button := Button.new()
-	return_button.text = "Return to Main Menu"
+	return_button.text = "返回主菜单"
 	return_button.position = Vector2(center_x - 120, center_y + 70)
 	return_button.size = Vector2(240, 50)
 	return_button.add_theme_font_size_override("font_size", 18)
+	_style_button_secondary(return_button)
 	return_button.connect("pressed", Callable(self, "_on_return_pressed"))
 	add_child(return_button)
-
-
-# Create a text-based card panel for the reward selection.
-# TODO (M8): Replace with real card instance rendering.
-func _create_card_panel(card_name: String, card_data: Dictionary) -> Control:
-	var panel := Panel.new()
-	panel.name = "RewardCard_" + card_name
-
-	# Styling: dark background with gold border
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.12, 0.18)
-	style.border_color = Color(0.7, 0.6, 0.3)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
-	panel.add_theme_stylebox_override("panel", style)
-
-	# Content layout
-	var vbox := VBoxContainer.new()
-	vbox.anchor_right = 1.0
-	vbox.anchor_bottom = 1.0
-	vbox.offset_left = 10
-	vbox.offset_right = -10
-	vbox.offset_top = 10
-	vbox.offset_bottom = -10
-	vbox.add_theme_constant_override("separation", 6)
-
-	# Card name (colored by type)
-	var name_label := Label.new()
-	name_label.text = card_name
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 16)
-	name_label.add_theme_color_override("font_color", _get_type_color(card_data.get("Type", "")))
-	vbox.add_child(name_label)
-
-	# Separator
-	var sep := HSeparator.new()
-	sep.add_theme_stylebox_override("separator", StyleBoxEmpty.new())
-	vbox.add_child(sep)
-
-	# Cost
-	var cost_label := Label.new()
-	cost_label.text = "Cost: %d ⚡" % card_data.get("Cost", 0)
-	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cost_label.add_theme_font_size_override("font_size", 14)
-	vbox.add_child(cost_label)
-
-	# Type badge
-	var type_label := Label.new()
-	type_label.text = "[%s]" % card_data.get("Type", "")
-	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	type_label.add_theme_font_size_override("font_size", 12)
-	type_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	vbox.add_child(type_label)
-
-	# Abilities description
-	var desc_label := Label.new()
-	desc_label.text = card_data.get("Abilities", "")
-	desc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_label.add_theme_font_size_override("font_size", 12)
-	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(desc_label)
-
-	# Rarity badge
-	var rarity: String = card_data.get("_rarity", "")
-	var rarity_label := Label.new()
-	rarity_label.text = "[%s]" % rarity
-	rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rarity_label.add_theme_font_size_override("font_size", 11)
-	rarity_label.add_theme_color_override("font_color", _get_rarity_color(rarity))
-	vbox.add_child(rarity_label)
-
-	panel.add_child(vbox)
-
-	# Make clickable
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	panel.connect("gui_input", Callable(self, "_on_card_panel_gui_input").bind(card_name))
-	panel.connect("mouse_entered", Callable(self, "_on_card_panel_hover").bind(panel, true))
-	panel.connect("mouse_exited", Callable(self, "_on_card_panel_hover").bind(panel, false))
-
-	return panel
 
 
 # --- Card Selection Logic ---
 
 
-# Pick 3 random non-duplicate cards from the reward pool (non-Starter).
 func _pick_3_rewards() -> Array:
 	var reward_pool: Array = []
 	for card_name in _SetDefinition.CARDS:
@@ -312,29 +478,6 @@ func _pick_3_rewards() -> Array:
 	reward_pool.shuffle()
 	var count: int = mini(3, reward_pool.size())
 	return reward_pool.slice(0, count)
-
-
-func _on_card_panel_gui_input(event: InputEvent, card_name: String) -> void:
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and not event.is_pressed():
-			_on_card_selected(card_name)
-
-
-func _on_card_panel_hover(panel: Control, entering: bool) -> void:
-	var style: StyleBoxFlat = panel.get_theme_stylebox("panel")
-	if entering:
-		style.border_color = Color(1, 0.85, 0.3)
-		style.set_border_width_all(3)
-	else:
-		style.border_color = Color(0.7, 0.6, 0.3)
-		style.set_border_width_all(2)
-
-
-func _on_card_selected(card_name: String) -> void:
-	emit_signal("reward_selected", card_name)
-	_clear_ui()
-	_build_overlay()
-	_build_result_screen(true, card_name)
 
 
 func _on_skip_pressed() -> void:
@@ -352,28 +495,84 @@ func _on_return_pressed() -> void:
 	emit_signal("return_to_menu")
 
 
-# --- Helpers ---
+# --- Entry Animation Helper ---
 
 
-static func _get_type_color(card_type: String) -> Color:
-	match card_type:
-		"Attack":
-			return Color(1, 0.4, 0.4)
-		"Skill":
-			return Color(0.4, 0.6, 1.0)
-		"Power":
-			return Color(0.8, 0.5, 1.0)
-		_:
-			return Color.WHITE
+func _animate_entries(container: VBoxContainer, center_y: float) -> void:
+	var target_y: float = container.position.y
+	# Start below screen
+	container.position.y = _viewport_size.y + 50
+	# Tween to target
+	var tween := create_tween()
+	tween.tween_property(container, "position:y", target_y, 0.5)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# Also animate skip button
+	var skip = get_node_or_null("SkipButton")
+	if skip:
+		var skip_target_y: float = skip.position.y
+		skip.position.y = _viewport_size.y + 50
+		tween.parallel().tween_property(skip, "position:y", skip_target_y, 0.5)\
+			.set_delay(0.15)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
-static func _get_rarity_color(rarity: String) -> Color:
-	match rarity:
-		"Common":
-			return Color(0.7, 0.7, 0.7)
-		"Uncommon":
-			return Color(0.3, 0.8, 0.3)
-		"Rare":
-			return Color(1.0, 0.7, 0.2)
-		_:
-			return Color(0.5, 0.5, 0.5)
+# --- Button Styling ---
+
+
+func _style_button_primary(btn: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.15, 0.15, 0.25)
+	normal.border_color = Color(0.7, 0.6, 0.3)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(8)
+	normal.content_margin_left = 12
+	normal.content_margin_right = 12
+	normal.content_margin_top = 8
+	normal.content_margin_bottom = 8
+
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.22, 0.22, 0.38)
+	hover.border_color = Color(1, 0.85, 0.3)
+	hover.set_border_width_all(3)
+
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color(0.1, 0.1, 0.18)
+	pressed.border_color = Color(0.5, 0.4, 0.2)
+
+	var disabled := normal.duplicate()
+	disabled.bg_color = Color(0.08, 0.08, 0.12, 0.5)
+	disabled.border_color = Color(0.3, 0.3, 0.3)
+	disabled.set_border_width_all(1)
+
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("pressed", pressed)
+	btn.add_theme_stylebox_override("disabled", disabled)
+	btn.add_theme_color_override("font_color", Color.WHITE)
+	btn.add_theme_color_override("font_hover_color", Color(1, 0.85, 0.3))
+	btn.add_theme_color_override("font_disabled_color", Color(0.4, 0.4, 0.4))
+
+
+func _style_button_secondary(btn: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.12, 0.12, 0.18)
+	normal.border_color = Color(0.5, 0.5, 0.5)
+	normal.set_border_width_all(1)
+	normal.set_corner_radius_all(6)
+	normal.content_margin_left = 10
+	normal.content_margin_right = 10
+	normal.content_margin_top = 6
+	normal.content_margin_bottom = 6
+
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.18, 0.18, 0.28)
+	hover.border_color = Color(0.8, 0.8, 0.8)
+
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color(0.08, 0.08, 0.12)
+
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("pressed", pressed)
+	btn.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	btn.add_theme_color_override("font_hover_color", Color.WHITE)

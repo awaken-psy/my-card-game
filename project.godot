@@ -22,6 +22,8 @@ config/icon="res://icon.png"
 [autoload]
 
 
+
+
 cfc="*res://src/core/CFControl.gd"
 
 [debug]
