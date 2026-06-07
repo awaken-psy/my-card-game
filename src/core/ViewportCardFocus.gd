@@ -234,8 +234,10 @@ func _input(event):
 
 # Takes care to resize the child viewport, when the main viewport is resized
 func _on_Viewport_size_changed() -> void:
-	if ProjectSettings.get("display/window/stretch/mode") == "disabled" and is_instance_valid(get_viewport()):
-		$SubViewportContainer.size = get_viewport().size
+	if is_instance_valid(get_viewport()):
+		var vp_size: Vector2 = get_viewport().size
+		$SubViewportContainer.size = vp_size
+		$SubViewportContainer/SubViewport.size = Vector2i(int(vp_size.x), int(vp_size.y))
 #		for c in _previously_focused_cards.values().duplicate():
 #			c.queue_free()
 

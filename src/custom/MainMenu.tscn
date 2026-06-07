@@ -1,8 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://cbsklevordoo0"]
+[gd_scene format=3 uid="uid://cbsklevordoo0"]
 
 [ext_resource type="Theme" uid="uid://b50sjum3qm447" path="res://themes/darktheme/darktheme.theme" id="1"]
-[ext_resource type="FontFile" uid="uid://kqgxsr0dp74l" path="res://themes/darktheme/fonts/Bangers/Bangers-Regular.ttf" id="2"]
-[ext_resource type="Script" uid="uid://dnveh4pivn43c" path="res://src/custom/MainMenu.gd" id="3"]
+[ext_resource type="FontFile" uid="uid://dlle01liev120" path="res://themes/darktheme/fonts/Bangers/Bangers-Regular.ttf" id="2"]
+[ext_resource type="Script" uid="uid://c4iwngkndrccc" path="res://src/custom/MainMenu.gd" id="3"]
 [ext_resource type="PackedScene" uid="uid://caaf25j8jf2kd" path="res://src/custom/CGFDeckbuilder/CGFCardLibrary.tscn" id="4_6xxet"]
 [ext_resource type="PackedScene" uid="uid://b11xuhluxj23k" path="res://src/custom/CGFDeckbuilder/CGFDeckBuilder.tscn" id="5"]
 
@@ -11,6 +11,15 @@ bg_color = Color(0.145098, 0.145098, 0.145098, 1)
 
 [sub_resource type="FontFile" id="2"]
 fallbacks = Array[Font]([ExtResource("2")])
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
 cache/0/16/0/ascent = 0.0
 cache/0/16/0/descent = 0.0
 cache/0/16/0/underline_position = 0.0
@@ -548,7 +557,7 @@ cache/0/108/0/underline_position = 0.0
 cache/0/108/0/underline_thickness = 0.0
 cache/0/108/0/scale = 1.0
 
-[node name="Menu" type="Panel"]
+[node name="Menu" type="Panel" unique_id=24402306]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -557,39 +566,34 @@ grow_vertical = 2
 theme = ExtResource("1")
 script = ExtResource("3")
 
-[node name="DeckBuilder" parent="." instance=ExtResource("5")]
+[node name="DeckBuilder" parent="." unique_id=1332034654 instance=ExtResource("5")]
 layout_mode = 1
 size_flags_horizontal = 1
 size_flags_vertical = 1
 theme_override_styles/panel = SubResource("1")
 
-[node name="CardLibrary" parent="." instance=ExtResource("4_6xxet")]
+[node name="CardLibrary" parent="." unique_id=443538816 instance=ExtResource("4_6xxet")]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
-[node name="MainMenu" type="MarginContainer" parent="."]
+[node name="MainMenu" type="MarginContainer" parent="." unique_id=1778878328]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="ColorRect" type="ColorRect" parent="MainMenu"]
+[node name="ColorRect" type="ColorRect" parent="MainMenu" unique_id=808732597]
 layout_mode = 2
 color = Color(0.0705882, 0.0705882, 0.0705882, 1)
 
-[node name="VBox" type="VBoxContainer" parent="MainMenu"]
+[node name="VBox" type="VBoxContainer" parent="MainMenu" unique_id=226019299]
 layout_mode = 2
 
-[node name="Margin" type="MarginContainer" parent="MainMenu/VBox"]
+[node name="Margin" type="MarginContainer" parent="MainMenu/VBox" unique_id=617174949]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/margin_top = 90
 
-[node name="Label" type="Label" parent="MainMenu/VBox/Margin"]
+[node name="Label" type="Label" parent="MainMenu/VBox/Margin" unique_id=998129640]
 layout_mode = 2
 theme_override_fonts/font = SubResource("2")
 theme_override_font_sizes/font_size = 108
@@ -597,36 +601,36 @@ text = "Godot
 Card Game Framework"
 horizontal_alignment = 1
 
-[node name="Center" type="CenterContainer" parent="MainMenu/VBox"]
+[node name="Center" type="CenterContainer" parent="MainMenu/VBox" unique_id=1057734106]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="VButtons" type="VBoxContainer" parent="MainMenu/VBox/Center"]
+[node name="VButtons" type="VBoxContainer" parent="MainMenu/VBox/Center" unique_id=1199794187]
 custom_minimum_size = Vector2(192, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SinglePlayerDemo" type="Button" parent="MainMenu/VBox/Center/VButtons"]
+[node name="SinglePlayerDemo" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=1288547837]
 layout_mode = 2
 text = "Single Player Demo"
 
-[node name="Multiplayer" type="Button" parent="MainMenu/VBox/Center/VButtons"]
+[node name="Multiplayer" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=556460916]
 layout_mode = 2
 text = "Multiplayer Demo"
 
-[node name="Deckbuilder" type="Button" parent="MainMenu/VBox/Center/VButtons"]
+[node name="Deckbuilder" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=744650050]
 layout_mode = 2
 text = "Deck Builder"
 
-[node name="CardLibrary" type="Button" parent="MainMenu/VBox/Center/VButtons"]
+[node name="CardLibrary" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=262836234]
 layout_mode = 2
 text = "Card Library"
 
-[node name="GUT" type="Button" parent="MainMenu/VBox/Center/VButtons"]
+[node name="GUT" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=1440521310]
 visible = false
 layout_mode = 2
 text = "Tests"
 
-[node name="Exit" type="Button" parent="MainMenu/VBox/Center/VButtons"]
+[node name="Exit" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=1930866145]
 layout_mode = 2
 text = "Exit"

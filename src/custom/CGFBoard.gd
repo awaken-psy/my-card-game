@@ -283,9 +283,12 @@ func _create_combat_ui() -> void:
 	_enemy_hp_text = Label.new()
 	_enemy_hp_text.name = "EnemyHpText"
 	_enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 110)
-	_enemy_hp_text.size = Vector2(200, 18)
-	_enemy_hp_text.add_theme_font_size_override("font_size", 13)
+	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 108)
+	_enemy_hp_text.size = Vector2(200, 22)
+	_enemy_hp_text.add_theme_font_size_override("font_size", 16)
+	_enemy_hp_text.add_theme_color_override("font_color", Color.WHITE)
+	_enemy_hp_text.add_theme_color_override("font_outline_color", Color.BLACK)
+	_enemy_hp_text.add_theme_constant_override("outline_size", 2)
 	_enemy_hp_text.text = "%d/%d" % [combat_manager.enemy.hp, combat_manager.enemy.max_hp]
 	add_child(_enemy_hp_text)
 	_combat_ui_nodes.append(_enemy_hp_text)
@@ -363,9 +366,12 @@ func _create_combat_ui() -> void:
 	_player_hp_text = Label.new()
 	_player_hp_text.name = "PlayerHpText"
 	_player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_hp_text.position = Vector2(player_x, player_cy + 110)
-	_player_hp_text.size = Vector2(200, 18)
-	_player_hp_text.add_theme_font_size_override("font_size", 13)
+	_player_hp_text.position = Vector2(player_x, player_cy + 108)
+	_player_hp_text.size = Vector2(200, 22)
+	_player_hp_text.add_theme_font_size_override("font_size", 16)
+	_player_hp_text.add_theme_color_override("font_color", Color.WHITE)
+	_player_hp_text.add_theme_color_override("font_outline_color", Color.BLACK)
+	_player_hp_text.add_theme_constant_override("outline_size", 2)
 	_player_hp_text.text = "%d/%d" % [combat_manager.player.hp, combat_manager.player.max_hp]
 	add_child(_player_hp_text)
 	_combat_ui_nodes.append(_player_hp_text)
@@ -648,7 +654,7 @@ func _on_entity_damaged(entity, amount: int) -> void:
 		_spawn_floating_text("-%d" % amount, pos, color)
 	elif entity == combat_manager.player and _player_visual:
 		pos = _player_visual.global_position + _player_visual.size / 2.0
-		color = Color(1, 0.8, 0.2)  # Orange for player damage
+		color = Color(1, 0.3, 0.3)  # Red for player damage
 		_spawn_floating_text("-%d" % amount, pos, color)
 
 

@@ -18,6 +18,9 @@ var _focus_tracking: bool = false
 func _ready() -> void:
 	super._ready()
 	_apply_play_mode()
+	# Speed up animations for snappier feel
+	focus_tween_duration = 0.075
+	dragged_tween_duration = 0.1
 
 
 # Configure drag/click interaction based on the board's play_mode setting.
@@ -95,11 +98,18 @@ func _on_Card_gui_input(event) -> void:
 					super._on_Card_gui_input(event)
 				return
 			else:
-				# --- Drag mode: intercept release while DRAGGED ---
+				# --- Drag mode ---
 				if not event.is_pressed() and state == CardState.DRAGGED:
 					_handle_drag_drop()
 					return
-				# Let framework handle press (starts drag after 0.1s hold)
+				# Start drag immediately on press (skip framework 0.1s delay)
+				# STS style: allow dragging even when energy is insufficient (snaps back on release)
+				if event.is_pressed() \
+						and state in [CardState.FOCUSED_IN_HAND, CardState.FOCUSED_ON_BOARD, CardState.FOCUSED_IN_POPUP] \
+						and combat_manager:
+					cfc.card_drag_ongoing = self
+					_start_dragging(event.position)
+					return
 				super._on_Card_gui_input(event)
 				return
 
@@ -140,27 +150,40 @@ func _handle_drag_drop() -> void:
 
 # Check if the current drop position is valid for this card type.
 # - Attack: must land on enemy area
-# - Defense/Power: can land anywhere on board
+# - Defense/Power: can be dropped outside hand area
 # Always checks energy and turn state.
 func _is_valid_drag_drop() -> bool:
 	if not combat_manager or not combat_manager.can_play_card(self):
 		return false
+	var mouse_pos: Vector2 = get_global_mouse_position()
+	# If dropped back over the hand area, snap back (cancel play)
+	if _is_over_hand(mouse_pos):
+		return false
 	var card_type: String = properties.get("Type", "")
 	if card_type == "Attack":
-		# Attack cards must land on the enemy area
-		var board = cfc.NMAP.board
-		if not board:
-			return false
-		var drop_rect: Rect2 = board.get_enemy_drop_rect()
-		var mouse_pos: Vector2 = get_global_mouse_position()
-		return drop_rect.has_point(mouse_pos)
+		# Attack cards auto-target nearest enemy when dragged outside hand
+		return true
 	else:
-		# Defense/Power cards can be dropped anywhere
+		# Defense/Power cards can be dropped anywhere outside hand
 		return true
 
 
-# Override to show enemy highlight when dragging an attack card.
+# Check if the given position is within the hand container area.
+func _is_over_hand(pos: Vector2) -> bool:
+	if not cfc.NMAP.has("hand"):
+		return false
+	var hand = cfc.NMAP.hand
+	var hand_control: Control = hand.get_node("Control")
+	if not hand_control:
+		return false
+	var hand_rect := Rect2(hand.global_position, hand_control.size)
+	return hand_rect.has_point(pos)
+
+
+# Override to force rotation reset and show enemy highlight for attack cards.
 func _start_dragging(drag_offset: Vector2) -> void:
+	# Force rotation to 0 immediately (prevent tilted drag from incomplete focus tween)
+	$Control.rotation_degrees = 0
 	super._start_dragging(drag_offset)
 	if properties.get("Type", "") == "Attack" and cfc.NMAP.board:
 		cfc.NMAP.board._set_enemy_highlight(true)
