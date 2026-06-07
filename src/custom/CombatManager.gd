@@ -13,6 +13,8 @@ signal energy_changed(current_energy, max_energy)
 signal combat_ended
 signal entity_damaged(entity, amount)
 signal enemy_intent_changed(intent_info)
+signal player_turn_started
+signal enemy_turn_started
 
 const MAX_ENERGY := 3
 const DRAW_PER_TURN := 5
@@ -74,6 +76,7 @@ func start_turn() -> void:
 	var intent: Dictionary = enemy_ai.choose_intent()
 	emit_signal("enemy_intent_changed", intent)
 	emit_signal("turn_started", turn_number)
+	emit_signal("player_turn_started")
 	# Draw cards one by one with animation delay
 	await draw_cards(DRAW_PER_TURN)
 
@@ -99,6 +102,7 @@ func end_turn() -> void:
 
 # Execute the enemy's pre-chosen intent.
 func _enemy_turn() -> void:
+	emit_signal("enemy_turn_started")
 	# Enemy resets block and ticks status at start of their turn
 	enemy.reset_block()
 	enemy.tick_status()

@@ -101,6 +101,8 @@ func _setup_combat() -> void:
 
 	# Connect combat signals for animations
 	combat_manager.connect("entity_damaged", Callable(self, "_on_entity_damaged"))
+	combat_manager.connect("player_turn_started", Callable(self, "_on_player_turn_banner"))
+	combat_manager.connect("enemy_turn_started", Callable(self, "_on_enemy_turn_banner"))
 
 	# Connect entity signals for UI updates
 	combat_manager.player.connect("hp_changed", Callable(self, "_on_player_hp_changed"))
@@ -486,12 +488,112 @@ func _on_combat_ended() -> void:
 		_enemy_intent_label.text = ""
 	if combat_manager.combat_result == "victory":
 		run_state.player_hp = combat_manager.player.hp
+		await _animate_victory()
 		if run_state.is_final_encounter():
 			_show_run_complete_screen()
 		else:
 			_show_reward_screen()
 	else:
+		await _animate_defeat()
 		_show_game_over_screen()
+
+
+# --- Turn transition banner ---
+
+
+func _show_turn_banner(text: String, color: Color) -> void:
+	var viewport_size := Vector2(get_viewport().size)
+	# Semi-transparent overlay to block input during banner
+	var overlay := ColorRect.new()
+	overlay.name = "TurnBannerOverlay"
+	overlay.color = Color(0, 0, 0, 0.4)
+	overlay.size = viewport_size
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.z_index = 200
+	overlay.modulate.a = 0.0
+	add_child(overlay)
+	# Banner text label
+	var label := Label.new()
+	label.name = "TurnBannerLabel"
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.position = Vector2(0, viewport_size.y / 2 - 40)
+	label.size = Vector2(viewport_size.x, 80)
+	label.add_theme_font_size_override("font_size", 42)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	label.add_theme_constant_override("outline_size", 3)
+	label.z_index = 201
+	label.scale = Vector2(1.5, 1.5)
+	label.modulate.a = 0.0
+	add_child(label)
+	# Animation: appear → hold → fade out
+	var tween := create_tween()
+	# Phase 1: scale in + fade in (0.3s)
+	tween.tween_property(overlay, "modulate:a", 1.0, 0.3)
+	tween.parallel().tween_property(label, "modulate:a", 1.0, 0.3)
+	tween.parallel().tween_property(label, "scale", Vector2(1.0, 1.0), 0.3)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# Phase 2: hold (0.4s)
+	tween.tween_interval(0.4)
+	# Phase 3: fade out (0.3s)
+	tween.tween_property(overlay, "modulate:a", 0.0, 0.3)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.3)
+	# Cleanup
+	tween.tween_callback(overlay.queue_free)
+	tween.tween_callback(label.queue_free)
+
+
+func _on_player_turn_banner() -> void:
+	_show_turn_banner("你的回合", Color(1, 0.85, 0.2))
+
+
+func _on_enemy_turn_banner() -> void:
+	_show_turn_banner("敌方回合", Color(1, 0.3, 0.3))
+
+
+# --- Combat end animations ---
+
+
+func _animate_victory() -> void:
+	if _enemy_visual:
+		_enemy_visual.pivot_offset = _enemy_visual.size / 2
+		var tween := create_tween()
+		tween.tween_property(_enemy_visual, "modulate:a", 0.0, 0.6)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		tween.parallel().tween_property(_enemy_visual, "scale", Vector2(0.3, 0.3), 0.6)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		# Fade enemy stat labels
+		for node in [_enemy_name_label, _enemy_hp_bar, _enemy_hp_text, _enemy_block_label, _enemy_status_label]:
+			if node and is_instance_valid(node):
+				tween.parallel().tween_property(node, "modulate:a", 0.0, 0.5)
+		await tween.finished
+		# Brief pause before reward screen
+		await get_tree().create_timer(0.3).timeout
+
+
+func _animate_defeat() -> void:
+	var viewport_size := Vector2(get_viewport().size)
+	# Dark overlay
+	var overlay := ColorRect.new()
+	overlay.name = "DefeatOverlay"
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.size = viewport_size
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.z_index = 200
+	overlay.modulate.a = 0.0
+	add_child(overlay)
+	var tween := create_tween()
+	# Darken screen
+	tween.tween_property(overlay, "modulate:a", 1.0, 0.5)
+	# Screen shake
+	var orig_pos := position
+	for i in range(8):
+		var offset := Vector2(randf_range(-8, 8), randf_range(-5, 5))
+		tween.tween_property(self, "position", orig_pos + offset, 0.04)
+	tween.tween_property(self, "position", orig_pos, 0.06)
+	await tween.finished
 
 
 # Show the reward selection screen (non-final victory).
