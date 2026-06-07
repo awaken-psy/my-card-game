@@ -239,19 +239,17 @@ func _build_card_selection() -> void:
 
 		# Create real Card instance
 		var card = cfc.instance_card(card_name)
-		card.name = "RewardCard_" + card_name
 		card.z_index = 5
-		# Prevent framework drag/focus interactions
-		card.state = Card.CardState.VIEWPORT_FOCUS
+		add_child(card)
+		# Disable framework processing to prevent state-based scale override
+		card.set_process(false)
 		card.set_is_faceup(true, true)
+		card.scale = Vector2(card_scale, card_scale)
+		card.position = Vector2(card_x, _viewport_size.y + 50) # start below screen
 		# Hide manipulation buttons
 		var mb = card.get_node_or_null("Control/ManipulationButtons")
 		if mb:
 			mb.visible = false
-		add_child(card)
-		# Position after adding to tree (Node2D in Control parent)
-		card.scale = Vector2(card_scale, card_scale)
-		card.position = Vector2(card_x, _viewport_size.y + 50) # start below screen
 		card_nodes.append(card)
 		target_positions.append(Vector2(card_x, target_y))
 
@@ -288,6 +286,8 @@ func _build_card_selection() -> void:
 		var card = card_nodes[i]
 		var target = target_positions[i]
 		var tween := create_tween()
+		# Force correct scale (framework may override during _ready)
+		tween.tween_property(card, "scale", Vector2(card_scale, card_scale), 0.01)
 		tween.tween_property(card, "position", target, 0.5)\
 			.set_delay(0.15 * i)\
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -325,7 +325,7 @@ func _on_reward_card_gui_input(event: InputEvent, card_name: String) -> void:
 
 
 func _on_reward_card_hover(card_name: String, entering: bool) -> void:
-	var card = get_node_or_null("RewardCard_" + card_name)
+	var card = get_node_or_null(card_name)
 	if not card:
 		return
 	if entering and _selected_card_name != card_name:
@@ -339,7 +339,7 @@ func _select_card(card_name: String) -> void:
 	# Update highlights and dimming
 	for cn in _reward_card_names:
 		var highlight = get_node_or_null("Highlight_" + cn)
-		var card = get_node_or_null("RewardCard_" + cn)
+		var card = get_node_or_null(cn)
 		if not highlight or not card:
 			continue
 		var style: StyleBoxFlat = highlight.get_theme_stylebox("panel")
