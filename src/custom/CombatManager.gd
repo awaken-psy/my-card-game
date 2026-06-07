@@ -109,6 +109,7 @@ func _enemy_turn() -> void:
 	# Brief pause to let player see the intent before execution
 	await get_tree().create_timer(0.8).timeout
 	# Execute the pre-chosen intent
+	board.audio_manager.play_sfx("enemy_attack")
 	enemy_ai.execute_intent(enemy, player, self)
 	# Clear intent display after execution
 	emit_signal("enemy_intent_changed", {})
@@ -133,6 +134,8 @@ func play_card(card: Card) -> void:
 	_is_resolving = true
 	var cost: int = card.properties.get("Cost", 0)
 	spend_energy(cost)
+	# Play card sound
+	board.audio_manager.play_sfx("card_play")
 	# Fly card toward its target
 	await _animate_card_to_target(card)
 	# Execute card effects
@@ -261,6 +264,8 @@ func draw_cards(count: int) -> void:
 			await _reshuffle_discard_into_deck()
 		var card: Card = cfc.NMAP.hand.draw_card()
 		if card:
+			# Play draw sound
+			board.audio_manager.play_sfx("card_draw")
 			# Small delay between draws for animation
 			await get_tree().create_timer(0.15).timeout
 	# Ensure all cards finished their move animation and are properly positioned

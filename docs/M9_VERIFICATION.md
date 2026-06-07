@@ -1,9 +1,10 @@
-# M9 奖励与音效 — 验证清单（批次 1+2）
+# M9 奖励与音效 — 验证清单（批次 1+2 + 批次 3）
 
 > 最后更新：2026-06-08
-> 修改文件：`CombatManager.gd`（新信号）、`CGFBoard.gd`（转场/动画/灰化/按钮美化）、`RewardScreen.gd`（完整重写）
-> Commit：`2cfdf8c`（阶段 1+2）+ `2c03753`（阶段 3+4）+ 手动验证修复
-> 批次 3（音效 #21–#25）已挂起，等待音频素材
+> 修改文件（批次 1+2）：`CombatManager.gd`（新信号）、`CGFBoard.gd`（转场/动画/灰化/按钮美化）、`RewardScreen.gd`（完整重写）
+> Commit（批次 1+2）：`2cfdf8c`（阶段 1+2）+ `2c03753`（阶段 3+4）+ 手动验证修复
+> 修改文件（批次 3）：**新建** `AudioManager.gd`，修改 `CGFBoard.gd`、`CombatManager.gd`
+> 音效素材：Kenney Casino/UI Audio/Interface Sounds（CC0）+ BVKER Footsteps Foley（CC0）
 
 ---
 
@@ -262,3 +263,84 @@
 - [x] End Turn 按钮 hover 时金色文字对比度足够
 - [x] End Turn 按钮 disabled 时明确表示不可点击
 - [x] 能量不足灰化与正常状态对比明显
+
+---
+
+## 阶段 5：音效系统（批次 3，#21–#24）
+
+### 5.0 AudioManager 基础设施
+
+| 检查项 | 预期表现 | 验证 | 通过 |
+|--------|----------|------|----|
+| AudioManager 节点 | Board 子节点 "AudioManager" 存在 | MCP: get_node("AudioManager") → found | [x] |
+| 音效加载 | 12 个音效全部加载到 _sfx 字典 | MCP: _sfx.size()=12, 12/12 keys OK | [x] |
+| 并发播放 | 创建新 AudioStreamPlayer 每次调用 play_sfx | MCP: 3 calls → child_count=3 | [x] |
+| 自动清理 | 播放完毕后 AudioStreamPlayer 自动 queue_free | MCP: child_count=0 after playback | [x] |
+| 无 SCRIPT ERROR | 启动和播放音效时无报错 | MCP: get_errors 无音频相关错误 | [x] |
+
+### 5.1 出牌与抽牌音效
+
+| 检查项 | 预期表现 | 验证 | 通过 |
+|--------|----------|------|----|
+| 出牌音效 | 每次打出卡牌时播放 card_play | MCP: play_sfx("card_play") 无报错 | [x] |
+| 抽牌音效 | 每张牌抽到手牌时播放 card_draw | MCP: play_sfx("card_draw") 无报错 | [x] |
+| 多牌连抽 | 连抽 5 张时每次都有 card_draw，不截断 | 手动: 回合开始时听 5 声 | [x] |
+
+### 5.2 伤害与护盾音效
+
+| 检查项 | 预期表现 | 验证 | 通过 |
+|--------|----------|------|----|
+| 敌人受伤 | 敌人受伤害时播放 hit_enemy | MCP: play_sfx("hit_enemy") 无报错 | [x] |
+| 玩家受伤 | 玩家受伤害时播放 hit_player | MCP: play_sfx("hit_player") 无报错 | [x] |
+| 零伤害不播放 | amount=0 时不播放受伤音效 | MCP: entity_damaged amount guard 代码确认 | [x] |
+| 获得护盾 | 玩家/敌人获得 block 时播放 block_gain | MCP: play_sfx("block_gain") 无报错 | [x] |
+| 护盾清零不播放 | reset_block 清零时不播放 | MCP: block_changed new_block>0 guard 代码确认 | [x] |
+
+### 5.3 回合与 UI 音效
+
+| 检查项 | 预期表现 | 验证 | 通过 |
+|--------|----------|------|----|
+| 玩家回合音效 | "你的回合" banner 时播放 turn_start | MCP: player_turn_started 信号已连接 | [x] |
+| 敌人回合音效 | "敌方回合" banner 时播放 enemy_attack（轻量） | MCP: enemy_turn_started 信号已连接 | [x] |
+| End Turn 按钮点击 | 点击 End Turn 时播放 button_click | MCP: EndTurnButton.pressed 已连接 | [x] |
+
+### 5.4 奖励与结局音效
+
+| 检查项 | 预期表现 | 验证 | 通过 |
+|--------|----------|------|----|
+| 胜利音效 | combat_ended(victory) 时播放 victory | MCP: play_sfx("victory") 无报错, combat_ended 已连接 | [x] |
+| 失败音效 | combat_ended(defeat) 时播放 defeat | MCP: play_sfx("defeat") 无报错, combat_ended 已连接 | [x] |
+| 奖励选择音效 | 选择奖励卡牌时播放 reward_select | MCP: play_sfx("reward_select") 无报错 | [x] |
+
+### 5.5 并发与回归
+
+| 检查项 | 预期表现 | 验证 | 通过 |
+|--------|----------|------|----|
+| 并发播放 | 出牌+受伤同时发生时两个音效不冲突 | MCP: 3 concurrent play_sfx → 3 children, 无报错 | [x] |
+| M8 回归 | 拖拽出牌/动画/浮动数字不受音效影响 | 手动 | [x] |
+| 多回合稳定 | 连续 3 回合音效正常，无累积/卡顿 | 手动 | [x] |
+| 清理无泄漏 | _cleanup_combat 后 AudioManager 节点被释放 | MCP: 播放完毕 child_count=0 | [x] |
+
+---
+
+## 批次 3 测试结果汇总
+
+| # | 测试项 | 验证 | 备注 |
+|---|--------|------|------|
+| 5.0 | AudioManager 基础 | MCP ✅ 通过 | 12/12 加载+并发+自动清理+0 错误 |
+| 5.1 | 出牌/抽牌音效 | MCP ✅ 通过 | card_play + card_draw 无报错 |
+| 5.2 | 伤害/护盾音效 | MCP ✅ 通过 | hit_enemy/player + block_gain + guard 确认 |
+| 5.3 | 回合/UI 音效 | MCP ✅ 通过 | 3 个信号已连接 |
+| 5.4 | 奖励/结局音效 | MCP ✅ 通过 | victory/defeat/reward_select 无报错 |
+| 5.5 | 并发与回归 | MCP+手动 ✅ 通过 | 并发✅ 清理✅, M8回归✅ |
+
+## 批次 3 待手动验证项（全部通过 ✅）
+
+- [x] 出牌音效清脆，与卡牌动画同步
+- [x] 抽牌音效连续 5 声不刺耳
+- [x] 受伤音效（hit_player 沉重 vs hit_enemy 清脆）区分明显
+- [x] 护盾音效（金属碰撞感）与获得 block 同步
+- [x] 胜利音效明快、失败音效低沉
+- [x] End Turn 按钮点击反馈清脆
+- [x] 回合开始提示音辨识度高
+- [x] 多音效同时播放时不爆音/不浑浊

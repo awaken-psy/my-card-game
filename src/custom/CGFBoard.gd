@@ -5,6 +5,7 @@ extends Board
 var play_mode: String = "drag"
 
 var combat_manager: Node
+var audio_manager: Node
 var _energy_orb: Panel
 var _energy_label: Label
 var _turn_label: Label
@@ -85,6 +86,12 @@ func _setup_combat() -> void:
 	combat_manager.board = self
 	add_child(combat_manager)
 
+	# Create AudioManager
+	audio_manager = Node.new()
+	audio_manager.set_script(load("res://src/custom/AudioManager.gd"))
+	audio_manager.name = "AudioManager"
+	add_child(audio_manager)
+
 	# Get encounter config from RunState
 	var encounter: Dictionary = run_state.get_current_encounter()
 
@@ -157,6 +164,10 @@ func _cleanup_combat() -> void:
 	if combat_manager and is_instance_valid(combat_manager):
 		combat_manager.queue_free()
 		combat_manager = null
+
+	if audio_manager and is_instance_valid(audio_manager):
+		audio_manager.queue_free()
+		audio_manager = null
 
 
 # Transition to the next encounter after reward selection.
@@ -509,6 +520,8 @@ func _style_end_turn_button(btn: Button) -> void:
 
 func _on_EndTurn_pressed() -> void:
 	if combat_manager and combat_manager.is_player_turn:
+		if audio_manager:
+			audio_manager.play_sfx("button_click", -3.0)  # VOL_UI
 		combat_manager.end_turn()
 
 
@@ -519,6 +532,8 @@ func _on_combat_ended() -> void:
 		_enemy_intent_label.text = ""
 	if combat_manager.combat_result == "victory":
 		run_state.player_hp = combat_manager.player.hp
+		if audio_manager:
+			audio_manager.play_sfx("victory")
 		await _animate_victory()
 		if run_state.is_final_encounter():
 			_show_run_complete_screen()
@@ -526,6 +541,8 @@ func _on_combat_ended() -> void:
 			_show_reward_screen()
 	else:
 		await _animate_defeat()
+		if audio_manager:
+			audio_manager.play_sfx("defeat")
 		_show_game_over_screen()
 
 
@@ -577,10 +594,14 @@ func _show_turn_banner(text: String, color: Color) -> void:
 
 
 func _on_player_turn_banner() -> void:
+	if audio_manager:
+		audio_manager.play_sfx("turn_start")
 	_show_turn_banner("你的回合", Color(1, 0.85, 0.2))
 
 
 func _on_enemy_turn_banner() -> void:
+	if audio_manager:
+		audio_manager.play_sfx("enemy_attack", -3.0)  # lighter than actual attack
 	_show_turn_banner("敌方回合", Color(1, 0.3, 0.3))
 
 
@@ -664,6 +685,8 @@ func _show_game_over_screen() -> void:
 
 # Add the selected reward card to the deck and run state.
 func _on_reward_card_selected(card_name: String) -> void:
+	if audio_manager:
+		audio_manager.play_sfx("reward_select")
 	var card = cfc.instance_card(card_name)
 	inject_combat_manager(card)
 	cfc.NMAP.deck.add_child(card)
@@ -735,6 +758,8 @@ func _on_player_hp_changed(current, maximum) -> void:
 func _on_player_block_changed(new_block) -> void:
 	if _player_block_label:
 		_player_block_label.text = "🛡️ %d" % new_block if new_block > 0 else ""
+	if new_block > 0 and audio_manager:
+		audio_manager.play_sfx("block_gain")
 
 
 func _on_player_stats_changed() -> void:
@@ -757,6 +782,8 @@ func _on_enemy_hp_changed(current, maximum) -> void:
 func _on_enemy_block_changed(new_block) -> void:
 	if _enemy_block_label:
 		_enemy_block_label.text = "🛡️ %d" % new_block if new_block > 0 else ""
+	if new_block > 0 and audio_manager:
+		audio_manager.play_sfx("block_gain")
 
 
 func _on_enemy_stats_changed() -> void:
@@ -802,10 +829,14 @@ func _on_entity_damaged(entity, amount: int) -> void:
 		pos = _enemy_visual.global_position + _enemy_visual.size / 2.0
 		color = Color(1, 0.3, 0.3)  # Red for enemy damage
 		_spawn_floating_text("-%d" % amount, pos, color)
+		if amount > 0 and audio_manager:
+			audio_manager.play_sfx("hit_enemy", 2.0)
 	elif entity == combat_manager.player and _player_visual:
 		pos = _player_visual.global_position + _player_visual.size / 2.0
 		color = Color(1, 0.3, 0.3)  # Red for player damage
 		_spawn_floating_text("-%d" % amount, pos, color)
+		if amount > 0 and audio_manager:
+			audio_manager.play_sfx("hit_player", 2.0)
 
 
 # Update HP bar fill color based on ratio (green → yellow → red).
