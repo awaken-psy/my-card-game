@@ -15,6 +15,7 @@ signal entity_damaged(entity, amount)
 signal enemy_intent_changed(intent_info)
 signal player_turn_started
 signal enemy_turn_started
+signal thorns_triggered(source, damage)
 
 const MAX_ENERGY := 3
 const DRAW_PER_TURN := 5
@@ -52,8 +53,7 @@ func start_combat() -> void:
 	current_energy = 0
 	is_player_turn = false
 	combat_result = ""
-	# Create enemy AI
-	enemy_ai = _EnemyAI.new()
+	# enemy_ai is created externally by CGFBoard from enemy config
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
 	# Shuffle the deck (SNAP style avoids the framework's return tween bug)
@@ -69,9 +69,17 @@ func start_turn() -> void:
 	# Reset block and tick status at start of turn
 	player.reset_block()
 	player.tick_status()
+	# Poison tick can kill the player before they act
+	if player.is_dead():
+		is_player_turn = false
+		combat_result = "defeat"
+		emit_signal("combat_ended")
+		return
 	# Refill energy
 	current_energy = MAX_ENERGY
 	emit_signal("energy_changed", current_energy, MAX_ENERGY)
+	# Check boss phase transition before choosing intent
+	enemy_ai.check_phase_transition(enemy)
 	# Choose enemy intent for this round (displayed during player's turn)
 	var intent: Dictionary = enemy_ai.choose_intent()
 	emit_signal("enemy_intent_changed", intent)
@@ -106,6 +114,10 @@ func _enemy_turn() -> void:
 	# Enemy resets block and ticks status at start of their turn
 	enemy.reset_block()
 	enemy.tick_status()
+	# Poison tick can kill the enemy before they act
+	if enemy.is_dead():
+		emit_signal("enemy_intent_changed", {})
+		return
 	# Brief pause to let player see the intent before execution
 	await get_tree().create_timer(0.8).timeout
 	# Execute the pre-chosen intent
@@ -175,6 +187,11 @@ func _resolve_card_effects(card: Card) -> void:
 		var damage := _calculate_damage(base_damage, player, enemy, effects)
 		enemy.take_damage(damage)
 		emit_signal("entity_damaged", enemy, damage)
+		# Thorns: if enemy has thorns, player takes reflected damage
+		if enemy.thorns > 0:
+			player.take_damage(enemy.thorns)
+			emit_signal("entity_damaged", player, enemy.thorns)
+			emit_signal("thorns_triggered", enemy, enemy.thorns)
 
 	# 3. Special effects from _effects array
 	var effects: Array = card.properties.get("_effects", [])
@@ -218,6 +235,10 @@ func _resolve_effect(effect_str: String) -> void:
 			player.add_strength(value)
 		"vulnerable":
 			enemy.add_vulnerable(value)
+		"poison":
+			enemy.add_poison(value)
+		"weak":
+			enemy.add_weak(value)
 		"gain_energy":
 			current_energy += value
 			emit_signal("energy_changed", current_energy, MAX_ENERGY)
@@ -225,6 +246,16 @@ func _resolve_effect(effect_str: String) -> void:
 			player.lose_hp(value)
 			emit_signal("entity_damaged", player, value)
 		"strength_scaling":
+			pass
+		"heal":
+			player.heal(value)
+		"thorns":
+			player.add_thorns(value)
+		"shield_bash":
+			# Damage equals current block value
+			var bash_dmg := _calculate_damage(player.block, player, enemy, [])
+			enemy.take_damage(bash_dmg)
+			emit_signal("entity_damaged", enemy, bash_dmg)
 			pass  # Already handled in _calculate_damage
 		_:
 			push_warning("CombatManager: Unknown effect '%s'" % effect_name)

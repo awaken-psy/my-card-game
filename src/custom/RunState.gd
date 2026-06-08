@@ -10,16 +10,29 @@ extends RefCounted
 
 const PLAYER_MAX_HP := 80
 
+const _EnemyDatabase = preload("res://src/custom/enemies/EnemyDatabase.gd")
+
+# Encounter definitions: enemy_id determines which enemy config to use.
+# Format: {"enemy_id": "..."} — full config fetched from EnemyDatabase.
 const ENCOUNTERS := [
-	{"name": "Jaw Worm", "hp": 42},
-	{"name": "Jaw Worm", "hp": 55},
-	{"name": "Jaw Worm Elite", "hp": 70},
+	# Battle 1: random normal enemy
+	{"enemy_id": "_random_normal"},
+	# Battle 2: elite
+	{"enemy_id": "jaw_worm_elite"},
+	# Battle 3: boss (fixed)
+	{"enemy_id": "heart_mimic"},
 ]
+
+# All normal enemy IDs for random selection in encounter 1.
+const _NORMAL_ENEMIES := ["jaw_worm", "fungi_beast", "slaver"]
 
 var current_encounter: int = 0
 var player_hp: int = PLAYER_MAX_HP
 var player_max_hp: int = PLAYER_MAX_HP
 var deck_card_names: Array = []
+
+# Cached random pick for the first encounter (decided at run start).
+var _first_encounter_enemy: String = ""
 
 
 func _init() -> void:
@@ -28,11 +41,18 @@ func _init() -> void:
 		"Defend", "Defend", "Defend", "Defend",
 		"Bash",
 	]
+	# Decide the random enemy for encounter 1 at run start
+	_first_encounter_enemy = _NORMAL_ENEMIES[randi() % _NORMAL_ENEMIES.size()]
 
 
-# Returns the encounter config for the current fight.
+# Returns the full enemy config for the current encounter.
 func get_current_encounter() -> Dictionary:
-	return ENCOUNTERS[current_encounter]
+	var encounter: Dictionary = ENCOUNTERS[current_encounter]
+	var enemy_id: String = encounter["enemy_id"]
+	# Resolve random placeholder
+	if enemy_id == "_random_normal":
+		enemy_id = _first_encounter_enemy
+	return _EnemyDatabase.get_enemy(enemy_id)
 
 
 # 1-based encounter number for display ("Battle 1/3").

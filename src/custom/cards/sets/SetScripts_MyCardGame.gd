@@ -73,7 +73,51 @@ const scripts := {
 			]
 		}
 	},
+	"Poison Stab": {
+		"manual": {
+			"hand": [
+				# M10: Deal 4 damage + apply 3 poison
+			]
+		}
+	},
+	"Crippling Blow": {
+		"manual": {
+			"hand": [
+				# M10: Deal 9 damage + apply 2 weak
+			]
+		}
+	},
+	"Bandage": {
+		"manual": {
+			"hand": [
+				# M10: Heal 6 HP
+			]
+		}
+	},
+	"Thorns": {
+		"manual": {
+			"hand": [
+				# M10: Gain 8 block + 3 thorns
+			]
+		}
+	},
+	"Shield Bash": {
+		"manual": {
+			"hand": [
+				# M10: Deal damage equal to current block
+			]
+		}
+	},
+	"Fiend Fire": {
+		"manual": {
+			"hand": [
+				# M10: Deal 15 damage + apply 2 poison
+			]
+		}
+	},
 }
+
+
 
 func get_scripts(card_name: String) -> Dictionary:
 	return(scripts.get(card_name, {}))

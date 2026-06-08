@@ -19,6 +19,7 @@ var _player_visual: Control
 # Preload combat entity script (class_name removed due to load-order issues)
 const _CombatEntity = preload("res://src/custom/CombatEntity.gd")
 const _RunState = preload("res://src/custom/RunState.gd")
+const _EnemyAI = preload("res://src/custom/EnemyAI.gd")
 var _player_block_label: Label
 var _player_status_label: Label
 # Enemy stat UI
@@ -43,6 +44,9 @@ var _combat_ui_nodes: Array = []
 # Enemy highlight tween (for drag targeting visual feedback)
 var _enemy_highlight_tween: Tween = null
 
+
+# Full-screen red flash overlay for player damage feedback.
+var _hit_overlay: ColorRect = null
 
 # Called when the node enters the scene tree.
 func _ready() -> void:
@@ -99,6 +103,9 @@ func _setup_combat() -> void:
 	combat_manager.player = _CombatEntity.new("Player", run_state.player_max_hp, run_state.player_hp)
 	combat_manager.enemy = _CombatEntity.new(encounter["name"], encounter["hp"])
 
+
+	# Create enemy AI from config
+	combat_manager.enemy_ai = _EnemyAI.new(encounter)
 	# Connect combat signals
 	combat_manager.connect("energy_changed", Callable(self, "_on_energy_changed"))
 	combat_manager.connect("turn_started", Callable(self, "_on_turn_started"))
@@ -118,6 +125,8 @@ func _setup_combat() -> void:
 	combat_manager.enemy.connect("hp_changed", Callable(self, "_on_enemy_hp_changed"))
 	combat_manager.enemy.connect("block_changed", Callable(self, "_on_enemy_block_changed"))
 	combat_manager.enemy.connect("stats_changed", Callable(self, "_on_enemy_stats_changed"))
+	combat_manager.player.connect("poison_damaged", Callable(self, "_on_poison_tick"))
+	combat_manager.enemy.connect("poison_damaged", Callable(self, "_on_poison_tick"))
 
 	# Auto-inject combat_manager into all newly instanced cards
 	if not cfc.is_connected("new_card_instanced", Callable(self, "inject_combat_manager")):
@@ -183,6 +192,43 @@ func _advance_to_next_encounter() -> void:
 
 func _create_combat_ui() -> void:
 	var viewport_size: Vector2 = Vector2(get_viewport().size)
+	var encounter: Dictionary = run_state.get_current_encounter()
+
+	# --- Combat background (gradient based on encounter type) ---
+	var bg := TextureRect.new()
+	bg.name = "CombatBackground"
+	bg.size = viewport_size
+	bg.z_index = -10
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	var gradient := Gradient.new()
+	var enc_type: String = encounter.get("type", "normal")
+	match enc_type:
+		"elite":
+			gradient.colors = [Color(0.1, 0.03, 0.15), Color(0.15, 0.08, 0.25)]
+		"boss":
+			gradient.colors = [Color(0.15, 0.03, 0.05), Color(0.2, 0.05, 0.1)]
+		_:
+			gradient.colors = [Color(0.05, 0.05, 0.15), Color(0.1, 0.1, 0.25)]
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	bg.texture = tex
+	add_child(bg)
+	_combat_ui_nodes.append(bg)
+
+	# --- Hit overlay (full-screen red flash when player takes damage) ---
+	_hit_overlay = ColorRect.new()
+	_hit_overlay.name = "HitOverlay"
+	_hit_overlay.color = Color(1, 0, 0, 0)
+	_hit_overlay.size = viewport_size
+	_hit_overlay.z_index = 150
+	_hit_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_hit_overlay)
+	_combat_ui_nodes.append(_hit_overlay)
 
 	# --- Encounter progress label (top center) ---
 	_encounter_label = Label.new()
@@ -233,28 +279,36 @@ func _create_combat_ui() -> void:
 	_combat_ui_nodes.append(_turn_label)
 
 	# --- Enemy area (right side — STS style) ---
+	# --- Enemy area (right side — STS style) ---
 	var enemy_x := viewport_size.x / 2 + 120
 	var enemy_cy := viewport_size.y / 2 - 50
 
-	# Enemy visual (geometric placeholder: red rounded rectangle)
+	# Enemy visual — use config-driven colors/size
+	var evis: Dictionary = encounter.get("visual", {})
+	var ev_size: Vector2 = evis.get("size", Vector2(150, 120))
+	var ev_color: Color = evis.get("color", Color(0.5, 0.1, 0.1, 0.9))
+	var ev_border: Color = evis.get("border_color", Color(0.85, 0.25, 0.25))
+	var ev_radius: int = evis.get("corner_radius", 12)
+	var ev_border_w: int = 3 if encounter.get("type", "normal") == "boss" else 2
+
 	_enemy_visual = Panel.new()
 	_enemy_visual.name = "EnemyVisual"
-	_enemy_visual.position = Vector2(enemy_x + 25, enemy_cy - 50)
-	_enemy_visual.size = Vector2(150, 120)
+	_enemy_visual.position = Vector2(enemy_x + 25, enemy_cy - ev_size.y / 2)
+	_enemy_visual.size = ev_size
 	var ev_style := StyleBoxFlat.new()
-	ev_style.bg_color = Color(0.5, 0.1, 0.1, 0.9)
-	ev_style.border_color = Color(0.85, 0.25, 0.25)
-	ev_style.set_border_width_all(2)
-	ev_style.set_corner_radius_all(12)
+	ev_style.bg_color = ev_color
+	ev_style.border_color = ev_border
+	ev_style.set_border_width_all(ev_border_w)
+	ev_style.set_corner_radius_all(ev_radius)
 	_enemy_visual.add_theme_stylebox_override("panel", ev_style)
 	add_child(_enemy_visual)
 	_combat_ui_nodes.append(_enemy_visual)
-
+	# Intent label (above enemy visual)
 	# Intent label (above enemy visual)
 	_enemy_intent_label = Label.new()
 	_enemy_intent_label.name = "EnemyIntentLabel"
 	_enemy_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - 88)
+	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - ev_size.y / 2 - 30)
 	_enemy_intent_label.size = Vector2(200, 20)
 	_enemy_intent_label.add_theme_font_size_override("font_size", 14)
 	_enemy_intent_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
@@ -265,7 +319,7 @@ func _create_combat_ui() -> void:
 	_enemy_name_label = Label.new()
 	_enemy_name_label.name = "EnemyNameLabel"
 	_enemy_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_name_label.position = Vector2(enemy_x, enemy_cy - 68)
+	_enemy_name_label.position = Vector2(enemy_x, enemy_cy - ev_size.y / 2 - 10)
 	_enemy_name_label.size = Vector2(200, 20)
 	_enemy_name_label.add_theme_font_size_override("font_size", 16)
 	_enemy_name_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
@@ -276,8 +330,8 @@ func _create_combat_ui() -> void:
 	# Enemy HP bar (below enemy visual)
 	_enemy_hp_bar = ProgressBar.new()
 	_enemy_hp_bar.name = "EnemyHpBar"
-	_enemy_hp_bar.position = Vector2(enemy_x + 25, enemy_cy + 78)
-	_enemy_hp_bar.size = Vector2(150, 16)
+	_enemy_hp_bar.position = Vector2(enemy_x + 25, enemy_cy + ev_size.y / 2 + 8)
+	_enemy_hp_bar.size = Vector2(ev_size.x, 16)
 	_enemy_hp_bar.min_value = 0
 	_enemy_hp_bar.max_value = combat_manager.enemy.max_hp
 	_enemy_hp_bar.value = combat_manager.enemy.hp
@@ -296,7 +350,7 @@ func _create_combat_ui() -> void:
 	_enemy_hp_text = Label.new()
 	_enemy_hp_text.name = "EnemyHpText"
 	_enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + 108)
+	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + ev_size.y / 2 + 28)
 	_enemy_hp_text.size = Vector2(200, 22)
 	_enemy_hp_text.add_theme_font_size_override("font_size", 16)
 	_enemy_hp_text.add_theme_color_override("font_color", Color.WHITE)
@@ -309,7 +363,7 @@ func _create_combat_ui() -> void:
 	_enemy_block_label = Label.new()
 	_enemy_block_label.name = "EnemyBlockLabel"
 	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_block_label.position = Vector2(enemy_x + 60, enemy_cy + 108)
+	_enemy_block_label.position = Vector2(enemy_x + 60, enemy_cy + ev_size.y / 2 + 28)
 	_enemy_block_label.size = Vector2(200, 22)
 	_enemy_block_label.add_theme_font_size_override("font_size", 16)
 	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
@@ -320,13 +374,12 @@ func _create_combat_ui() -> void:
 	_enemy_status_label = Label.new()
 	_enemy_status_label.name = "EnemyStatusLabel"
 	_enemy_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_status_label.position = Vector2(enemy_x, enemy_cy + 132)
+	_enemy_status_label.position = Vector2(enemy_x, enemy_cy + ev_size.y / 2 + 52)
 	_enemy_status_label.size = Vector2(200, 18)
 	_enemy_status_label.add_theme_font_size_override("font_size", 12)
 	_enemy_status_label.text = ""
 	add_child(_enemy_status_label)
 	_combat_ui_nodes.append(_enemy_status_label)
-
 	# --- Player area (left side — STS style) ---
 	var player_x := viewport_size.x / 2 - 320
 	var player_cy := viewport_size.y / 2 - 50
@@ -831,12 +884,43 @@ func _on_entity_damaged(entity, amount: int) -> void:
 		_spawn_floating_text("-%d" % amount, pos, color)
 		if amount > 0 and audio_manager:
 			audio_manager.play_sfx("hit_enemy", 2.0)
+			# Enemy hit feedback: flash white + shake
+			var ev_tween := create_tween()
+			ev_tween.tween_property(_enemy_visual, "modulate", Color.WHITE * 3, 0.05)
+			ev_tween.tween_property(_enemy_visual, "modulate", Color.WHITE, 0.15)
+			var ev_orig := _enemy_visual.position
+			for _j in range(4):
+				ev_tween.tween_property(_enemy_visual, "position", ev_orig + Vector2(randf_range(-4, 4), randf_range(-3, 3)), 0.03)
+			ev_tween.tween_property(_enemy_visual, "position", ev_orig, 0.05)
 	elif entity == combat_manager.player and _player_visual:
 		pos = _player_visual.global_position + _player_visual.size / 2.0
 		color = Color(1, 0.3, 0.3)  # Red for player damage
 		_spawn_floating_text("-%d" % amount, pos, color)
 		if amount > 0 and audio_manager:
 			audio_manager.play_sfx("hit_player", 2.0)
+			# Player hit feedback: screen edge flash red
+			if _hit_overlay:
+				var hit_tween := create_tween()
+				hit_tween.tween_property(_hit_overlay, "color:a", 0.3, 0.05)
+				hit_tween.tween_property(_hit_overlay, "color:a", 0.0, 0.3)
+
+
+# Handle poison_damaged signal: spawn green floating poison text.
+func _on_poison_tick(entity, amount: int) -> void:
+	var pos: Vector2
+	if entity == combat_manager.enemy and _enemy_visual:
+		pos = _enemy_visual.global_position + _enemy_visual.size / 2.0
+		_spawn_floating_text("☠️-%d" % amount, pos, Color(0.3, 0.9, 0.3))
+	elif entity == combat_manager.player and _player_visual:
+		pos = _player_visual.global_position + _player_visual.size / 2.0
+		_spawn_floating_text("☠️-%d" % amount, pos, Color(0.3, 0.9, 0.3))
+
+
+# Handle healed signal: spawn green floating heal text.
+func _on_player_healed(entity, amount: int) -> void:
+	if _player_visual:
+		var pos: Vector2 = _player_visual.global_position + _player_visual.size / 2.0
+		_spawn_floating_text("+%d" % amount, pos, Color(0.2, 0.9, 0.3))
 
 
 # Update HP bar fill color based on ratio (green → yellow → red).
@@ -892,18 +976,28 @@ static func _format_status_text(entity) -> String:
 		parts.append("🔻%d" % entity.vulnerable)
 	if entity.weak > 0:
 		parts.append("❄️%d" % entity.weak)
+	if entity.poison > 0:
+		parts.append("☠️%d" % entity.poison)
+	if entity.thorns > 0:
+		parts.append("🌵%d" % entity.thorns)
 	return "  ".join(parts)
 
-
-# Format enemy intent as a compact string for display.
 static func _format_intent_text(intent: Dictionary) -> String:
 	var parts: Array = []
 	if intent.get("damage", 0) > 0:
-		parts.append("⚔️%d" % intent["damage"])
+		var hits: int = intent.get("hits", 1)
+		if hits > 1:
+			parts.append("⚔️%d×%d" % [intent["damage"], hits])
+		else:
+			parts.append("⚔️%d" % intent["damage"])
 	if intent.get("block", 0) > 0:
 		parts.append("🛡️%d" % intent["block"])
 	if intent.get("strength", 0) > 0:
 		parts.append("⬆️+%d⚔️" % intent["strength"])
+	if intent.get("poison", 0) > 0:
+		parts.append("☠️%d" % intent["poison"])
+	if intent.get("weak", 0) > 0:
+		parts.append("❄️%d" % intent["weak"])
 	var text := " ".join(parts)
 	if text != "":
 		text = intent.get("name", "") + " " + text
