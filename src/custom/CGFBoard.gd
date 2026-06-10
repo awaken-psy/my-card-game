@@ -788,6 +788,7 @@ func _show_map_screen() -> void:
 
 
 func _close_map_screen() -> void:
+	cfc.game_paused = false
 	if _map_screen and is_instance_valid(_map_screen):
 		_map_screen.queue_free()
 		_map_screen = null
@@ -875,11 +876,13 @@ func _on_reward_card_selected(card_name: String) -> void:
 	card._determine_idle_state()
 	run_state.deck_card_names.append(card_name)
 	push_warning("Reward: %s added to deck" % card_name)
+	_on_continue_run()
 
 
 # Player skipped the reward.
 func _on_reward_skipped() -> void:
 	push_warning("Reward skipped")
+	_on_continue_run()
 
 
 # Player clicked "Continue" after reward — save strength, go to map or run complete.
