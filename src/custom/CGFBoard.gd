@@ -83,6 +83,7 @@ func _start_run() -> void:
 
 # Set up the combat system and UI.
 func _setup_combat() -> void:
+	_set_piles_visible(true)
 	cfc.set_setting("hand_use_oval_shape", true)
 	cfc.set_setting("fancy_movement", true)
 	$OvalHandToggle.button_pressed = true
@@ -534,6 +535,13 @@ func _hide_demo_buttons() -> void:
 				mb.visible = false
 
 
+func _set_piles_visible(vis: bool) -> void:
+	for pile_name in ["deck", "discard", "hand"]:
+		var container = cfc.NMAP.get(pile_name) if cfc.NMAP else null
+		if container:
+			container.visible = vis
+
+
 # --- Combat signal handlers ---
 
 
@@ -779,6 +787,7 @@ func _show_game_over_screen() -> void:
 func _show_map_screen() -> void:
 	if _map_screen and is_instance_valid(_map_screen):
 		_map_screen.queue_free()
+	_set_piles_visible(false)
 	_map_screen = Control.new()
 	_map_screen.set_script(load("res://src/custom/MapScreen.gd"))
 	_map_screen.setup(Vector2(get_viewport().size), run_state)
@@ -810,6 +819,7 @@ func _on_map_node_selected(floor_index: int, node_index: int) -> void:
 func _show_shop_screen() -> void:
 	if _shop_screen and is_instance_valid(_shop_screen):
 		_shop_screen.queue_free()
+	_set_piles_visible(false)
 	_shop_screen = Control.new()
 	_shop_screen.set_script(load("res://src/custom/ShopScreen.gd"))
 	_shop_screen.setup(Vector2(get_viewport().size), run_state, self)
@@ -826,6 +836,7 @@ func _on_shop_closed() -> void:
 
 
 func _do_rest() -> void:
+	_set_piles_visible(false)
 	var heal_amount: int = int(run_state.player_max_hp * 0.3)
 	run_state.player_hp = mini(run_state.player_hp + heal_amount, run_state.player_max_hp)
 	# Brief rest notification then return to map
