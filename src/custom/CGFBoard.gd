@@ -151,6 +151,9 @@ func _setup_combat() -> void:
 
 # Clean up combat state to prepare for the next encounter.
 func _cleanup_combat() -> void:
+	# Clear any focused card before transitioning
+	if cfc.NMAP and cfc.NMAP.get("main") and is_instance_valid(cfc.NMAP.main):
+		cfc.NMAP.main.unfocus_all()
 	if combat_manager and is_instance_valid(combat_manager):
 		if combat_manager.is_connected("combat_ended", Callable(self, "_on_combat_ended")):
 			combat_manager.disconnect("combat_ended", Callable(self, "_on_combat_ended"))
@@ -410,7 +413,7 @@ func _create_combat_ui() -> void:
 	# Player visual (geometric placeholder: blue rounded rectangle)
 	_player_visual = Panel.new()
 	_player_visual.name = "PlayerVisual"
-	_player_visual.position = Vector2(player_x + 25, player_cy - 50)
+	_player_visual.position = Vector2(player_x + 25, player_cy - 60)
 	_player_visual.size = Vector2(150, 120)
 	var pv_style := StyleBoxFlat.new()
 	pv_style.bg_color = Color(0.1, 0.12, 0.4, 0.9)
@@ -424,7 +427,7 @@ func _create_combat_ui() -> void:
 	_player_name_label = Label.new()
 	_player_name_label.name = "PlayerNameLabel"
 	_player_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_name_label.position = Vector2(player_x, player_cy - 68)
+	_player_name_label.position = Vector2(player_x, player_cy - 82)
 	_player_name_label.size = Vector2(200, 20)
 	_player_name_label.add_theme_font_size_override("font_size", 16)
 	_player_name_label.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
@@ -435,7 +438,7 @@ func _create_combat_ui() -> void:
 	# Player HP bar (below player visual)
 	_player_hp_bar = ProgressBar.new()
 	_player_hp_bar.name = "PlayerHpBar"
-	_player_hp_bar.position = Vector2(player_x + 25, player_cy + 78)
+	_player_hp_bar.position = Vector2(player_x + 25, player_cy + 68)
 	_player_hp_bar.size = Vector2(150, 16)
 	_player_hp_bar.min_value = 0
 	_player_hp_bar.max_value = combat_manager.player.max_hp
@@ -455,7 +458,7 @@ func _create_combat_ui() -> void:
 	_player_hp_text = Label.new()
 	_player_hp_text.name = "PlayerHpText"
 	_player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_hp_text.position = Vector2(player_x, player_cy + 108)
+	_player_hp_text.position = Vector2(player_x, player_cy + 88)
 	_player_hp_text.size = Vector2(200, 22)
 	_player_hp_text.add_theme_font_size_override("font_size", 16)
 	_player_hp_text.add_theme_color_override("font_color", Color.WHITE)
@@ -468,7 +471,7 @@ func _create_combat_ui() -> void:
 	_player_block_label = Label.new()
 	_player_block_label.name = "PlayerBlockLabel"
 	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_block_label.position = Vector2(player_x + 60, player_cy + 108)
+	_player_block_label.position = Vector2(player_x + 60, player_cy + 88)
 	_player_block_label.size = Vector2(200, 22)
 	_player_block_label.add_theme_font_size_override("font_size", 16)
 	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
@@ -479,7 +482,7 @@ func _create_combat_ui() -> void:
 	_player_status_label = Label.new()
 	_player_status_label.name = "PlayerStatusLabel"
 	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_status_label.position = Vector2(player_x, player_cy + 132)
+	_player_status_label.position = Vector2(player_x, player_cy + 112)
 	_player_status_label.size = Vector2(200, 18)
 	_player_status_label.add_theme_font_size_override("font_size", 12)
 	_player_status_label.text = ""
