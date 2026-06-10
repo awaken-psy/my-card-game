@@ -127,20 +127,20 @@ func _build_card_section(center_x: float, start_y: float) -> void:
 		if card_data.get("_rarity", "") != "Starter":
 			pool.append(card_name)
 	pool.shuffle()
-	var sale_cards := pool.slice(0, mini(5, pool.size()))
+	var sale_cards: Array = pool.slice(0, mini(5, pool.size()))
 
-	var card_width := 130.0
-	var gap := 15.0
-	var total_width := sale_cards.size() * card_width + (sale_cards.size() - 1) * gap
-	var start_x := center_x - total_width / 2.0
+	var card_width: float = 130.0
+	var gap: float = 15.0
+	var total_width: int = sale_cards.size() * card_width + (sale_cards.size() - 1) * gap
+	var start_x: float = center_x - total_width / 2.0
 
 	for i in range(sale_cards.size()):
 		var card_name: String = sale_cards[i]
 		var rarity: String = _SetDefinition.CARDS[card_name].get("_rarity", "Common")
-		var price := _card_price(rarity)
+		var price: int = _card_price(rarity)
 		_card_slots.append({"card_name": card_name, "price": price, "sold": false})
 
-		var x := start_x + i * (card_width + gap)
+		var x: float = start_x + i * (card_width + gap)
 		var btn := Button.new()
 		btn.name = "CardSlot_%d" % i
 		btn.text = "%s\n💰%d" % [card_name, price]
@@ -165,7 +165,7 @@ func _build_services_section(center_x: float, start_y: float) -> void:
 	# Heal button
 	var heal_btn := Button.new()
 	heal_btn.name = "HealButton"
-	var heal_amount := int(_run_state.player_max_hp * 0.3)
+	var heal_amount: int = int(_run_state.player_max_hp * 0.3)
 	heal_btn.text = "❤️ 回复 %d HP  (💰%d)" % [heal_amount, PRICE_HEAL]
 	heal_btn.position = Vector2(center_x - 170, start_y + 5)
 	heal_btn.size = Vector2(160, 50)
@@ -266,7 +266,7 @@ func _on_heal_pressed() -> void:
 	if not _run_state.spend_gold(PRICE_HEAL):
 		_show_toast("金币不足！")
 		return
-	var heal_amount := int(_run_state.player_max_hp * 0.3)
+	var heal_amount: int = int(_run_state.player_max_hp * 0.3)
 	_run_state.player_hp = mini(_run_state.player_hp + heal_amount, _run_state.player_max_hp)
 	_refresh_gold_display()
 	_show_toast("回复了 %d HP！" % heal_amount)
@@ -422,7 +422,7 @@ func _show_toast(text: String) -> void:
 	toast.add_theme_constant_override("outline_size", 2)
 	toast.z_index = 100
 	add_child(toast)
-	var tween := create_tween()
+	var tween: Tween = create_tween()
 	tween.tween_interval(1.5)
 	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(toast.queue_free)
@@ -442,14 +442,14 @@ func _style_button_primary(btn: Button) -> void:
 	normal.content_margin_top = 6
 	normal.content_margin_bottom = 6
 
-	var hover := normal.duplicate()
+	var hover: StyleBoxFlat = normal.duplicate()
 	hover.bg_color = Color(0.22, 0.22, 0.38)
 	hover.border_color = Color(1, 0.85, 0.3)
 
-	var pressed := normal.duplicate()
+	var pressed: StyleBoxFlat = normal.duplicate()
 	pressed.bg_color = Color(0.1, 0.1, 0.18)
 
-	var disabled := normal.duplicate()
+	var disabled: StyleBoxFlat = normal.duplicate()
 	disabled.bg_color = Color(0.08, 0.08, 0.12, 0.5)
 	disabled.border_color = Color(0.3, 0.3, 0.3)
 
@@ -469,7 +469,7 @@ func _style_button_secondary(btn: Button) -> void:
 	normal.set_border_width_all(1)
 	normal.set_corner_radius_all(6)
 
-	var hover := normal.duplicate()
+	var hover: StyleBoxFlat = normal.duplicate()
 	hover.bg_color = Color(0.18, 0.18, 0.28)
 	hover.border_color = Color(0.8, 0.8, 0.8)
 
@@ -495,12 +495,12 @@ func _style_card_button(btn: Button, rarity: String) -> void:
 	normal.set_border_width_all(2)
 	normal.set_corner_radius_all(8)
 
-	var hover := normal.duplicate()
+	var hover: StyleBoxFlat = normal.duplicate()
 	hover.bg_color = Color(0.18, 0.18, 0.3)
 	hover.border_color = Color(1, 0.85, 0.3)
 	hover.set_border_width_all(3)
 
-	var disabled := normal.duplicate()
+	var disabled: StyleBoxFlat = normal.duplicate()
 	disabled.bg_color = Color(0.08, 0.08, 0.08, 0.5)
 	disabled.border_color = Color(0.3, 0.3, 0.3)
 

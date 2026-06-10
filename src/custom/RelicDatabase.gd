@@ -61,7 +61,7 @@ static func get_all_ids() -> Array:
 
 
 static func get_random_relic(exclude: Array = []) -> String:
-	var pool := []
+	var pool: Array = []
 	for id in RELICS:
 		if not id in exclude:
 			pool.append(id)

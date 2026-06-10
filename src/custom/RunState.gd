@@ -64,7 +64,7 @@ func get_starting_nodes() -> Array:
 func get_reachable_nodes() -> Array:
 	if current_floor < 0:
 		# Haven't entered map yet; all floor 0 nodes are reachable
-		var result := []
+		var result: Array = []
 		var floor_nodes: Array = map_data["floors"][0]
 		for i in range(floor_nodes.size()):
 			result.append({
@@ -79,7 +79,7 @@ func get_reachable_nodes() -> Array:
 		return []
 	var next_floor: Array = map_data["floors"][next_floor_index]
 	var connected_indices: Array = current_node.get("connections", [])
-	var result := []
+	var result: Array = []
 	for idx in connected_indices:
 		if idx < next_floor.size():
 			result.append({
@@ -122,7 +122,7 @@ func get_floor_number() -> int:
 # Returns the full enemy config for the current node.
 # Interface unchanged from M10 — CombatManager doesn't need modification for this.
 func get_current_encounter() -> Dictionary:
-	var node := get_current_node()
+	var node: Dictionary = get_current_node()
 	if node.is_empty():
 		return {}
 	var node_type: String = node.get("type", "combat")
@@ -157,16 +157,16 @@ func _get_boss_encounter() -> Dictionary:
 
 # Scale enemy stats based on floor progression.
 func _scale_enemy(config: Dictionary, extra_mult: float = 1.0) -> Dictionary:
-	var scaled := config.duplicate(true)
+	var scaled: Dictionary = config.duplicate(true)
 	# Floor-based scaling: +8% HP per floor, +5% damage per floor
 	var hp_mult := 1.0 + current_floor * 0.08
 	var dmg_mult := 1.0 + current_floor * 0.05
 	scaled["hp"] = int(scaled["hp"] * hp_mult * extra_mult)
 	# Scale damage in moves
 	if scaled.has("moves"):
-		var scaled_moves := []
+		var scaled_moves: Array = []
 		for move in scaled["moves"]:
-			var sm := move.duplicate()
+			var sm: Dictionary = move.duplicate()
 			if sm.has("damage"):
 				sm["damage"] = int(sm["damage"] * dmg_mult * extra_mult)
 			scaled_moves.append(sm)
@@ -205,7 +205,7 @@ func has_relic(relic_id: String) -> bool:
 
 # Calculate gold reward for current combat based on node type.
 func get_gold_reward() -> int:
-	var node := get_current_node()
+	var node: Dictionary = get_current_node()
 	var node_type: String = node.get("type", "combat")
 	var base_gold := 20 + current_floor * 3
 	match node_type:
@@ -221,7 +221,7 @@ func get_gold_reward() -> int:
 
 # Check if current encounter is an elite or boss (for relic effects).
 func is_elite_or_boss_encounter() -> bool:
-	var node := get_current_node()
+	var node: Dictionary = get_current_node()
 	var node_type: String = node.get("type", "combat")
 	return node_type in ["elite", "boss"]
 
@@ -231,7 +231,7 @@ func is_elite_or_boss_encounter() -> bool:
 
 # Remove a card by name from the deck. Returns true if removed.
 func remove_card_from_deck(card_name: String) -> bool:
-	var idx := deck_card_names.find(card_name)
+	var idx: int = deck_card_names.find(card_name)
 	if idx >= 0:
 		deck_card_names.remove_at(idx)
 		return true

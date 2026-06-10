@@ -91,7 +91,7 @@ func _build_map() -> void:
 
 	# Calculate map height
 	var total_floors: int = _run_state.map_data["floors"].size()
-	var map_height := total_floors * FLOOR_HEIGHT + MAP_PADDING_Y * 2
+	var map_height: int = total_floors * FLOOR_HEIGHT + MAP_PADDING_Y * 2
 
 	# Drawing layer for connections (behind nodes)
 	var draw_layer := Control.new()
@@ -110,35 +110,35 @@ func _build_map() -> void:
 	_scroll.add_child(node_layer)
 
 	# Get reachable node identifiers
-	var reachable := _run_state.get_reachable_nodes()
-	var reachable_keys := {}
+	var reachable: Array = _run_state.get_reachable_nodes()
+	var reachable_keys: Dictionary = {}
 	for r in reachable:
 		reachable_keys["%d_%d" % [r["floor_index"], r["node_index"]]] = true
 
 	# Build nodes for each floor (top to bottom: boss first, start last)
-	var map_center_x := _viewport_size.x / 2.0
-	var map_width := _viewport_size.x * MAP_WIDTH_RATIO
+	var map_center_x: float = _viewport_size.x / 2.0
+	var map_width: float = _viewport_size.x * MAP_WIDTH_RATIO
 
 	for floor_index in range(total_floors):
 		var floor_nodes: Array = _run_state.map_data["floors"][floor_index]
 		# Y position: boss at top (floor 14 = low Y), start at bottom (floor 0 = high Y)
-		var y := map_height - MAP_PADDING_Y - (floor_index * FLOOR_HEIGHT) - FLOOR_HEIGHT / 2.0
+		var y: float = map_height - MAP_PADDING_Y - (floor_index * FLOOR_HEIGHT) - FLOOR_HEIGHT / 2.0
 
 		for node_index in range(floor_nodes.size()):
 			var node: Dictionary = floor_nodes[node_index]
-			var x := map_center_x - map_width / 2.0 + node["x"] * map_width
+			var x: float = map_center_x - map_width / 2.0 + node["x"] * map_width
 			var node_type: String = node.get("type", "combat")
-			var is_current := (floor_index == _run_state.current_floor and node_index == _run_state.current_node_index)
-			var key := "%d_%d" % [floor_index, node_index]
-			var is_reachable := reachable_keys.has(key)
+			var is_current: bool = (floor_index == _run_state.current_floor and node_index == _run_state.current_node_index)
+			var key: String = "%d_%d" % [floor_index, node_index]
+			var is_reachable: bool = reachable_keys.has(key)
 
 			# Build connections data
 			for conn_idx in node.get("connections", []):
 				var next_floor: Array = _run_state.map_data["floors"][floor_index + 1] if floor_index + 1 < total_floors else []
 				if conn_idx < next_floor.size():
 					var next_node: Dictionary = next_floor[conn_idx]
-					var next_y := map_height - MAP_PADDING_Y - ((floor_index + 1) * FLOOR_HEIGHT) - FLOOR_HEIGHT / 2.0
-					var next_x := map_center_x - map_width / 2.0 + next_node["x"] * map_width
+					var next_y: float = map_height - MAP_PADDING_Y - ((floor_index + 1) * FLOOR_HEIGHT) - FLOOR_HEIGHT / 2.0
+					var next_x: float = map_center_x - map_width / 2.0 + next_node["x"] * map_width
 					_connections.append({
 						"from_pos": Vector2(x, y),
 						"to_pos": Vector2(next_x, next_y),
@@ -212,7 +212,7 @@ func _build_info_bar() -> void:
 	add_child(gold_label)
 
 	# Relics
-	var relic_x := 260
+	var relic_x: int = 260
 	for relic_id in _run_state.relics:
 		var relic_data: Dictionary = _RelicDatabase.get_relic(relic_id)
 		var relic_label := Label.new()
@@ -227,7 +227,7 @@ func _build_info_bar() -> void:
 
 	# Floor progress
 	var floor_label := Label.new()
-	var total := _run_state.get_total_floors()
+	var total: int = _run_state.get_total_floors()
 	floor_label.text = "层 %d/%d" % [_run_state.get_floor_number(), total]
 	floor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	floor_label.position = Vector2(_viewport_size.x - 150, 12)
@@ -248,7 +248,7 @@ func _on_draw_lines(draw_layer: Control) -> void:
 func _on_draw_connections(draw_layer: Control) -> void:
 	for conn in _connections:
 		var color := Color(0.3, 0.3, 0.3, 0.5)
-		var width := 2.0
+		var width: float = 2.0
 		if conn["active"]:
 			color = Color(1, 0.85, 0.2, 0.8)
 			width = 3.0
@@ -261,9 +261,9 @@ func _on_draw_connections(draw_layer: Control) -> void:
 func _scroll_to_current() -> void:
 	if not _scroll:
 		return
-	var target_y := maxi(0, _run_state.current_floor) * FLOOR_HEIGHT
-	var max_scroll := _scroll.get_v_scroll_bar().max_value if _scroll.get_v_scroll_bar() else 0
-	var scroll_pos := clampf(float(target_y) - _scroll.size.y / 2.0, 0.0, max_scroll)
+	var target_y: int = maxi(0, _run_state.current_floor) * FLOOR_HEIGHT
+	var max_scroll: float = _scroll.get_v_scroll_bar().max_value if _scroll.get_v_scroll_bar() else 0
+	var scroll_pos: float = clampf(float(target_y) - _scroll.size.y / 2.0, 0.0, max_scroll)
 	_scroll.scroll_vertical = int(scroll_pos)
 
 
@@ -297,7 +297,7 @@ func _style_node_button(btn: Button, base_color: Color, is_current: bool, is_rea
 		normal.set_border_width_all(3)
 		btn.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 		# Pulsing animation for reachable nodes
-		var tween := create_tween()
+		var tween: Tween = create_tween()
 		tween.set_loops()
 		tween.tween_property(normal, "border_color", Color(1, 1, 0.5), 0.5)
 		tween.tween_property(normal, "border_color", Color(1, 0.85, 0.2), 0.5)
@@ -308,7 +308,7 @@ func _style_node_button(btn: Button, base_color: Color, is_current: bool, is_rea
 		btn.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
 		btn.disabled = true
 
-	var hover := normal.duplicate()
+	var hover: StyleBoxFlat = normal.duplicate()
 	if is_reachable:
 		hover.bg_color = Color(base_color.r * 0.5, base_color.g * 0.5, base_color.b * 0.5)
 		hover.border_color = Color.WHITE

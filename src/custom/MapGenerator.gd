@@ -41,7 +41,7 @@ static func _make_floor(types: Array) -> Array:
 
 
 static func _generate_floor(floor_index: int) -> Array:
-	var templates := _get_templates(floor_index)
+	var templates: Array = _get_templates(floor_index)
 	var template: Array = templates[randi() % templates.size()]
 	return _make_floor(template)
 
@@ -98,7 +98,7 @@ static func _get_templates(floor_index: int) -> Array:
 # Assign normalized x positions to nodes in each floor (evenly spaced).
 static func _assign_positions(floors: Array) -> void:
 	for floor in floors:
-		var count := floor.size()
+		var count: int = floor.size()
 		for i in range(count):
 			floor[i]["x"] = (float(i) + 0.5) / float(count)
 
@@ -118,24 +118,24 @@ static func _connect_floors(floor_below: Array, floor_above: Array) -> void:
 	# Each node below connects to 1–2 nearest nodes above
 	for i in range(floor_below.size()):
 		var from_x: float = floor_below[i]["x"]
-		var sorted_above := _sort_by_distance(from_x, floor_above)
+		var sorted_above: Array = _sort_by_distance(from_x, floor_above)
 		# Always connect to nearest
 		floor_below[i]["connections"].append(sorted_above[0])
 		# 40% chance to also connect to second nearest
 		if sorted_above.size() > 1 and randf() < 0.4:
 			floor_below[i]["connections"].append(sorted_above[1])
 	# Ensure every node above has at least one incoming connection
-	var connected := {}
+	var connected: Dictionary = {}
 	for node in floor_below:
 		for conn in node["connections"]:
 			connected[conn] = true
 	for j in range(floor_above.size()):
 		if not connected.has(j):
 			# Find nearest node below and add this connection
-			var nearest_below := 0
-			var nearest_dist := 999.0
+			var nearest_below: int = 0
+			var nearest_dist: float = 999.0
 			for i in range(floor_below.size()):
-				var dist := absf(floor_below[i]["x"] - floor_above[j]["x"])
+				var dist: float = absf(floor_below[i]["x"] - floor_above[j]["x"])
 				if dist < nearest_dist:
 					nearest_dist = dist
 					nearest_below = i
@@ -145,7 +145,7 @@ static func _connect_floors(floor_below: Array, floor_above: Array) -> void:
 
 # Sort indices of floor_above by x distance from from_x (nearest first).
 static func _sort_by_distance(from_x: float, floor_above: Array) -> Array:
-	var pairs := []
+	var pairs: Array = []
 	for j in range(floor_above.size()):
 		pairs.append({"index": j, "dist": absf(from_x - floor_above[j]["x"])})
 	pairs.sort_custom(func(a, b): return a["dist"] < b["dist"])
