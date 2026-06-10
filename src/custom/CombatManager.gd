@@ -33,8 +33,8 @@ var combat_result: String = ""
 # True while a card's effects are being resolved (prevents double-play).
 var _is_resolving: bool = false
 
-	# True until the first attack card is played this turn (for Burning Blade relic).
-	var _first_attack_this_turn: bool = true
+# True until the first attack card is played this turn (for Burning Blade relic).
+var _first_attack_this_turn: bool = true
 
 # Reference to the board node (set by CGFBoard)
 var board: Node
@@ -69,7 +69,7 @@ func start_combat() -> void:
 func start_turn() -> void:
 	turn_number += 1
 	is_player_turn = true
-		_first_attack_this_turn = true
+	_first_attack_this_turn = true
 	# Reset block and tick status at start of turn
 	player.reset_block()
 	player.tick_status()
