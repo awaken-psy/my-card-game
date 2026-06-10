@@ -261,16 +261,32 @@ func _on_draw_connections(draw_layer: Control) -> void:
 func _scroll_to_current() -> void:
 	if not _scroll:
 		return
-	var total_floors: int = _run_state.map_data["floors"].size()
-	var target_y: int
-	if _run_state.current_floor < 0:
-		# Haven't entered map yet — scroll to bottom (starting nodes)
-		target_y = total_floors * FLOOR_HEIGHT
-	else:
-		target_y = _run_state.current_floor * FLOOR_HEIGHT
+	# Wait one frame so ScrollContainer has updated its scrollbar range
+	await get_tree().process_frame
+	var target_y: float = _get_target_scroll_y()
 	var max_scroll: float = _scroll.get_v_scroll_bar().max_value if _scroll.get_v_scroll_bar() else 0
-	var scroll_pos: float = clampf(float(target_y) - _scroll.size.y / 2.0, 0.0, max_scroll)
-	_scroll.scroll_vertical = int(scroll_pos)
+	var scroll_pos: float = clampf(target_y - _scroll.size.y / 2.0, 0.0, max_scroll)
+	var tween: Tween = create_tween()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.tween_property(_scroll, "scroll_vertical", scroll_pos, 0.5)
+
+
+# Calculate the Y position of the target floor in the map content area.
+func _get_target_scroll_y() -> float:
+	var total_floors: int = _run_state.map_data["floors"].size()
+	var map_height: int = total_floors * FLOOR_HEIGHT + MAP_PADDING_Y * 2
+	# When returning from combat, scroll to the next floor's reachable nodes
+	var target_floor: int
+	if _run_state.current_floor < 0:
+		# Haven't entered map yet — target the starting floor (bottom)
+		target_floor = 0
+	else:
+		# After combat on floor N, show floor N+1 reachable nodes
+		target_floor = mini(_run_state.current_floor + 1, total_floors - 1)
+	# Y position formula matches _build_map:
+	# y = map_height - PADDING - floor * HEIGHT - HEIGHT/2
+	return map_height - MAP_PADDING_Y - (target_floor * FLOOR_HEIGHT) - FLOOR_HEIGHT / 2.0
 
 
 # --- Node Click Handler ---
