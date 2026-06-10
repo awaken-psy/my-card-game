@@ -17,6 +17,7 @@ const _CFConst = preload("res://src/custom/CFConst.gd")
 var _viewport_size: Vector2 = Vector2(1280, 720)
 var _selected_card_name: String = ""
 var _reward_card_names: Array = []
+var _gold_reward: int = 0
 
 
 # Called by CGFBoard after adding this node to the tree.
@@ -29,7 +30,8 @@ func setup(viewport_size: Vector2) -> void:
 # --- Public API (called by CGFBoard) ---
 
 
-func show_victory_rewards(_is_final_encounter: bool = false) -> void:
+func show_victory_rewards(_is_final_encounter: bool = false, gold_amount: int = 0) -> void:
+	_gold_reward = gold_amount
 	cfc.game_paused = true
 	_clear_ui()
 	_build_overlay()
@@ -107,10 +109,11 @@ func _build_reward_list() -> void:
 	card_entry.connect("pressed", Callable(self, "_on_card_reward_clicked"))
 	entries_vbox.add_child(card_entry)
 
-	# Gold entry (static placeholder for M11)
-	var gold_entry := _create_list_entry("💰  金币 +30", "（未来版本）", false)
-	gold_entry.name = "GoldEntry"
-	entries_vbox.add_child(gold_entry)
+	# Gold entry (real gold reward)
+	if _gold_reward > 0:
+		var gold_entry := _create_list_entry("💰  金币 +%d" % _gold_reward, "已自动获得", false)
+		gold_entry.name = "GoldEntry"
+		entries_vbox.add_child(gold_entry)
 
 	add_child(entries_vbox)
 

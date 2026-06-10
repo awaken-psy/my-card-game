@@ -48,6 +48,10 @@ var _enemy_highlight_tween: Tween = null
 # Full-screen red flash overlay for player damage feedback.
 var _hit_overlay: ColorRect = null
 
+# M11: Map and Shop screens
+var _map_screen: Control
+var _shop_screen: Control
+
 # Called when the node enters the scene tree.
 func _ready() -> void:
 	super._ready()
@@ -74,7 +78,7 @@ func _ready() -> void:
 # Start a new run (fresh RunState + first encounter).
 func _start_run() -> void:
 	run_state = _RunState.new()
-	_setup_combat()
+	_show_map_screen()
 
 
 # Set up the combat system and UI.
@@ -101,6 +105,7 @@ func _setup_combat() -> void:
 
 	# Initialize combat entities
 	combat_manager.player = _CombatEntity.new("Player", run_state.player_max_hp, run_state.player_hp)
+		combat_manager.player.strength = run_state.player_strength
 	combat_manager.enemy = _CombatEntity.new(encounter["name"], encounter["hp"])
 
 
@@ -181,12 +186,7 @@ func _cleanup_combat() -> void:
 		audio_manager = null
 
 
-# Transition to the next encounter after reward selection.
-func _advance_to_next_encounter() -> void:
-	run_state.player_hp = combat_manager.player.hp
-	run_state.advance_encounter()
-	_cleanup_combat()
-	_setup_combat()
+# _advance_to_next_encounter removed — replaced by map-driven flow in M11.
 
 
 # --- Combat UI ---
@@ -240,9 +240,29 @@ func _create_combat_ui() -> void:
 	_encounter_label.size = Vector2(160, 30)
 	_encounter_label.add_theme_font_size_override("font_size", 20)
 	_encounter_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-	_encounter_label.text = "Battle %d/%d" % [run_state.get_encounter_number(), run_state.get_total_encounters()]
+	var node := run_state.get_current_node()
+	var node_type: String = node.get("type", "combat")
+	var type_names := {"combat": "战斗", "elite": "精英", "boss": "Boss"}
+	_encounter_label.text = "层 %d/%d · %s" % [run_state.get_floor_number(), run_state.get_total_floors(), type_names.get(node_type, "战斗")]
 	add_child(_encounter_label)
 	_combat_ui_nodes.append(_encounter_label)
+
+	# Relic icons display (top-right of encounter label)
+	var _RelicDB = load("res://src/custom/RelicDatabase.gd")
+	var relic_x := viewport_size.x / 2.0 + 100
+	for relic_id in run_state.relics:
+		var rdata: Dictionary = _RelicDB.get_relic(relic_id)
+		var relic_icon := Label.new()
+		relic_icon.text = rdata.get("icon", "?")
+		relic_icon.position = Vector2(relic_x, 12)
+		relic_icon.size = Vector2(30, 30)
+		relic_icon.add_theme_font_size_override("font_size", 18)
+		relic_icon.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+		relic_icon.tooltip_text = "%s: %s" % [rdata.get("name", ""), rdata.get("description", "")]
+		relic_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(relic_icon)
+		_combat_ui_nodes.append(relic_icon)
+		relic_x += 35
 
 	# --- Energy orb (bottom-left, near deck — STS style) ---
 	_energy_orb = Panel.new()
@@ -587,13 +607,23 @@ func _on_combat_ended() -> void:
 		_enemy_intent_label.text = ""
 	if combat_manager.combat_result == "victory":
 		run_state.player_hp = combat_manager.player.hp
+		# Gold reward
+		var gold_reward := run_state.get_gold_reward()
+		run_state.add_gold(gold_reward)
+		# Red Skull relic: +2 strength after elite/boss
+		if run_state.is_elite_or_boss_encounter() and run_state.has_relic("red_skull"):
+			run_state.player_strength += 2
+		# Elite/boss relic drop
+		var dropped_relic := ""
+		if run_state.is_elite_or_boss_encounter():
+			var _RelicDB = load("res://src/custom/RelicDatabase.gd")
+			dropped_relic = _RelicDB.get_random_relic(run_state.relics)
+			if dropped_relic != "":
+				run_state.add_relic(dropped_relic)
 		if audio_manager:
 			audio_manager.play_sfx("victory")
 		await _animate_victory()
-		if run_state.is_final_encounter():
-			_show_run_complete_screen()
-		else:
-			_show_reward_screen()
+		_show_reward_screen(gold_reward, dropped_relic)
 	else:
 		await _animate_defeat()
 		if audio_manager:
@@ -707,7 +737,7 @@ func _animate_defeat() -> void:
 
 
 # Show the reward selection screen (non-final victory).
-func _show_reward_screen() -> void:
+func _show_reward_screen(gold_reward: int = 0, dropped_relic: String = "") -> void:
 	_reward_screen = Control.new()
 	_reward_screen.set_script(load("res://src/custom/RewardScreen.gd"))
 	_reward_screen.setup(Vector2(get_viewport().size))
@@ -715,7 +745,12 @@ func _show_reward_screen() -> void:
 	_reward_screen.connect("reward_skipped", Callable(self, "_on_reward_skipped"))
 	_reward_screen.connect("continue_run", Callable(self, "_on_continue_run"))
 	add_child(_reward_screen)
-	_reward_screen.show_victory_rewards(false)
+	_reward_screen.show_victory_rewards(false, gold_reward)
+	# Show relic drop notification
+	if dropped_relic != "":
+		var _RelicDB = load("res://src/custom/RelicDatabase.gd")
+		var rdata: Dictionary = _RelicDB.get_relic(dropped_relic)
+		_show_relic_toast(rdata.get("icon", ""), rdata.get("name", ""))
 
 
 # Show the run complete screen (final victory).
@@ -738,6 +773,98 @@ func _show_game_over_screen() -> void:
 	_reward_screen.show_game_over()
 
 
+# --- M11: Map, Shop, Rest flows ---
+
+
+func _show_map_screen() -> void:
+	if _map_screen and is_instance_valid(_map_screen):
+		_map_screen.queue_free()
+	_map_screen = Control.new()
+	_map_screen.set_script(load("res://src/custom/MapScreen.gd"))
+	_map_screen.setup(Vector2(get_viewport().size), run_state)
+	_map_screen.connect("node_selected", Callable(self, "_on_map_node_selected"))
+	add_child(_map_screen)
+	_map_screen.show_map()
+
+
+func _close_map_screen() -> void:
+	if _map_screen and is_instance_valid(_map_screen):
+		_map_screen.queue_free()
+		_map_screen = null
+
+
+func _on_map_node_selected(floor_index: int, node_index: int) -> void:
+	_close_map_screen()
+	var node := run_state.get_current_node()
+	var node_type: String = node.get("type", "combat")
+	match node_type:
+		"combat", "elite", "boss":
+			_setup_combat()
+		"shop":
+			_show_shop_screen()
+		"rest":
+			_do_rest()
+
+
+func _show_shop_screen() -> void:
+	if _shop_screen and is_instance_valid(_shop_screen):
+		_shop_screen.queue_free()
+	_shop_screen = Control.new()
+	_shop_screen.set_script(load("res://src/custom/ShopScreen.gd"))
+	_shop_screen.setup(Vector2(get_viewport().size), run_state, self)
+	_shop_screen.connect("shop_closed", Callable(self, "_on_shop_closed"))
+	add_child(_shop_screen)
+	_shop_screen.show_shop()
+
+
+func _on_shop_closed() -> void:
+	if _shop_screen and is_instance_valid(_shop_screen):
+		_shop_screen.queue_free()
+		_shop_screen = null
+	_show_map_screen()
+
+
+func _do_rest() -> void:
+	var heal_amount := int(run_state.player_max_hp * 0.3)
+	run_state.player_hp = mini(run_state.player_hp + heal_amount, run_state.player_max_hp)
+	# Brief rest notification then return to map
+	var toast := Label.new()
+	toast.text = "❤️ 休息恢复 %d HP!" % heal_amount
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.position = Vector2(get_viewport().size.x / 2.0 - 150, get_viewport().size.y / 2.0 - 20)
+	toast.size = Vector2(300, 40)
+	toast.add_theme_font_size_override("font_size", 24)
+	toast.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
+	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	toast.add_theme_constant_override("outline_size", 2)
+	toast.z_index = 200
+	add_child(toast)
+	var tween := create_tween()
+	tween.tween_interval(1.5)
+	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(toast.queue_free)
+	await tween.finished
+	_show_map_screen()
+
+
+func _show_relic_toast(icon: String, relic_name: String) -> void:
+	var toast := Label.new()
+	toast.text = "%s 获得遗物: %s!" % [icon, relic_name]
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.position = Vector2(get_viewport().size.x / 2.0 - 180, get_viewport().size.y / 2.0 + 30)
+	toast.size = Vector2(360, 40)
+	toast.add_theme_font_size_override("font_size", 20)
+	toast.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	toast.add_theme_constant_override("outline_size", 2)
+	toast.z_index = 200
+	add_child(toast)
+	var tween := create_tween()
+	tween.tween_interval(2.0)
+	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(toast.queue_free)
+
+
 # Add the selected reward card to the deck and run state.
 func _on_reward_card_selected(card_name: String) -> void:
 	if audio_manager:
@@ -755,9 +882,16 @@ func _on_reward_skipped() -> void:
 	push_warning("Reward skipped")
 
 
-# Player clicked "Continue" after reward — advance to next encounter.
+# Player clicked "Continue" after reward — save strength, go to map or run complete.
 func _on_continue_run() -> void:
-	_advance_to_next_encounter()
+	# Save persistent strength from combat
+	if combat_manager and combat_manager.player:
+		run_state.player_strength = combat_manager.player.strength
+	_cleanup_combat()
+	if run_state.is_current_node_final():
+		_show_run_complete_screen()
+	else:
+		_show_map_screen()
 
 
 # Return to the main menu scene.

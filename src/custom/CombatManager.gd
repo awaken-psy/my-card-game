@@ -33,6 +33,9 @@ var combat_result: String = ""
 # True while a card's effects are being resolved (prevents double-play).
 var _is_resolving: bool = false
 
+	# True until the first attack card is played this turn (for Burning Blade relic).
+	var _first_attack_this_turn: bool = true
+
 # Reference to the board node (set by CGFBoard)
 var board: Node
 
@@ -66,6 +69,7 @@ func start_combat() -> void:
 func start_turn() -> void:
 	turn_number += 1
 	is_player_turn = true
+		_first_attack_this_turn = true
 	# Reset block and tick status at start of turn
 	player.reset_block()
 	player.tick_status()
@@ -75,6 +79,8 @@ func start_turn() -> void:
 		combat_result = "defeat"
 		emit_signal("combat_ended")
 		return
+	# Orichalcum relic: +4 block at start of each turn
+	_apply_relic_effect("orichalcum")
 	# Refill energy
 	current_energy = MAX_ENERGY
 	emit_signal("energy_changed", current_energy, MAX_ENERGY)
@@ -185,8 +191,15 @@ func _resolve_card_effects(card: Card) -> void:
 	if base_damage > 0:
 		var effects: Array = card.properties.get("_effects", [])
 		var damage := _calculate_damage(base_damage, player, enemy, effects)
+		# Burning Blade relic: first attack each turn +3 damage
+		if _first_attack_this_turn and board and board.run_state.has_relic("burning_blade"):
+			damage += 3
+		_first_attack_this_turn = false
 		enemy.take_damage(damage)
 		emit_signal("entity_damaged", enemy, damage)
+		# Vampire Eye relic: heal 2 HP when dealing attack damage
+		if damage > 0 and board and board.run_state.has_relic("vampire_eye"):
+			player.heal(2)
 		# Thorns: if enemy has thorns, player takes reflected damage
 		if enemy.thorns > 0:
 			player.take_damage(enemy.thorns)
@@ -328,3 +341,16 @@ func _reshuffle_discard_into_deck() -> void:
 	# Wait for move animations to complete
 	await get_tree().create_timer(0.3).timeout
 	await cfc.NMAP.deck.shuffle_cards()
+
+# --- Relic Effects ---
+
+
+# Apply a relic effect at the appropriate hook point.
+func _apply_relic_effect(relic_id: String) -> void:
+	if not board or not board.run_state:
+		return
+	if not board.run_state.has_relic(relic_id):
+		return
+	match relic_id:
+		"orichalcum":
+			player.gain_block(4)
