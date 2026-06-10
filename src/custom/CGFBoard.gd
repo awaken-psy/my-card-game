@@ -105,7 +105,7 @@ func _setup_combat() -> void:
 
 	# Initialize combat entities
 	combat_manager.player = _CombatEntity.new("Player", run_state.player_max_hp, run_state.player_hp)
-		combat_manager.player.strength = run_state.player_strength
+	combat_manager.player.strength = run_state.player_strength
 	combat_manager.enemy = _CombatEntity.new(encounter["name"], encounter["hp"])
 
 
@@ -240,9 +240,9 @@ func _create_combat_ui() -> void:
 	_encounter_label.size = Vector2(160, 30)
 	_encounter_label.add_theme_font_size_override("font_size", 20)
 	_encounter_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-	var node := run_state.get_current_node()
-	var node_type: String = node.get("type", "combat")
-	var type_names := {"combat": "战斗", "elite": "精英", "boss": "Boss"}
+	var map_node: Dictionary = run_state.get_current_node()
+	var node_type: String = map_node.get("type", "combat")
+	var type_names: Dictionary = {"combat": "战斗", "elite": "精英", "boss": "Boss"}
 	_encounter_label.text = "层 %d/%d · %s" % [run_state.get_floor_number(), run_state.get_total_floors(), type_names.get(node_type, "战斗")]
 	add_child(_encounter_label)
 	_combat_ui_nodes.append(_encounter_label)
@@ -608,13 +608,13 @@ func _on_combat_ended() -> void:
 	if combat_manager.combat_result == "victory":
 		run_state.player_hp = combat_manager.player.hp
 		# Gold reward
-		var gold_reward := run_state.get_gold_reward()
+		var gold_reward: int = run_state.get_gold_reward()
 		run_state.add_gold(gold_reward)
 		# Red Skull relic: +2 strength after elite/boss
 		if run_state.is_elite_or_boss_encounter() and run_state.has_relic("red_skull"):
 			run_state.player_strength += 2
 		# Elite/boss relic drop
-		var dropped_relic := ""
+		var dropped_relic: String = ""
 		if run_state.is_elite_or_boss_encounter():
 			var _RelicDB = load("res://src/custom/RelicDatabase.gd")
 			dropped_relic = _RelicDB.get_random_relic(run_state.relics)
@@ -795,7 +795,7 @@ func _close_map_screen() -> void:
 
 func _on_map_node_selected(floor_index: int, node_index: int) -> void:
 	_close_map_screen()
-	var node := run_state.get_current_node()
+	var node: Dictionary = run_state.get_current_node()
 	var node_type: String = node.get("type", "combat")
 	match node_type:
 		"combat", "elite", "boss":
@@ -825,7 +825,7 @@ func _on_shop_closed() -> void:
 
 
 func _do_rest() -> void:
-	var heal_amount := int(run_state.player_max_hp * 0.3)
+	var heal_amount: int = int(run_state.player_max_hp * 0.3)
 	run_state.player_hp = mini(run_state.player_hp + heal_amount, run_state.player_max_hp)
 	# Brief rest notification then return to map
 	var toast := Label.new()
