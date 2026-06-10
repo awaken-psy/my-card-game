@@ -127,6 +127,8 @@ func _setup_combat() -> void:
 	combat_manager.enemy.connect("stats_changed", Callable(self, "_on_enemy_stats_changed"))
 	combat_manager.player.connect("poison_damaged", Callable(self, "_on_poison_tick"))
 	combat_manager.enemy.connect("poison_damaged", Callable(self, "_on_poison_tick"))
+	combat_manager.player.connect("healed", Callable(self, "_on_player_healed"))
+	combat_manager.connect("thorns_triggered", Callable(self, "_on_thorns_triggered"))
 
 	# Auto-inject combat_manager into all newly instanced cards
 	if not cfc.is_connected("new_card_instanced", Callable(self, "inject_combat_manager")):
@@ -922,6 +924,13 @@ func _on_player_healed(entity, amount: int) -> void:
 		var pos: Vector2 = _player_visual.global_position + _player_visual.size / 2.0
 		_spawn_floating_text("+%d" % amount, pos, Color(0.2, 0.9, 0.3))
 
+
+
+# Handle thorns_triggered signal: spawn orange floating thorns text at the source.
+func _on_thorns_triggered(source, damage: int) -> void:
+	if source == combat_manager.enemy and _enemy_visual:
+		var pos: Vector2 = _enemy_visual.global_position + _enemy_visual.size / 2.0
+		_spawn_floating_text("🌵%d" % damage, pos, Color(1.0, 0.7, 0.1))
 
 # Update HP bar fill color based on ratio (green → yellow → red).
 func _update_hp_bar_color(bar: ProgressBar, ratio: float) -> void:
