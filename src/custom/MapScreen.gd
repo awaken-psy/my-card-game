@@ -96,7 +96,7 @@ func _build_map() -> void:
 	# Drawing layer for connections (behind nodes)
 	var draw_layer := Control.new()
 	draw_layer.name = "ConnectionLayer"
-	draw_layer.size = Vector2(_viewport_size.x, map_height)
+	draw_layer.custom_minimum_size = Vector2(_viewport_size.x, map_height)
 	draw_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_scroll.add_child(draw_layer)
 	# Connect draw signal
@@ -105,7 +105,7 @@ func _build_map() -> void:
 	# Node layer
 	var node_layer := Control.new()
 	node_layer.name = "NodeLayer"
-	node_layer.size = Vector2(_viewport_size.x, map_height)
+	node_layer.custom_minimum_size = Vector2(_viewport_size.x, map_height)
 	node_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_scroll.add_child(node_layer)
 
@@ -261,7 +261,13 @@ func _on_draw_connections(draw_layer: Control) -> void:
 func _scroll_to_current() -> void:
 	if not _scroll:
 		return
-	var target_y: int = maxi(0, _run_state.current_floor) * FLOOR_HEIGHT
+	var total_floors: int = _run_state.map_data["floors"].size()
+	var target_y: int
+	if _run_state.current_floor < 0:
+		# Haven't entered map yet — scroll to bottom (starting nodes)
+		target_y = total_floors * FLOOR_HEIGHT
+	else:
+		target_y = _run_state.current_floor * FLOOR_HEIGHT
 	var max_scroll: float = _scroll.get_v_scroll_bar().max_value if _scroll.get_v_scroll_bar() else 0
 	var scroll_pos: float = clampf(float(target_y) - _scroll.size.y / 2.0, 0.0, max_scroll)
 	_scroll.scroll_vertical = int(scroll_pos)
