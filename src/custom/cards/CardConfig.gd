@@ -39,6 +39,38 @@ const BOOL_PROPERTY_TO_HIDE_IN_CARDVIEWER := "_hide_in_deckbuilder"
 # will add extra info panel with the specified information to the player.
 const EXPLANATIONS = {}
 # Allows the Card object and Card Viewer to replace specific entries during display.
-const REPLACEMENTS = {}
+# Maps internal English identifiers to Chinese display text.
+# canonical_name stays English (used by scripts, deck state, rewards, etc.).
+const REPLACEMENTS = {
+	"Name": {
+		"Strike": "打击",
+		"Defend": "防御",
+		"Bash": "痛击",
+		"Cleave": "顺劈",
+		"Iron Wave": "铁浪",
+		"Shrug It Off": "耸肩",
+		"Pommel Strike": "刺击",
+		"Inflame": "燃烧",
+		"Bloodletting": "放血",
+		"Heavy Blow": "重击",
+		"Poison Stab": "毒刺",
+		"Crippling Blow": "致残打击",
+		"Bandage": "绷带",
+		"Thorns": "荆棘",
+		"Shield Bash": "盾击",
+		"Fiend Fire": "魔焰",
+	},
+	"Type": {
+		"Attack": "攻击",
+		"Skill": "技能",
+		"Power": "能力",
+	},
+	"Tags": {
+		"Starter": "初始",
+		"Common": "普通",
+		"Uncommon": "稀有",
+		"Rare": "史诗",
+	},
+}
 # Defined bbcode which will replace the specified string in RichTextLabels
 const CARD_BBCODE := {}
