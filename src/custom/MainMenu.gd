@@ -1,4 +1,4 @@
-extends Panel
+extends Control
 
 # The time it takes to switch from one menu tab to another
 const menu_switch_time = 0.35

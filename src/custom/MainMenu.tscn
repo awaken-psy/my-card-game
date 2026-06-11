@@ -557,12 +557,14 @@ cache/0/108/0/underline_position = 0.0
 cache/0/108/0/underline_thickness = 0.0
 cache/0/108/0/scale = 1.0
 
-[node name="Menu" type="Panel" unique_id=24402306]
+[node name="Menu" type="Control" unique_id=24402306]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 theme = ExtResource("1")
 script = ExtResource("3")
 
