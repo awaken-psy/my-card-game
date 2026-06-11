@@ -237,11 +237,11 @@ func _create_combat_ui() -> void:
 	_combat_ui_nodes.append(_hit_overlay)
 
 	# --- Encounter progress label (top center) ---
+	# --- Encounter progress label (top-left) ---
 	_encounter_label = Label.new()
 	_encounter_label.name = "EncounterLabel"
-	_encounter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_encounter_label.position = Vector2(viewport_size.x / 2 - 80, 10)
-	_encounter_label.size = Vector2(160, 30)
+	_encounter_label.position = Vector2(20, 10)
+	_encounter_label.size = Vector2(200, 30)
 	_encounter_label.add_theme_font_size_override("font_size", 20)
 	_encounter_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	var map_node: Dictionary = run_state.get_current_node()
@@ -251,9 +251,9 @@ func _create_combat_ui() -> void:
 	add_child(_encounter_label)
 	_combat_ui_nodes.append(_encounter_label)
 
-	# Relic icons display (top-right of encounter label) with hover tooltip
+	# Relic icons display (right of encounter label) with hover tooltip
 	var _RelicDB = load("res://src/custom/RelicDatabase.gd")
-	var relic_x := viewport_size.x / 2.0 + 100
+	var relic_x := 230.0
 	for relic_id in run_state.relics:
 		var rdata: Dictionary = _RelicDB.get_relic(relic_id)
 		var relic_icon := Label.new()
@@ -271,6 +271,22 @@ func _create_combat_ui() -> void:
 		add_child(relic_icon)
 		_combat_ui_nodes.append(relic_icon)
 		relic_x += 35
+
+	# Settings gear button (top-right)
+	var settings_btn := Button.new()
+	settings_btn.name = "SettingsButton"
+	settings_btn.text = "⚙"
+	settings_btn.position = Vector2(viewport_size.x - 55, 8)
+	settings_btn.size = Vector2(40, 34)
+	settings_btn.add_theme_font_size_override("font_size", 22)
+	settings_btn.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+	settings_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	settings_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	settings_btn.z_index = 11
+	settings_btn.flat = true
+	settings_btn.connect("pressed", Callable(self, "open_settings"))
+	add_child(settings_btn)
+	_combat_ui_nodes.append(settings_btn)
 
 	# --- Energy orb (bottom-left, near deck — STS style) ---
 	_energy_orb = Panel.new()
@@ -1252,3 +1268,59 @@ func _on_DeckBuilder_hide() -> void:
 func _on_BackToMain_pressed() -> void:
 	cfc.quit_game()
 	get_tree().change_scene_to_file("res://src/custom/MainMenu.tscn")
+
+
+func open_settings() -> void:
+	# Use game pause (not engine pause) so overlay still receives input
+	cfc.game_paused = true
+	var overlay := Control.new()
+	overlay.name = "SettingsOverlay"
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.z_index = 500
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	# Dim background
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(dim)
+
+	var panel := Panel.new()
+	panel.name = "SettingsPanel"
+	var panel_size := Vector2(400, 300)
+	panel.position = (Vector2(get_viewport().size) - panel_size) / 2
+	panel.size = panel_size
+	panel.z_index = 501
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.1, 0.18, 0.97)
+	style.border_color = Color(0.5, 0.5, 0.6)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	panel.add_theme_stylebox_override("panel", style)
+	overlay.add_child(panel)
+
+	var title := Label.new()
+	title.text = "设置"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(0, 20)
+	title.size = Vector2(panel_size.x, 40)
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1, 0.9, 0.7))
+	panel.add_child(title)
+
+	var close_btn := Button.new()
+	close_btn.text = "关闭"
+	close_btn.position = Vector2(panel_size.x / 2 - 60, panel_size.y - 60)
+	close_btn.size = Vector2(120, 40)
+	close_btn.add_theme_font_size_override("font_size", 18)
+	close_btn.z_index = 502
+	close_btn.connect("pressed", Callable(self, "_close_settings").bind(overlay))
+	panel.add_child(close_btn)
+
+
+func _close_settings(overlay: Control) -> void:
+	cfc.game_paused = false
+	if overlay and is_instance_valid(overlay):
+		overlay.queue_free()

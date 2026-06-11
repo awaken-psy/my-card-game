@@ -212,9 +212,20 @@ func _build_info_bar() -> void:
 	gold_label.z_index = 11
 	add_child(gold_label)
 
+	# Floor progress (left of relics)
+	var total: int = _run_state.get_total_floors()
+	var floor_label := Label.new()
+	floor_label.text = "层 %d/%d" % [_run_state.get_floor_number(), total]
+	floor_label.position = Vector2(260, 12)
+	floor_label.size = Vector2(100, 30)
+	floor_label.add_theme_font_size_override("font_size", 16)
+	floor_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	floor_label.z_index = 11
+	add_child(floor_label)
+
 	# Relics (with hover tooltip)
 	_relic_tooltip = null
-	var relic_x: int = 260
+	var relic_x: int = 370
 	for relic_id in _run_state.relics:
 		var relic_data: Dictionary = _RelicDatabase.get_relic(relic_id)
 		var relic_label := Label.new()
@@ -231,17 +242,20 @@ func _build_info_bar() -> void:
 		add_child(relic_label)
 		relic_x += 35
 
-	# Floor progress
-	var floor_label := Label.new()
-	var total: int = _run_state.get_total_floors()
-	floor_label.text = "层 %d/%d" % [_run_state.get_floor_number(), total]
-	floor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	floor_label.position = Vector2(_viewport_size.x - 150, 12)
-	floor_label.size = Vector2(130, 30)
-	floor_label.add_theme_font_size_override("font_size", 16)
-	floor_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	floor_label.z_index = 11
-	add_child(floor_label)
+	# Settings gear button (top-right)
+	var settings_btn := Button.new()
+	settings_btn.name = "SettingsButton"
+	settings_btn.text = "⚙"
+	settings_btn.position = Vector2(_viewport_size.x - 55, 8)
+	settings_btn.size = Vector2(40, 34)
+	settings_btn.add_theme_font_size_override("font_size", 22)
+	settings_btn.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+	settings_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	settings_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	settings_btn.z_index = 11
+	settings_btn.flat = true
+	settings_btn.connect("pressed", Callable(self, "_on_settings_pressed"))
+	add_child(settings_btn)
 
 
 # --- Connection Drawing ---
@@ -402,3 +416,10 @@ func _style_node_button(btn: Button, base_color: Color, is_current: bool, is_rea
 	btn.add_theme_stylebox_override("disabled", normal)
 	btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	btn.add_theme_color_override("font_disabled_color", Color(0.4, 0.4, 0.4))
+
+
+
+func _on_settings_pressed() -> void:
+	var board = get_parent()
+	if board and board.has_method("open_settings"):
+		board.open_settings()
