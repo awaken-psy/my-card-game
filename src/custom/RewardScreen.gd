@@ -32,6 +32,8 @@ func setup(viewport_size: Vector2) -> void:
 
 func show_victory_rewards(_is_final_encounter: bool = false, gold_amount: int = 0) -> void:
 	_gold_reward = gold_amount
+	# Pick reward cards once — reused across back/forward navigation
+	_reward_card_names = _pick_3_rewards()
 	cfc.game_paused = true
 	_clear_ui()
 	_build_overlay()
@@ -60,7 +62,8 @@ func show_game_over() -> void:
 
 func _clear_ui() -> void:
 	_selected_card_name = ""
-	_reward_card_names = []
+	# Note: _reward_card_names is intentionally NOT cleared here.
+	# It is set once in show_victory_rewards and reused across back/forward navigation.
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -226,8 +229,7 @@ func _build_card_selection() -> void:
 	title.add_theme_constant_override("outline_size", 2)
 	add_child(title)
 
-	# Create 3 real card instances
-	_reward_card_names = _pick_3_rewards()
+	# Use cached reward cards (generated in show_victory_rewards)
 	var card_scale := 1.5
 	var card_width: float = _CFConst.CARD_SIZE.x * card_scale
 	var card_height: float = _CFConst.CARD_SIZE.y * card_scale
