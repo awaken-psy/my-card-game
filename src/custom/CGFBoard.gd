@@ -57,13 +57,8 @@ func _ready() -> void:
 	super._ready()
 	counters = $Counters
 	cfc.map_node(self)
-	$FancyMovementToggle.button_pressed = cfc.game_settings.fancy_movement
-	$OvalHandToggle.button_pressed = cfc.game_settings.hand_use_oval_shape
-	$ScalingFocusOptions.selected = cfc.game_settings.focus_style
-	$Debug.button_pressed = cfc._debug
 	if not cfc.ut:
 		cfc.game_rng_seed = CFUtils.generate_random_seed()
-		$SeedLabel.text = "Game Seed is: " + cfc.game_rng_seed
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
 	if not cfc.ut and not get_tree().get_root().has_node('RunFromEditor'):
@@ -93,8 +88,6 @@ func _setup_combat() -> void:
 	_set_piles_visible(true)
 	cfc.set_setting("hand_use_oval_shape", true)
 	cfc.set_setting("fancy_movement", true)
-	$OvalHandToggle.button_pressed = true
-	$FancyMovementToggle.button_pressed = true
 
 	# Create CombatManager
 	combat_manager = Node.new()
@@ -519,28 +512,11 @@ func _create_combat_ui() -> void:
 		if node is Control and node != _end_turn_button:
 			node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	_hide_demo_buttons()
-
-
-func _hide_demo_buttons() -> void:
-	var demo_nodes := [
-		"Counters",
-		"FancyMovementToggle",
-		"EnableAttach",
-		"ScalingFocusOptions",
-		"ReshuffleAllDeck",
-		"ReshuffleAllDiscard",
-		"OvalHandToggle",
-		"DeckBuilder",
-		"Debug",
-		"PlacementGridDemo",
-		"ModifiedLabelGrid",
-		"SeedLabel",
-	]
-	for node_name in demo_nodes:
-		var node := get_node_or_null(node_name)
-		if node:
-			node.visible = false
+	# Hide framework demo UI not needed during combat
+	for node_name in ["Counters"]:
+		var n := get_node_or_null(node_name)
+		if n:
+			n.visible = false
 	for container_name in ["deck", "discard", "hand"]:
 		var container = cfc.NMAP.get(container_name) if cfc.NMAP else null
 		if container:
@@ -1229,51 +1205,8 @@ static func _format_intent_text(intent: Dictionary) -> String:
 	return text
 
 
-# --- Original CGFBoard methods (kept for compatibility) ---
 
-func _on_FancyMovementToggle_toggled(_button_pressed) -> void:
-	cfc.set_setting('fancy_movement', $FancyMovementToggle.button_pressed)
-
-
-func _on_OvalHandToggle_toggled(_button_pressed: bool) -> void:
-	cfc.set_setting("hand_use_oval_shape", $OvalHandToggle.button_pressed)
-	for c in cfc.NMAP.hand.get_all_cards():
-		c.reorganize_self()
-
-
-func _on_ReshuffleAllDeck_pressed() -> void:
-	reshuffle_all_in_pile(cfc.NMAP.deck)
-
-
-func _on_ReshuffleAllDiscard_pressed() -> void:
-	reshuffle_all_in_pile(cfc.NMAP.discard)
-
-func reshuffle_all_in_pile(pile: Pile = cfc.NMAP.deck):
-	for c in get_tree().get_nodes_in_group("cards"):
-		if c.get_parent() != pile and c.state != Card.CardState.DECKBUILDER_GRID:
-			c.move_to(pile)
-			await get_tree().create_timer(0.1).timeout
-	var last_card : Card = pile.get_top_card()
-	if last_card._tween and last_card._tween.is_running():
-		await last_card._tween.finished
-	await get_tree().create_timer(0.2).timeout
-	pile.shuffle_cards()
-
-
-func _on_ScalingFocusOptions_item_selected(index) -> void:
-	cfc.set_setting('focus_style', index)
-
-
-func _on_EnableAttach_toggled(button_pressed: bool) -> void:
-	for c in get_tree().get_nodes_in_group("cards"):
-		if button_pressed:
-			c.attachment_mode = Card.AttachmentMode.ATTACH_BEHIND
-		else:
-			c.attachment_mode = Card.AttachmentMode.DO_NOT_ATTACH
-
-
-func _on_Debug_toggled(button_pressed: bool) -> void:
-	cfc._debug = button_pressed
+# --- Deck builder and navigation ---
 
 # Load the deck from run_state's card name list.
 func _load_deck_from_run_state() -> void:

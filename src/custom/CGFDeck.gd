@@ -7,11 +7,9 @@ signal draw_card(deck)
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super._ready()
-	# Disable shuffle animation entirely. The framework's shuffle animations
-	# (CORGI/SPLASH/SNAP) all move the pile toward viewport center, but the
-	# return tween is fire-and-forget and unreliable — the pile gets stuck at
-	# the shuffle midpoint. NONE skips animation and just reorders the cards.
-	shuffle_style = CFConst.ShuffleStyle.NONE
+	# Framework shuffle animation restored (return tween bug fixed in a453a01).
+	# AUTO picks CORGI for small decks, SPLASH/OVERHAND for larger ones.
+	shuffle_style = CFConst.ShuffleStyle.AUTO
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
 	# Keep the draw_card signal connected for compatibility
