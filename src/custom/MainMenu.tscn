@@ -580,9 +580,10 @@ layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="ColorRect" type="ColorRect" parent="MainMenu" unique_id=808732597]
+[node name="Background" type="TextureRect" parent="MainMenu" unique_id=808732597]
 layout_mode = 2
-color = Color(0.0705882, 0.0705882, 0.0705882, 1)
+stretch_mode = 6
+mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="MainMenu" unique_id=226019299]
 layout_mode = 2
@@ -597,8 +598,7 @@ theme_override_constants/margin_top = 90
 layout_mode = 2
 theme_override_fonts/font = SubResource("2")
 theme_override_font_sizes/font_size = 108
-text = "Godot 
-Card Game Framework"
+text = "My Card Game"
 horizontal_alignment = 1
 
 [node name="Center" type="CenterContainer" parent="MainMenu/VBox" unique_id=1057734106]
@@ -610,27 +610,23 @@ custom_minimum_size = Vector2(192, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SinglePlayerDemo" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=1288547837]
+[node name="StartRun" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=1288547837]
 layout_mode = 2
-text = "Single Player Demo"
-
-[node name="Multiplayer" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=556460916]
-layout_mode = 2
-text = "Multiplayer Demo"
+text = "开始冒险"
 
 [node name="Deckbuilder" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=744650050]
 layout_mode = 2
-text = "Deck Builder"
+text = "牌组构建"
 
 [node name="CardLibrary" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=262836234]
 layout_mode = 2
-text = "Card Library"
+text = "卡牌图鉴"
 
 [node name="GUT" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=1440521310]
 visible = false
 layout_mode = 2
-text = "Tests"
+text = "测试"
 
 [node name="Exit" type="Button" parent="MainMenu/VBox/Center/VButtons" unique_id=1930866145]
 layout_mode = 2
-text = "Exit"
+text = "退出游戏"

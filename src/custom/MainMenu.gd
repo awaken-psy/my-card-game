@@ -5,33 +5,40 @@ const menu_switch_time = 0.35
 
 @onready var v_buttons := $MainMenu/VBox/Center/VButtons
 @onready var main_menu := $MainMenu
-#onready var settings_menu := $SettingsMenu
 @onready var deck_builder := $DeckBuilder
 @onready var card_library := $CardLibrary
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	_setup_background()
 	for option_button in v_buttons.get_children():
 		if option_button.has_signal('pressed'):
 			option_button.connect('pressed', Callable(self, 'on_button_pressed').bind(option_button.name))
-#	settings_menu.rect_position.x = get_viewport().size.x
 	deck_builder.position.x = -get_viewport().size.x
 	card_library.position.x = -get_viewport().size.x
-#	settings_menu.back_button.connect("pressed", self, "_on_Setings_Back_pressed")
-#	settings_menu.recover_prebuilts.connect("pressed", self, "_on_PreBuilts_pressed")
 	deck_builder.back_button.connect("pressed", Callable(self, "_on_DeckBuilder_Back_pressed"))
 	card_library.back_button.connect("pressed", Callable(self, "_on_CardLibrary_Back_pressed"))
 	# warning-ignore:return_value_discarded
 	get_viewport().connect("size_changed", Callable(self, '_on_Menu_resized'))
 
 
+func _setup_background() -> void:
+	var bg := $MainMenu/Background
+	var gradient := Gradient.new()
+	gradient.colors = [Color(0.05, 0.05, 0.12), Color(0.12, 0.06, 0.18)]
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.4)
+	tex.fill_to = Vector2(1.0, 0.4)
+	bg.texture = tex
+
+
 func on_button_pressed(_button_name : String) -> void:
 	match _button_name:
-		"SinglePlayerDemo":
+		"StartRun":
 			# warning-ignore:return_value_discarded
 			get_tree().change_scene_to_file(CFConst.PATH_CUSTOM + 'CGFMain.tscn')
-		"Multiplayer":
-			pass
 		"GUT":
 			# warning-ignore:return_value_discarded
 			get_tree().change_scene_to_file("res://tests/tests.tscn")
@@ -45,8 +52,6 @@ func on_button_pressed(_button_name : String) -> void:
 func switch_to_tab(tab: Control) -> void:
 	var main_position_x : float
 	match tab:
-#		settings_menu:
-#			main_position_x = -get_viewport().size.x
 		deck_builder, card_library:
 			main_position_x = get_viewport().size.x
 	var tween: Tween
@@ -62,8 +67,6 @@ func switch_to_tab(tab: Control) -> void:
 func switch_to_main_menu(tab: Control) -> void:
 	var tab_position_x : float
 	match tab:
-#		settings_menu:
-#			tab_position_x = get_viewport().size.x
 		deck_builder, card_library:
 			tab_position_x = -get_viewport().size.x
 	var tween: Tween
@@ -77,10 +80,10 @@ func switch_to_main_menu(tab: Control) -> void:
 
 func _on_DeckBuilder_Back_pressed() -> void:
 	switch_to_main_menu(deck_builder)
-	
+
 func _on_CardLibrary_Back_pressed() -> void:
 	switch_to_main_menu(card_library)
-	
+
 func _on_Menu_resized() -> void:
 	for tab in [main_menu, deck_builder, card_library]:
 		if is_instance_valid(tab):
