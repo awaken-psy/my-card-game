@@ -27,6 +27,7 @@ var _connections: Array = []  # [{from_pos, to_pos, reachable}]
 
 # Scroll container reference
 var _scroll: ScrollContainer
+var _relic_tooltip: Panel = null
 
 
 func setup(viewport_size: Vector2, run_state: RefCounted) -> void:
@@ -211,7 +212,8 @@ func _build_info_bar() -> void:
 	gold_label.z_index = 11
 	add_child(gold_label)
 
-	# Relics
+	# Relics (with hover tooltip)
+	_relic_tooltip = null
 	var relic_x: int = 260
 	for relic_id in _run_state.relics:
 		var relic_data: Dictionary = _RelicDatabase.get_relic(relic_id)
@@ -220,8 +222,12 @@ func _build_info_bar() -> void:
 		relic_label.position = Vector2(relic_x, 12)
 		relic_label.size = Vector2(30, 30)
 		relic_label.add_theme_font_size_override("font_size", 18)
-		relic_label.tooltip_text = "%s: %s" % [relic_data.get("name", ""), relic_data.get("description", "")]
 		relic_label.z_index = 11
+		relic_label.mouse_filter = Control.MOUSE_FILTER_STOP
+		relic_label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		var rid: String = relic_id
+		relic_label.connect("mouse_entered", Callable(self, "_show_relic_tooltip").bind(relic_label, rid))
+		relic_label.connect("mouse_exited", Callable(self, "_hide_relic_tooltip"))
 		add_child(relic_label)
 		relic_x += 35
 
@@ -253,6 +259,60 @@ func _on_draw_connections(draw_layer: Control) -> void:
 			color = Color(1, 0.85, 0.2, 0.8)
 			width = 3.0
 		draw_layer.draw_line(conn["from_pos"], conn["to_pos"], color, width, true)
+
+
+# --- Relic Tooltip ---
+
+
+func _show_relic_tooltip(anchor: Control, relic_id: String) -> void:
+	_hide_relic_tooltip()
+	var data: Dictionary = _RelicDatabase.get_relic(relic_id)
+	if data.is_empty():
+		return
+	var tooltip := Panel.new()
+	tooltip.name = "RelicTooltip"
+	tooltip.z_index = 200
+	tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.15, 0.95)
+	style.border_color = Color(0.7, 0.6, 0.3)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	tooltip.add_theme_stylebox_override("panel", style)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	var title := Label.new()
+	title.text = "%s %s" % [data.get("icon", ""), data.get("name", "")]
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	vbox.add_child(title)
+	var desc := Label.new()
+	desc.text = data.get("description", "")
+	desc.add_theme_font_size_override("font_size", 14)
+	desc.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.custom_minimum_size = Vector2(200, 0)
+	vbox.add_child(desc)
+	tooltip.add_child(vbox)
+	add_child(tooltip)
+	_relic_tooltip = tooltip
+	# Position below the anchor, clamped to viewport
+	await get_tree().process_frame
+	var tx: float = mini(anchor.global_position.x - 30, _viewport_size.x - tooltip.size.x - 10)
+	var ty: float = anchor.global_position.y + anchor.size.y + 5
+	if ty + tooltip.size.y > _viewport_size.y:
+		ty = anchor.global_position.y - tooltip.size.y - 5
+	tooltip.position = Vector2(tx, ty)
+
+
+func _hide_relic_tooltip() -> void:
+	if _relic_tooltip and is_instance_valid(_relic_tooltip):
+		_relic_tooltip.queue_free()
+	_relic_tooltip = null
 
 
 # --- Scrolling ---

@@ -258,7 +258,7 @@ func _create_combat_ui() -> void:
 	add_child(_encounter_label)
 	_combat_ui_nodes.append(_encounter_label)
 
-	# Relic icons display (top-right of encounter label)
+	# Relic icons display (top-right of encounter label) with hover tooltip
 	var _RelicDB = load("res://src/custom/RelicDatabase.gd")
 	var relic_x := viewport_size.x / 2.0 + 100
 	for relic_id in run_state.relics:
@@ -269,8 +269,12 @@ func _create_combat_ui() -> void:
 		relic_icon.size = Vector2(30, 30)
 		relic_icon.add_theme_font_size_override("font_size", 18)
 		relic_icon.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
-		relic_icon.tooltip_text = "%s: %s" % [rdata.get("name", ""), rdata.get("description", "")]
-		relic_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		relic_icon.mouse_filter = Control.MOUSE_FILTER_STOP
+		relic_icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		var rid: String = relic_id
+		var rdata_copy: Dictionary = rdata
+		relic_icon.connect("mouse_entered", Callable(self, "_show_combat_relic_tooltip").bind(relic_icon, rid))
+		relic_icon.connect("mouse_exited", Callable(self, "_hide_combat_relic_tooltip"))
 		add_child(relic_icon)
 		_combat_ui_nodes.append(relic_icon)
 		relic_x += 35
@@ -579,6 +583,60 @@ func _on_turn_started(turn_num: int) -> void:
 func _on_turn_ended() -> void:
 	if _end_turn_button:
 		_end_turn_button.disabled = true
+
+
+func _show_combat_relic_tooltip(anchor: Control, relic_id: String) -> void:
+	_hide_combat_relic_tooltip()
+	var _RelicDB = load("res://src/custom/RelicDatabase.gd")
+	var data: Dictionary = _RelicDB.get_relic(relic_id)
+	if data.is_empty():
+		return
+	var tooltip := Panel.new()
+	tooltip.name = "RelicTooltip"
+	tooltip.z_index = 200
+	tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.15, 0.95)
+	style.border_color = Color(0.7, 0.6, 0.3)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	tooltip.add_theme_stylebox_override("panel", style)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	var title := Label.new()
+	title.text = "%s %s" % [data.get("icon", ""), data.get("name", "")]
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	vbox.add_child(title)
+	var desc := Label.new()
+	desc.text = data.get("description", "")
+	desc.add_theme_font_size_override("font_size", 14)
+	desc.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.custom_minimum_size = Vector2(200, 0)
+	vbox.add_child(desc)
+	tooltip.add_child(vbox)
+	add_child(tooltip)
+	_combat_ui_nodes.append(tooltip)
+	# Position below anchor
+	await get_tree().process_frame
+	var vp_size: Vector2 = get_viewport().size
+	var tx: float = mini(anchor.global_position.x - 30, vp_size.x - tooltip.size.x - 10)
+	var ty: float = anchor.global_position.y + anchor.size.y + 5
+	if ty + tooltip.size.y > vp_size.y:
+		ty = anchor.global_position.y - tooltip.size.y - 5
+	tooltip.position = Vector2(tx, ty)
+
+
+func _hide_combat_relic_tooltip() -> void:
+	var tooltip = get_node_or_null("RelicTooltip")
+	if tooltip:
+		_combat_ui_nodes.erase(tooltip)
+		tooltip.queue_free()
 
 
 func _style_end_turn_button(btn: Button) -> void:
