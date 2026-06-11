@@ -2,6 +2,10 @@ extends Control
 
 # The time it takes to switch from one menu tab to another
 const menu_switch_time = 0.35
+# Design resolution (matches project.godot viewport_width/height).
+# canvas_items stretch mode scales the canvas, so all positions/sizes
+# must use this constant, NOT get_viewport().size (which returns window size).
+const DESIGN_SIZE := Vector2(1280, 720)
 
 @onready var v_buttons := $MainMenu/VBox/Center/VButtons
 @onready var main_menu := $MainMenu
@@ -14,12 +18,10 @@ func _ready() -> void:
 	for option_button in v_buttons.get_children():
 		if option_button.has_signal('pressed'):
 			option_button.connect('pressed', Callable(self, 'on_button_pressed').bind(option_button.name))
-	deck_builder.position.x = -get_viewport().size.x
-	card_library.position.x = -get_viewport().size.x
+	deck_builder.position.x = -DESIGN_SIZE.x
+	card_library.position.x = -DESIGN_SIZE.x
 	deck_builder.back_button.connect("pressed", Callable(self, "_on_DeckBuilder_Back_pressed"))
 	card_library.back_button.connect("pressed", Callable(self, "_on_CardLibrary_Back_pressed"))
-	# warning-ignore:return_value_discarded
-	get_viewport().connect("size_changed", Callable(self, '_on_Menu_resized'))
 
 
 func _setup_background() -> void:
@@ -53,7 +55,7 @@ func switch_to_tab(tab: Control) -> void:
 	var main_position_x : float
 	match tab:
 		deck_builder, card_library:
-			main_position_x = get_viewport().size.x
+			main_position_x = DESIGN_SIZE.x
 	var tween: Tween
 	if tween:
 		tween.kill()
@@ -68,7 +70,7 @@ func switch_to_main_menu(tab: Control) -> void:
 	var tab_position_x : float
 	match tab:
 		deck_builder, card_library:
-			tab_position_x = -get_viewport().size.x
+			tab_position_x = -DESIGN_SIZE.x
 	var tween: Tween
 	if tween:
 		tween.kill()
@@ -83,12 +85,3 @@ func _on_DeckBuilder_Back_pressed() -> void:
 
 func _on_CardLibrary_Back_pressed() -> void:
 	switch_to_main_menu(card_library)
-
-func _on_Menu_resized() -> void:
-	for tab in [main_menu, deck_builder, card_library]:
-		if is_instance_valid(tab):
-			tab.size = get_viewport().size
-			if tab.position.x < 0.0:
-					tab.position.x = -get_viewport().size.x
-			elif tab.position.x > 0.0:
-					tab.position.x = get_viewport().size.x
