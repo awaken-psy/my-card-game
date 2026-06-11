@@ -78,6 +78,13 @@ func _ready() -> void:
 # Start a new run (fresh RunState + first encounter).
 func _start_run() -> void:
 	run_state = _RunState.new()
+	# STS-style: start with a random relic
+	var _RelicDB = load("res://src/custom/RelicDatabase.gd")
+	var starter_relic: String = _RelicDB.get_random_relic([])
+	if starter_relic != "":
+		run_state.add_relic(starter_relic)
+		var rdata: Dictionary = _RelicDB.get_relic(starter_relic)
+		push_warning("起始遗物: %s %s" % [rdata.get("icon", ""), rdata.get("name", "")])
 	_show_map_screen()
 
 
