@@ -1003,10 +1003,23 @@ func _on_player_hp_changed(current, maximum) -> void:
 
 
 func _on_player_block_changed(new_block) -> void:
-	if _player_block_label:
-		_player_block_label.text = "🛡️ %d" % new_block if new_block > 0 else ""
-	if new_block > 0 and audio_manager:
-		audio_manager.play_sfx("block_gain")
+	if not _player_block_label:
+		return
+	if new_block > 0:
+		_player_block_label.text = "🛡️ %d" % new_block
+		_player_block_label.modulate.a = 1.0
+		# Bounce scale: pop in then settle
+		_player_block_label.scale = Vector2(1.6, 1.6)
+		var tween := create_tween()
+		tween.tween_property(_player_block_label, "scale", Vector2.ONE, 0.3)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		if audio_manager:
+			audio_manager.play_sfx("block_gain")
+	else:
+		# Fade out when block resets to 0
+		var tween := create_tween()
+		tween.tween_property(_player_block_label, "modulate:a", 0.0, 0.25)
+		tween.tween_callback(func(): _player_block_label.text = "")
 
 
 func _on_player_stats_changed() -> void:
@@ -1027,10 +1040,21 @@ func _on_enemy_hp_changed(current, maximum) -> void:
 
 
 func _on_enemy_block_changed(new_block) -> void:
-	if _enemy_block_label:
-		_enemy_block_label.text = "🛡️ %d" % new_block if new_block > 0 else ""
-	if new_block > 0 and audio_manager:
-		audio_manager.play_sfx("block_gain")
+	if not _enemy_block_label:
+		return
+	if new_block > 0:
+		_enemy_block_label.text = "🛡️ %d" % new_block
+		_enemy_block_label.modulate.a = 1.0
+		_enemy_block_label.scale = Vector2(1.6, 1.6)
+		var tween := create_tween()
+		tween.tween_property(_enemy_block_label, "scale", Vector2.ONE, 0.3)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		if audio_manager:
+			audio_manager.play_sfx("block_gain")
+	else:
+		var tween := create_tween()
+		tween.tween_property(_enemy_block_label, "modulate:a", 0.0, 0.25)
+		tween.tween_callback(func(): _enemy_block_label.text = "")
 
 
 func _on_enemy_stats_changed() -> void:

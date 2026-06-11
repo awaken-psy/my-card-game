@@ -308,12 +308,13 @@ func draw_cards(count: int) -> void:
 			await _reshuffle_discard_into_deck()
 		var card: Card = cfc.NMAP.hand.draw_card()
 		if card:
-			# Play draw sound
+			# Scale down for "draw from deck" effect — framework tweens to (1,1)
+			card.scale = Vector2(0.35, 0.35)
+			card.rotation = randf_range(-0.08, 0.08)
 			board.audio_manager.play_sfx("card_draw")
-			# Small delay between draws for animation
 			await get_tree().create_timer(0.15).timeout
-	# Ensure all cards finished their move animation and are properly positioned
-	await get_tree().create_timer(0.3).timeout
+	# Let framework animations settle, then reorganize hand layout
+	await get_tree().create_timer(0.5).timeout
 	for c in cfc.NMAP.hand.get_all_cards():
 		c.interruptTweening()
 		c.reorganize_self()
