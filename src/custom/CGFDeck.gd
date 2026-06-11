@@ -7,9 +7,10 @@ signal draw_card(deck)
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super._ready()
-	# Framework shuffle animation restored (return tween bug fixed in a453a01).
-	# AUTO picks CORGI for small decks, SPLASH/OVERHAND for larger ones.
-	shuffle_style = CFConst.ShuffleStyle.AUTO
+	# Shuffle animation disabled — CORGI/SPLASH animations cause the deck pile
+	# to drift to wrong position and block combat startup. See Pile.shuffle_cards().
+	# Framework return tween fix (a453a01) may resolve this; re-enable after testing.
+	shuffle_style = CFConst.ShuffleStyle.NONE
 	if not cfc.are_all_nodes_mapped:
 		await cfc.all_nodes_mapped
 	# Keep the draw_card signal connected for compatibility
