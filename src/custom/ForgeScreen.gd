@@ -212,60 +212,62 @@ func _build_forge() -> void:
 
 
 func _build_card_grid(center_x: float, center_y: float) -> void:
-	var card_scale := 1.3
-	var card_width: float = _CFConst.CARD_SIZE.x * card_scale
-	var card_height: float = _CFConst.CARD_SIZE.y * card_scale
-	var gap: float = 30.0
+	# Card panel dimensions (Control-based, not Area2D)
+	var card_width: float = 160.0
+	var card_height: float = 250.0
+	var arrow_width: float = 30.0  # Space for arrow between cards
+	var pair_gap: float = 50.0  # Gap between card pairs
 
-	# Limit displayed cards to fit screen (max 5)
 	var display_cards: Array = _upgradeable_cards.slice(0, 5)
-	var total_width: float = display_cards.size() * card_width + (display_cards.size() - 1) * gap
+	var pair_width: float = card_width * 2 + arrow_width  # base + arrow + upgrade
+	var total_width: float = display_cards.size() * pair_width + (display_cards.size() - 1) * pair_gap
 	var start_x: float = center_x - total_width / 2.0
 	var target_y: float = center_y - card_height / 2.0
 
 	for i in range(display_cards.size()):
 		var card_info: Dictionary = display_cards[i]
-		var card_x: float = start_x + i * (card_width + gap)
+		var pair_x: float = start_x + i * (pair_width + pair_gap)
 
-		# Create card container (base + arrow + upgrade)
+		# Container for this card pair
 		var container := Control.new()
 		container.name = "CardContainer_%d" % i
-		container.position = Vector2(card_x, target_y)
-		container.size = Vector2(card_width, card_height + 80)
+		container.position = Vector2(pair_x, target_y)
+		container.size = Vector2(pair_width, card_height)
 		container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-		# Base card (dimmed)
-		var base_card = cfc.instance_card(card_info["base_name"])
-		if base_card and is_instance_valid(base_card):
-			base_card.scale = Vector2(card_scale, card_scale)
-			base_card.position = Vector2.ZERO
-			base_card.modulate = Color(0.6, 0.6, 0.6, 1.0)  # Dimmed
-			base_card.z_index = 0
-			container.add_child(base_card)
+		# Base card panel (left side, dimmed)
+		var base_abilities: String = _get_base_card_abilities(card_info["base_name"])
+		var base_panel := _create_card_panel(
+			card_info["base_name"], base_abilities,
+			false, card_width, card_height
+		)
+		base_panel.position = Vector2(0, 0)
+		container.add_child(base_panel)
 
-		# Arrow pointing right
+		# Arrow between cards
 		var arrow := Label.new()
 		arrow.text = "→"
-		arrow.position = Vector2(card_width / 2.0 - 15, card_height / 2.0 - 20)
-		arrow.size = Vector2(30, 40)
-		arrow.add_theme_font_size_override("font_size", 36)
+		arrow.position = Vector2(card_width + 5, card_height / 2.0 - 20)
+		arrow.size = Vector2(20, 40)
+		arrow.add_theme_font_size_override("font_size", 30)
 		arrow.add_theme_color_override("font_color", Color(1, 0.7, 0.2))
 		arrow.z_index = 10
 		container.add_child(arrow)
 
-		# Upgrade card (highlighted, offset to right)
-		var upgrade_card = cfc.instance_card(card_info["upgrade_name"])
-		if upgrade_card and is_instance_valid(upgrade_card):
-			upgrade_card.scale = Vector2(card_scale, card_scale)
-			upgrade_card.position = Vector2(card_width / 2.0 + 10, 0)
-			upgrade_card.z_index = 5
-			container.add_child(upgrade_card)
+		# Upgrade card panel (right side, highlighted)
+		var upgrade_abilities: String = card_info["upgrade_info"].get("Abilities", "")
+		var upgrade_panel := _create_card_panel(
+			card_info["upgrade_name"], upgrade_abilities,
+			true, card_width, card_height
+		)
+		upgrade_panel.position = Vector2(card_width + arrow_width, 0)
+		container.add_child(upgrade_panel)
 
-		# Click area over the whole container
+		# Click area button (transparent overlay)
 		var click_area := Button.new()
 		click_area.name = "ClickArea_%d" % i
 		click_area.position = Vector2.ZERO
-		click_area.size = Vector2(card_width + 80, card_height)
+		click_area.size = Vector2(pair_width, card_height)
 		click_area.flat = true
 		click_area.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		_style_click_area(click_area, i)
@@ -274,18 +276,149 @@ func _build_card_grid(center_x: float, center_y: float) -> void:
 
 		add_child(container)
 
-		# Card name label below
+		# Card name label below the pair
 		var name_label := Label.new()
 		name_label.text = "%s → %s" % [card_info["base_name"], card_info["upgrade_name"]]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.position = Vector2(card_x, target_y + card_height + 10)
-		name_label.size = Vector2(card_width + 80, 30)
+		name_label.position = Vector2(pair_x, target_y + card_height + 10)
+		name_label.size = Vector2(pair_width, 30)
 		name_label.add_theme_font_size_override("font_size", 14)
 		name_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 		add_child(name_label)
 
 
-func _style_click_area(btn: Button, index: int) -> void:
+# Create a Control-based card panel (replaces Area2D card instances).
+func _create_card_panel(card_name: String, abilities: String, is_upgrade: bool,
+		width: float, height: float) -> Panel:
+	var panel := Panel.new()
+	panel.name = card_name
+	panel.size = Vector2(width, height)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.z_index = 0 if not is_upgrade else 5
+
+	var card_type: String = _get_card_type(card_name)
+	var style := _make_card_style(card_type, is_upgrade)
+	panel.add_theme_stylebox_override("panel", style)
+
+	# --- Content layout ---
+	var margin := 10.0
+	var content_w := width - margin * 2
+	var content_h := height - margin * 2
+
+	var vbox := VBoxContainer.new()
+	vbox.position = Vector2(margin, margin)
+	vbox.size = Vector2(content_w, content_h)
+	vbox.add_theme_constant_override("separation", 6)
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	# Card name (top, centered)
+	var name_label := Label.new()
+	name_label.text = card_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.size = Vector2(content_w, 0)
+	if is_upgrade:
+		name_label.add_theme_font_size_override("font_size", 18)
+		name_label.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	else:
+		name_label.add_theme_font_size_override("font_size", 16)
+		name_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	vbox.add_child(name_label)
+
+	# Card type badge
+	var type_label := Label.new()
+	type_label.text = card_type
+	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	type_label.size = Vector2(content_w, 0)
+	type_label.add_theme_font_size_override("font_size", 12)
+	type_label.add_theme_color_override("font_color", _get_card_type_color(card_type, is_upgrade))
+	vbox.add_child(type_label)
+
+	# Separator line
+	var sep := HSeparator.new()
+	sep.size = Vector2(content_w, 0)
+	vbox.add_child(sep)
+
+	# Description text
+	if abilities != "":
+		var desc := Label.new()
+		desc.text = abilities
+		desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		desc.size = Vector2(content_w, 0)
+		desc.add_theme_font_size_override("font_size", 11)
+		desc.add_theme_color_override("font_color",
+			Color(0.7, 0.7, 0.7) if not is_upgrade else Color(0.95, 0.95, 0.95))
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		vbox.add_child(desc)
+
+	panel.add_child(vbox)
+	return panel
+
+
+# Get the card type (Attack / Skill / Power) from SetDefinition.
+func _get_card_type(card_name: String) -> String:
+	var cards: Dictionary = _SetDefinition.CARDS
+	if cards.has(card_name):
+		return cards[card_name].get("Type", "")
+	return ""
+
+
+# Get the base card's description from SetDefinition.
+func _get_base_card_abilities(card_name: String) -> String:
+	var cards: Dictionary = _SetDefinition.CARDS
+	if cards.has(card_name):
+		return cards[card_name].get("Abilities", "")
+	return ""
+
+
+# Build StyleBoxFlat for a card panel.
+func _make_card_style(card_type: String, is_upgrade: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = _get_card_bg_color(card_type, is_upgrade)
+	if is_upgrade:
+		style.border_color = Color(1, 0.7, 0.2)
+		style.set_border_width_all(3)
+	else:
+		style.border_color = Color(0.35, 0.35, 0.4)
+		style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	return style
+
+
+# Background color based on card type.
+func _get_card_bg_color(card_type: String, is_upgrade: bool) -> Color:
+	if not is_upgrade:
+		return Color(0.1, 0.1, 0.12)  # Dimmed dark
+	match card_type:
+		"Attack":
+			return Color(0.25, 0.1, 0.1)  # Dark red
+		"Skill":
+			return Color(0.1, 0.15, 0.25)  # Dark blue
+		"Power":
+			return Color(0.2, 0.08, 0.2)  # Dark purple
+		_:
+			return Color(0.12, 0.12, 0.18)  # Neutral dark
+
+
+# Text color for card type badge.
+func _get_card_type_color(card_type: String, is_upgrade: bool) -> Color:
+	if not is_upgrade:
+		return Color(0.5, 0.5, 0.5)
+	match card_type:
+		"Attack":
+			return Color(1, 0.4, 0.3)  # Red
+		"Skill":
+			return Color(0.4, 0.6, 1)  # Blue
+		"Power":
+			return Color(0.7, 0.4, 1)  # Purple
+		_:
+			return Color(0.7, 0.7, 0.7)
+
+
+func _style_click_area(btn: Button, _index: int) -> void:
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color(0, 0, 0, 0.0)
 	normal.border_color = Color(1, 0.7, 0.2)

@@ -1174,7 +1174,8 @@ func _on_player_block_changed(new_block) -> void:
 		# Fade out when block resets to 0
 		var tween := create_tween()
 		tween.tween_property(_player_block_label, "modulate:a", 0.0, 0.25)
-		tween.tween_callback(func(): _player_block_label.text = "")
+		var clear_text := func(): _player_block_label.text = ""
+		tween.tween_callback(clear_text)
 
 
 func _on_player_stats_changed() -> void:
@@ -1209,7 +1210,8 @@ func _on_enemy_block_changed(new_block) -> void:
 	else:
 		var tween := create_tween()
 		tween.tween_property(_enemy_block_label, "modulate:a", 0.0, 0.25)
-		tween.tween_callback(func(): _enemy_block_label.text = "")
+		var clear_text := func(): _enemy_block_label.text = ""
+		tween.tween_callback(clear_text)
 
 
 func _on_enemy_stats_changed() -> void:
