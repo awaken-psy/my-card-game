@@ -144,7 +144,7 @@ func _clear_ui() -> void:
 func _find_upgradeable_cards() -> void:
 	# Find all cards in deck that can be upgraded
 	_upgradeable_cards.clear()
-	var deck: Array = _run_state.deck
+	var deck: Array = _run_state.deck_card_names
 	var seen: Dictionary = {}  # Avoid duplicates
 
 	for card_name in deck:
@@ -329,7 +329,7 @@ func _on_card_selected(index: int) -> void:
 		var upgrade_name: String = card_info["upgrade_name"]
 
 		# Remove base card from deck, add upgrade
-		var deck: Array = _run_state.deck
+		var deck: Array = _run_state.deck_card_names
 		var remove_idx: int = deck.find(base_name)
 		if remove_idx >= 0:
 			deck.remove_at(remove_idx)
