@@ -125,14 +125,14 @@ func _enemy_turn() -> void:
 		emit_signal("enemy_intent_changed", {})
 		return
 	# Brief pause to let player see the intent before execution
-	await get_tree().create_timer(0.8).timeout
+	await get_tree().create_timer(0.3).timeout
 	# Execute the pre-chosen intent
 	board.audio_manager.play_sfx("enemy_attack")
 	enemy_ai.execute_intent(enemy, player, self)
 	# Clear intent display after execution
 	emit_signal("enemy_intent_changed", {})
 	# Brief pause after execution for visual feedback
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(0.2).timeout
 
 
 # Check if a card can be played (enough energy + player turn + not resolving).
@@ -312,9 +312,9 @@ func draw_cards(count: int) -> void:
 			card.scale = Vector2(0.35, 0.35)
 			card.rotation = randf_range(-0.08, 0.08)
 			board.audio_manager.play_sfx("card_draw")
-			await get_tree().create_timer(0.15).timeout
+			await get_tree().create_timer(0.08).timeout
 	# Let framework animations settle, then reorganize hand layout
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(0.25).timeout
 	for c in cfc.NMAP.hand.get_all_cards():
 		c.interruptTweening()
 		c.reorganize_self()
@@ -322,14 +322,14 @@ func draw_cards(count: int) -> void:
 	board._notify_hand_cards_cost_update()
 
 
-# Discard all cards currently in hand.
+# Discard all cards currently in hand (parallel move).
 func discard_hand() -> void:
 	var hand_cards: Array = cfc.NMAP.hand.get_all_cards().duplicate()
+	# Move all cards simultaneously, no inter-card delay
 	for card in hand_cards:
 		if is_instance_valid(card):
 			card.move_to(cfc.NMAP.discard)
-			await get_tree().create_timer(0.08).timeout
-	# Wait for the last card's move animation
+	# Wait for the last card's move animation (framework default duration)
 	await get_tree().create_timer(0.3).timeout
 
 

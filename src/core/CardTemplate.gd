@@ -397,7 +397,8 @@ func _init_card_name() -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta) -> void:
 	var tween := _tween.get_ref() as Tween
-	if tween and not cfc.ut: # Debug code for catch potential Tween deadlocks
+	# Tween deadlock detection only in debug mode (skip in production)
+	if cfc._debug and tween and not cfc.ut:
 		_tween_stuck_time += delta
 		if _tween_stuck_time > 5 and int(fmod(_tween_stuck_time,3)) == 2 :
 			print_debug("Tween Stuck for ",_tween_stuck_time, " seconds.")

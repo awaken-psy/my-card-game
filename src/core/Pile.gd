@@ -63,7 +63,9 @@ func _ready():
 			)
 
 func _process(_delta) -> void:
-	pass
+	# Only perform cleanup when popup is open
+	if not is_popup_open:
+		return
 	# This performs a bit of garbage collection to make sure no Control temp objects
 	# are leftover empty in the popup
 	for obj in $ViewPopup/CardView.get_children():

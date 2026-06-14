@@ -1121,11 +1121,11 @@ func _on_entity_damaged(entity, amount: int) -> void:
 			# Enemy hit feedback: flash white + shake
 			var ev_tween := create_tween()
 			ev_tween.tween_property(_enemy_visual, "modulate", Color.WHITE * 3, 0.05)
-			ev_tween.tween_property(_enemy_visual, "modulate", Color.WHITE, 0.15)
+			ev_tween.tween_property(_enemy_visual, "modulate", Color.WHITE, 0.1)
 			var ev_orig := _enemy_visual.position
-			for _j in range(4):
+			for _j in range(2):
 				ev_tween.tween_property(_enemy_visual, "position", ev_orig + Vector2(randf_range(-4, 4), randf_range(-3, 3)), 0.03)
-			ev_tween.tween_property(_enemy_visual, "position", ev_orig, 0.05)
+			ev_tween.tween_property(_enemy_visual, "position", ev_orig, 0.04)
 	elif entity == combat_manager.player and _player_visual:
 		pos = _player_visual.global_position + _player_visual.size / 2.0
 		color = Color(1, 0.3, 0.3)  # Red for player damage

@@ -21,6 +21,7 @@ func _ready() -> void:
 	# Speed up animations for snappier feel
 	focus_tween_duration = 0.075
 	dragged_tween_duration = 0.1
+	reorganization_tween_duration = 0.2
 
 
 # Configure drag/click interaction based on the board's play_mode setting.
