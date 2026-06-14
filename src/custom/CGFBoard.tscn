@@ -78,6 +78,7 @@ offset_top = 45.0
 offset_right = 374.698
 offset_bottom = 85.0
 text = "DeckBuilder"
+visible = false
 
 [node name="BackToMain" type="Button" parent="."]
 layout_mode = 0
@@ -86,6 +87,7 @@ offset_top = 43.7401
 offset_right = 533.448
 offset_bottom = 83.7401
 text = "Back to Main"
+visible = false
 
 [node name="DeckBuilderPopup" type="PopupPanel" parent="."]
 
