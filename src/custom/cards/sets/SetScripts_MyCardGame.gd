@@ -115,6 +115,119 @@ const scripts := {
 			]
 		}
 	},
+	# === Upgraded Cards ===
+	"Strike+": {
+		"manual": {
+			"hand": [
+				# Deal 9 damage
+			]
+		}
+	},
+	"Defend+": {
+		"manual": {
+			"hand": [
+				# Gain 8 block
+			]
+		}
+	},
+	"Bash+": {
+		"manual": {
+			"hand": [
+				# Deal 10 damage + apply 3 vulnerable
+			]
+		}
+	},
+	"Cleave+": {
+		"manual": {
+			"hand": [
+				# Deal 11 damage
+			]
+		}
+	},
+	"Iron Wave+": {
+		"manual": {
+			"hand": [
+				# Deal 7 damage + gain 7 block
+			]
+		}
+	},
+	"Shrug It Off+": {
+		"manual": {
+			"hand": [
+				# Gain 11 block + draw 1
+			]
+		}
+	},
+	"Pommel Strike+": {
+		"manual": {
+			"hand": [
+				# Deal 12 damage + draw 1
+			]
+		}
+	},
+	"Inflame+": {
+		"manual": {
+			"hand": [
+				# Gain 3 strength
+			]
+		}
+	},
+	"Bloodletting+": {
+		"manual": {
+			"hand": [
+				# Lose 3 HP + gain 3 energy
+			]
+		}
+	},
+	"Heavy Blow+": {
+		"manual": {
+			"hand": [
+				# Deal 20 damage (strength scaling)
+			]
+		}
+	},
+	"Poison Stab+": {
+		"manual": {
+			"hand": [
+				# Deal 6 damage + apply 4 poison
+			]
+		}
+	},
+	"Crippling Blow+": {
+		"manual": {
+			"hand": [
+				# Deal 12 damage + apply 3 weak
+			]
+		}
+	},
+	"Bandage+": {
+		"manual": {
+			"hand": [
+				# Heal 10 HP
+			]
+		}
+	},
+	"Thorns+": {
+		"manual": {
+			"hand": [
+				# Gain 12 block + 4 thorns
+			]
+		}
+	},
+	"Shield Bash+": {
+		"manual": {
+			"hand": [
+				# Deal block damage + 50% boost
+			]
+		}
+	},
+	"Fiend Fire+": {
+		"manual": {
+			"hand": [
+				# Deal 20 damage + apply 3 poison
+			]
+		}
+	},
 }
 
 

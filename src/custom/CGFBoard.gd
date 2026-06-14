@@ -52,8 +52,9 @@ var _hit_overlay: ColorRect = null
 var _map_screen: Control
 var _shop_screen: Control
 
-# M13: Combat log panel
+# M13: Combat log panel + Forge screen
 var _combat_log: Control
+var _forge_screen: Control
 
 # Called when the node enters the scene tree.
 func _ready() -> void:
@@ -922,6 +923,89 @@ func _on_shop_closed() -> void:
 
 func _do_rest() -> void:
 	_set_piles_visible(false)
+	# Show rest/forge choice dialog
+	var overlay := ColorRect.new()
+	overlay.name = "RestOverlay"
+	overlay.color = Color(0, 0, 0, 0.8)
+	overlay.size = Vector2(get_viewport().size)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.z_index = 100
+	add_child(overlay)
+
+	var center_x: float = get_viewport().size.x / 2.0
+	var center_y: float = get_viewport().size.y / 2.0
+
+	# Title
+	var title := Label.new()
+	title.text = "🔥 休息站点"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(center_x - 150, center_y - 150)
+	title.size = Vector2(300, 50)
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color(1, 0.7, 0.2))
+	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	title.add_theme_constant_override("outline_size", 2)
+	overlay.add_child(title)
+
+	# Rest button (heal 30% HP)
+	var rest_btn := Button.new()
+	rest_btn.text = "❤️ 休息\n回复 %d HP" % int(run_state.player_max_hp * 0.3)
+	rest_btn.position = Vector2(center_x - 220, center_y - 50)
+	rest_btn.size = Vector2(200, 100)
+	rest_btn.add_theme_font_size_override("font_size", 18)
+	_style_rest_button(rest_btn, "rest")
+	rest_btn.connect("pressed", Callable(self, "_on_rest_choice_selected").bind("rest", overlay))
+	overlay.add_child(rest_btn)
+
+	# Forge button (upgrade a card)
+	var forge_btn := Button.new()
+	forge_btn.text = "⚒️ 锻造\n升级一张卡牌"
+	forge_btn.position = Vector2(center_x + 20, center_y - 50)
+	forge_btn.size = Vector2(200, 100)
+	forge_btn.add_theme_font_size_override("font_size", 18)
+	_style_rest_button(forge_btn, "forge")
+	forge_btn.connect("pressed", Callable(self, "_on_rest_choice_selected").bind("forge", overlay))
+	overlay.add_child(forge_btn)
+
+
+func _style_rest_button(btn: Button, type: String) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.15, 0.15, 0.25)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	normal.content_margin_left = 15
+	normal.content_margin_right = 15
+	normal.content_margin_top = 10
+	normal.content_margin_bottom = 10
+
+	if type == "rest":
+		normal.border_color = Color(0.8, 0.3, 0.3)
+	else:
+		normal.border_color = Color(0.7, 0.5, 0.2)
+
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.25, 0.25, 0.4)
+	if type == "rest":
+		hover.border_color = Color(1, 0.4, 0.4)
+	else:
+		hover.border_color = Color(1, 0.8, 0.3)
+	hover.set_border_width_all(3)
+
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+
+
+func _on_rest_choice_selected(choice: String, overlay: Control) -> void:
+	overlay.queue_free()
+
+	if choice == "rest":
+		_execute_rest_heal()
+	else:
+		_show_forge_screen()
+
+
+func _execute_rest_heal() -> void:
 	var heal_amount: int = int(run_state.player_max_hp * 0.3)
 	run_state.player_hp = mini(run_state.player_hp + heal_amount, run_state.player_max_hp)
 	# Brief rest notification then return to map
@@ -942,6 +1026,33 @@ func _do_rest() -> void:
 	tween.tween_callback(toast.queue_free)
 	await tween.finished
 	_show_map_screen()
+
+
+func _show_forge_screen() -> void:
+	if _forge_screen and is_instance_valid(_forge_screen):
+		_forge_screen.queue_free()
+	_forge_screen = Control.new()
+	_forge_screen.set_script(load("res://src/custom/ForgeScreen.gd"))
+	_forge_screen.setup(Vector2(get_viewport().size), run_state, self)
+	_forge_screen.connect("forge_completed", Callable(self, "_on_forge_completed"))
+	_forge_screen.connect("forge_cancelled", Callable(self, "_on_forge_cancelled"))
+	add_child(_forge_screen)
+	_forge_screen.show_forge()
+
+
+func _on_forge_completed() -> void:
+	if _forge_screen and is_instance_valid(_forge_screen):
+		_forge_screen.queue_free()
+		_forge_screen = null
+	_show_map_screen()
+
+
+func _on_forge_cancelled() -> void:
+	if _forge_screen and is_instance_valid(_forge_screen):
+		_forge_screen.queue_free()
+		_forge_screen = null
+	# Return to rest choice instead of map
+	_do_rest()
 
 
 func _show_relic_toast(icon: String, relic_name: String) -> void:
