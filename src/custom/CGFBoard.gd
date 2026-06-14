@@ -533,6 +533,13 @@ func _create_combat_ui() -> void:
 	add_child(_end_turn_button)
 	_combat_ui_nodes.append(_end_turn_button)
 
+	# Combat log panel (M13)
+	_combat_log = Control.new()
+	_combat_log.set_script(load("res://src/custom/CombatLog.gd"))
+	_combat_log.setup(viewport_size)
+	add_child(_combat_log)
+	_combat_ui_nodes.append(_combat_log)
+
 	# All non-interactive UI elements must pass through mouse events,
 	# otherwise they consume gui_input and prevent card drag release detection.
 	for node in _combat_ui_nodes:
