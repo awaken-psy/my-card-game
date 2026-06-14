@@ -16,6 +16,9 @@ signal enemy_intent_changed(intent_info)
 signal player_turn_started
 signal enemy_turn_started
 signal thorns_triggered(source, damage)
+signal card_played(card_name: String, cost: int)
+signal cards_drawn(count: int)
+signal cards_discarded(count: int)
 
 const MAX_ENERGY := 3
 const DRAW_PER_TURN := 5
@@ -152,6 +155,9 @@ func play_card(card: Card) -> void:
 	_is_resolving = true
 	var cost: int = card.properties.get("Cost", 0)
 	spend_energy(cost)
+	# Log card played
+	var card_name: String = card.properties.get("Name", card.canonical_name)
+	emit_signal("card_played", card_name, cost)
 	# Play card sound
 	board.audio_manager.play_sfx("card_play")
 	# Fly card toward its target
@@ -300,6 +306,7 @@ func spend_energy(amount: int) -> void:
 
 # Draw N cards from deck to hand, reshuffling discard if deck is empty.
 func draw_cards(count: int) -> void:
+	var drawn := 0
 	for i in count:
 		# If deck is empty, reshuffle discard into deck
 		if cfc.NMAP.deck.get_card_count() == 0:
@@ -308,11 +315,15 @@ func draw_cards(count: int) -> void:
 			await _reshuffle_discard_into_deck()
 		var card: Card = cfc.NMAP.hand.draw_card()
 		if card:
+			drawn += 1
 			# Scale down for "draw from deck" effect — framework tweens to (1,1)
 			card.scale = Vector2(0.35, 0.35)
 			card.rotation = randf_range(-0.08, 0.08)
 			board.audio_manager.play_sfx("card_draw")
 			await get_tree().create_timer(0.08).timeout
+	# Emit signal for combat log
+	if drawn > 0:
+		emit_signal("cards_drawn", drawn)
 	# Let framework animations settle, then reorganize hand layout
 	await get_tree().create_timer(0.25).timeout
 	for c in cfc.NMAP.hand.get_all_cards():
@@ -325,10 +336,14 @@ func draw_cards(count: int) -> void:
 # Discard all cards currently in hand (parallel move).
 func discard_hand() -> void:
 	var hand_cards: Array = cfc.NMAP.hand.get_all_cards().duplicate()
+	var count := hand_cards.size()
 	# Move all cards simultaneously, no inter-card delay
 	for card in hand_cards:
 		if is_instance_valid(card):
 			card.move_to(cfc.NMAP.discard)
+	# Emit signal for combat log
+	if count > 0:
+		emit_signal("cards_discarded", count)
 	# Wait for the last card's move animation (framework default duration)
 	await get_tree().create_timer(0.3).timeout
 

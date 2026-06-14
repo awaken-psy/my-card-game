@@ -52,6 +52,9 @@ var _hit_overlay: ColorRect = null
 var _map_screen: Control
 var _shop_screen: Control
 
+# M13: Combat log panel
+var _combat_log: Control
+
 # Called when the node enters the scene tree.
 func _ready() -> void:
 	super._ready()
@@ -135,6 +138,9 @@ func _setup_combat() -> void:
 	combat_manager.enemy.connect("poison_damaged", Callable(self, "_on_poison_tick"))
 	combat_manager.player.connect("healed", Callable(self, "_on_player_healed"))
 	combat_manager.connect("thorns_triggered", Callable(self, "_on_thorns_triggered"))
+	combat_manager.connect("card_played", Callable(self, "_on_card_played"))
+	combat_manager.connect("cards_drawn", Callable(self, "_on_cards_drawn"))
+	combat_manager.connect("cards_discarded", Callable(self, "_on_cards_discarded"))
 
 	# Auto-inject combat_manager into all newly instanced cards
 	if not cfc.is_connected("new_card_instanced", Callable(self, "inject_combat_manager")):
@@ -188,6 +194,11 @@ func _cleanup_combat() -> void:
 	if audio_manager and is_instance_valid(audio_manager):
 		audio_manager.queue_free()
 		audio_manager = null
+
+	# Clean up combat log
+	if _combat_log and is_instance_valid(_combat_log):
+		_combat_log.queue_free()
+		_combat_log = null
 
 
 # _advance_to_next_encounter removed — replaced by map-driven flow in M11.
@@ -563,6 +574,9 @@ func _on_energy_changed(current: int, max_energy: int) -> void:
 			style.bg_color = Color(0.08, 0.18, 0.45, 0.95)
 			style.border_color = Color(0.3, 0.6, 1.0)
 	_notify_hand_cards_cost_update()
+	# Log energy change (only during player turn)
+	if _combat_log and combat_manager and combat_manager.is_player_turn:
+		_combat_log.log_energy_change(combat_manager.turn_number, current, max_energy)
 
 
 func _on_turn_started(turn_num: int) -> void:
@@ -570,11 +584,15 @@ func _on_turn_started(turn_num: int) -> void:
 		_turn_label.text = "Turn %d" % turn_num
 	if _end_turn_button:
 		_end_turn_button.disabled = false
+	if _combat_log:
+		_combat_log.log_turn_start(turn_num)
 
 
 func _on_turn_ended() -> void:
 	if _end_turn_button:
 		_end_turn_button.disabled = true
+	if _combat_log and combat_manager:
+		_combat_log.log_turn_end(combat_manager.turn_number)
 
 
 func _show_combat_relic_tooltip(anchor: Control, relic_id: String) -> void:
@@ -1031,6 +1049,9 @@ func _on_player_block_changed(new_block) -> void:
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		if audio_manager:
 			audio_manager.play_sfx("block_gain")
+		# Log block gain
+		if _combat_log and combat_manager:
+			_combat_log.log_block_gain(combat_manager.turn_number, "玩家", new_block)
 	else:
 		# Fade out when block resets to 0
 		var tween := create_tween()
@@ -1085,6 +1106,10 @@ func _on_enemy_intent_changed(intent_info: Dictionary) -> void:
 			_enemy_intent_label.text = ""
 		else:
 			_enemy_intent_label.text = _format_intent_text(intent_info)
+	# Log enemy intent
+	if _combat_log and combat_manager and not intent_info.is_empty():
+		var intent_name: String = intent_info.get("name", "未知")
+		_combat_log.log_enemy_intent(combat_manager.turn_number, intent_name)
 
 
 # Spawn a floating number at the target position, rising and fading out.
@@ -1112,10 +1137,12 @@ func _spawn_floating_text(text: String, pos: Vector2, color: Color) -> void:
 func _on_entity_damaged(entity, amount: int) -> void:
 	var pos: Vector2
 	var color: Color
+	var target_name: String = ""
 	if entity == combat_manager.enemy and _enemy_visual:
 		pos = _enemy_visual.global_position + _enemy_visual.size / 2.0
 		color = Color(1, 0.3, 0.3)  # Red for enemy damage
 		_spawn_floating_text("-%d" % amount, pos, color)
+		target_name = combat_manager.enemy.display_name
 		if amount > 0 and audio_manager:
 			audio_manager.play_sfx("hit_enemy", 2.0)
 			# Enemy hit feedback: flash white + shake
@@ -1130,6 +1157,7 @@ func _on_entity_damaged(entity, amount: int) -> void:
 		pos = _player_visual.global_position + _player_visual.size / 2.0
 		color = Color(1, 0.3, 0.3)  # Red for player damage
 		_spawn_floating_text("-%d" % amount, pos, color)
+		target_name = "玩家"
 		if amount > 0 and audio_manager:
 			audio_manager.play_sfx("hit_player", 2.0)
 			# Player hit feedback: screen edge flash red
@@ -1137,17 +1165,26 @@ func _on_entity_damaged(entity, amount: int) -> void:
 				var hit_tween := create_tween()
 				hit_tween.tween_property(_hit_overlay, "color:a", 0.3, 0.05)
 				hit_tween.tween_property(_hit_overlay, "color:a", 0.0, 0.3)
+	# Log damage
+	if _combat_log and combat_manager and amount > 0:
+		_combat_log.log_damage(combat_manager.turn_number, target_name, amount)
 
 
 # Handle poison_damaged signal: spawn green floating poison text.
 func _on_poison_tick(entity, amount: int) -> void:
 	var pos: Vector2
+	var target_name: String = ""
 	if entity == combat_manager.enemy and _enemy_visual:
 		pos = _enemy_visual.global_position + _enemy_visual.size / 2.0
 		_spawn_floating_text("☠️-%d" % amount, pos, Color(0.3, 0.9, 0.3))
+		target_name = combat_manager.enemy.display_name
 	elif entity == combat_manager.player and _player_visual:
 		pos = _player_visual.global_position + _player_visual.size / 2.0
 		_spawn_floating_text("☠️-%d" % amount, pos, Color(0.3, 0.9, 0.3))
+		target_name = "玩家"
+	# Log poison damage
+	if _combat_log and combat_manager:
+		_combat_log.log_poison_tick(combat_manager.turn_number, target_name, amount)
 
 
 # Handle healed signal: spawn green floating heal text.
@@ -1155,6 +1192,9 @@ func _on_player_healed(entity, amount: int) -> void:
 	if _player_visual:
 		var pos: Vector2 = _player_visual.global_position + _player_visual.size / 2.0
 		_spawn_floating_text("+%d" % amount, pos, Color(0.2, 0.9, 0.3))
+	# Log heal
+	if _combat_log and combat_manager:
+		_combat_log.log_heal(combat_manager.turn_number, "玩家", amount)
 
 
 
@@ -1163,6 +1203,9 @@ func _on_thorns_triggered(source, damage: int) -> void:
 	if source == combat_manager.enemy and _enemy_visual:
 		var pos: Vector2 = _enemy_visual.global_position + _enemy_visual.size / 2.0
 		_spawn_floating_text("🌵%d" % damage, pos, Color(1.0, 0.7, 0.1))
+	# Log thorns damage
+	if _combat_log and combat_manager:
+		_combat_log.log_thorns(combat_manager.turn_number, "玩家", damage)
 
 # Update HP bar fill color based on ratio (green → yellow → red).
 func _update_hp_bar_color(bar: ProgressBar, ratio: float) -> void:
