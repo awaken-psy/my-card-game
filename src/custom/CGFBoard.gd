@@ -538,7 +538,7 @@ func _create_combat_ui() -> void:
 	_combat_log.set_script(load("res://src/custom/CombatLog.gd"))
 	_combat_log.setup(viewport_size)
 	add_child(_combat_log)
-	_combat_ui_nodes.append(_combat_log)
+	# NOT added to _combat_ui_nodes - it handles its own mouse_filter
 
 	# All non-interactive UI elements must pass through mouse events,
 	# otherwise they consume gui_input and prevent card drag release detection.

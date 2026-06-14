@@ -10,7 +10,6 @@ var _entries: Array = []
 var _panel: Panel
 var _scroll_container: ScrollContainer
 var _log_container: VBoxContainer
-var _clear_button: Button
 var _toggle_button: Button
 var _is_expanded: bool = false
 
@@ -26,37 +25,18 @@ const COLOR_INFO := Color(0.75, 0.75, 0.75)  # Gray
 
 
 func _ready() -> void:
-	setup(Vector2(get_viewport().size))
-	_is_expanded = false
-	_update_visibility()
+	# Wait for setup to be called externally, then apply initial state
+	pass
 
 
 func setup(viewport_size: Vector2) -> void:
-	# Toggle button (small, always visible when collapsed)
-	_toggle_button = Button.new()
-	_toggle_button.name = "LogToggle"
-	_toggle_button.text = "📜"
-	_toggle_button.position = Vector2(viewport_size.x - 50, viewport_size.y - 45)
-	_toggle_button.size = Vector2(40, 35)
-	_toggle_button.add_theme_font_size_override("font_size", 20)
-	_toggle_button.z_index = 100
-	_toggle_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var toggle_normal := StyleBoxFlat.new()
-	toggle_normal.bg_color = Color(0.1, 0.1, 0.15, 0.9)
-	toggle_normal.border_color = Color(0.5, 0.5, 0.6)
-	toggle_normal.set_border_width_all(2)
-	toggle_normal.set_corner_radius_all(6)
-	_toggle_button.add_theme_stylebox_override("normal", toggle_normal)
-	_toggle_button.add_theme_stylebox_override("hover", toggle_normal.duplicate())
-	_toggle_button.connect("pressed", Callable(self, "_toggle_log"))
-	add_child(_toggle_button)
-
-	# Main panel (expandable)
+	# Main panel (expandable) - create FIRST so it's behind the button
 	_panel = Panel.new()
 	_panel.name = "LogPanel"
 	_panel.position = Vector2(viewport_size.x - 350, viewport_size.y - 280)
 	_panel.size = Vector2(330, 250)
 	_panel.z_index = 99
+	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Let clicks pass through to cards below
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.08, 0.08, 0.12, 0.95)
 	panel_style.border_color = Color(0.4, 0.4, 0.5)
@@ -82,7 +62,7 @@ func setup(viewport_size: Vector2) -> void:
 	_scroll_container = ScrollContainer.new()
 	_scroll_container.name = "LogScroll"
 	_scroll_container.position = Vector2(10, 35)
-	_scroll_container.size = Vector2(290, 180)
+	_scroll_container.size = Vector2(310, 200)
 	_scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_panel.add_child(_scroll_container)
 
@@ -93,16 +73,31 @@ func setup(viewport_size: Vector2) -> void:
 	_log_container.add_theme_constant_override("separation", 3)
 	_scroll_container.add_child(_log_container)
 
-	# Clear button
-	_clear_button = Button.new()
-	_clear_button.text = "清空"
-	_clear_button.position = Vector2(230, 215)
-	_clear_button.size = Vector2(80, 25)
-	_clear_button.add_theme_font_size_override("font_size", 14)
-	_clear_button.z_index = 100
-	_clear_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_clear_button.connect("pressed", Callable(self, "clear_log"))
-	_panel.add_child(_clear_button)
+	# Toggle button (small, always visible) - create LAST so it's on top
+	_toggle_button = Button.new()
+	_toggle_button.name = "LogToggle"
+	_toggle_button.text = "📜"
+	_toggle_button.position = Vector2(viewport_size.x - 50, viewport_size.y - 45)
+	_toggle_button.size = Vector2(40, 35)
+	_toggle_button.add_theme_font_size_override("font_size", 20)
+	_toggle_button.z_index = 100
+	_toggle_button.mouse_filter = Control.MOUSE_FILTER_STOP  # MUST receive clicks
+	_toggle_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var toggle_normal := StyleBoxFlat.new()
+	toggle_normal.bg_color = Color(0.1, 0.1, 0.15, 0.9)
+	toggle_normal.border_color = Color(0.5, 0.5, 0.6)
+	toggle_normal.set_border_width_all(2)
+	toggle_normal.set_corner_radius_all(6)
+	_toggle_button.add_theme_stylebox_override("normal", toggle_normal)
+	var toggle_hover := toggle_normal.duplicate()
+	toggle_hover.bg_color = Color(0.15, 0.15, 0.2, 0.95)
+	_toggle_button.add_theme_stylebox_override("hover", toggle_hover)
+	_toggle_button.pressed.connect(_toggle_log)
+	add_child(_toggle_button)
+
+	# Start collapsed
+	_is_expanded = false
+	_update_visibility()
 
 
 func _toggle_log() -> void:
