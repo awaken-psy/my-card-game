@@ -259,8 +259,6 @@ func _build_card_grid(center_x: float, center_y: float) -> void:
 			upgrade_card.scale = Vector2(card_scale, card_scale)
 			upgrade_card.position = Vector2(card_width / 2.0 + 10, 0)
 			upgrade_card.z_index = 5
-			# Make clickable
-			upgrade_card.mouse_filter = Control.MOUSE_FILTER_STOP
 			container.add_child(upgrade_card)
 
 		# Click area over the whole container
