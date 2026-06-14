@@ -83,7 +83,7 @@ func setup(viewport_size: Vector2) -> void:
 	_scroll_container.name = "LogScroll"
 	_scroll_container.position = Vector2(10, 35)
 	_scroll_container.size = Vector2(290, 180)
-	_scroll_container.scroll_horizontal_enabled = false
+	_scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_panel.add_child(_scroll_container)
 
 	# Log container (VBox for entries)
