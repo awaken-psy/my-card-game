@@ -134,7 +134,9 @@ func add_entry(turn: int, text: String, color: Color = COLOR_INFO) -> void:
 
 	# Scroll to bottom
 	await get_tree().process_frame
-	_scroll_container.scroll_vertical = _scroll_container.get_scroll_max()
+	var v_scroll := _scroll_container.get_v_scroll_bar()
+	if v_scroll:
+		_scroll_container.scroll_vertical = int(v_scroll.max_value)
 
 
 # Clear all log entries.
