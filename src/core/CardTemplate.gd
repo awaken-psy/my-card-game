@@ -2611,6 +2611,8 @@ func _process_card_state() -> void:
 			buttons.set_active(false)
 			# warning-ignore:return_value_discarded
 			set_card_rotation(0)
+			# Reset card rotation (fix for M18 draw animation)
+			rotation = 0
 			if scale != Vector2(1,1):
 				scale = Vector2(1,1)
 			if get_parent() in get_tree().get_nodes_in_group("piles"):
@@ -2631,6 +2633,8 @@ func _process_card_state() -> void:
 			buttons.set_active(false)
 			# warning-ignore:return_value_discarded
 			set_card_rotation(0)
+			# Reset card rotation (fix for M18 draw animation)
+			rotation = 0
 			if scale != Vector2(1,1):
 				scale = Vector2(1,1)
 			if get_parent() in get_tree().get_nodes_in_group("piles"):
