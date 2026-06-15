@@ -153,6 +153,15 @@ func play_card(card: Card) -> void:
 	if not can_play_card(card):
 		return
 	_is_resolving = true
+	# Snapshot where the card was released. The card stays in DRAGGED state
+	# across the await chain below, and DRAGGED re-sets global_position to
+	# the mouse cursor every frame (CardTemplate._process_card_state). By the
+	# time move_to() runs, global_position may have drifted to wherever the
+	# mouse wandered, so the discard-flight arc would launch from the wrong
+	# spot — or appear to jump into the pile then fly out-and-in. Restoring
+	# the snapshot right before move_to() makes the fancy arc start from the
+	# actual release position. See issue #2.
+	var release_pos := card.global_position
 	var cost: int = card.properties.get("Cost", 0)
 	spend_energy(cost)
 	# Log card played
@@ -164,6 +173,9 @@ func play_card(card: Card) -> void:
 	await _animate_card_to_target(card)
 	# Execute card effects
 	await _resolve_card_effects(card)
+	# Launch the discard flight from the release position, not the mouse's
+	# current position (see the release_pos snapshot above).
+	card.global_position = release_pos
 	# Move card to discard pile
 	card.move_to(cfc.NMAP.discard)
 	_is_resolving = false
