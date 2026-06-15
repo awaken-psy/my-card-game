@@ -2356,6 +2356,12 @@ func _process_card_state() -> void:
 				# to avoid a deadlock
 				tween = create_tween()
 				tween.stop()
+				# Focus zoom (position+scale) and straighten (rotation→0) must run
+				# simultaneously. Without parallel mode Godot 4 runs the three
+				# tween_property calls sequentially, so the card enlarges *first*
+				# (still tilted) and only straightens afterwards — a visible
+				# two-step "zoom then snap" instead of a single smooth motion.
+				tween.set_parallel(true)
 				_tween = weakref(tween)
 				_add_tween_position(expected_position, _target_position, focus_tween_duration)
 				_add_tween_scale(scale, Vector2(1,1) * focused_scale, focus_tween_duration)
