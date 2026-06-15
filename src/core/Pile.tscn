@@ -28,7 +28,7 @@ corner_radius_bottom_right = 15
 corner_radius_bottom_left = 15
 
 [sub_resource type="RectangleShape2D" id="4"]
-size = Vector2(156, 246)
+size = Vector2(234, 369)
 
 [node name="Pile" type="Area2D" groups=["piles"]]
 script = ExtResource("2")
@@ -104,7 +104,7 @@ text = "S"
 expand_icon = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(78, 123)
+position = Vector2(117, 184)
 shape = SubResource("4")
 
 [node name="ViewPopup" type="PopupPanel" parent="."]

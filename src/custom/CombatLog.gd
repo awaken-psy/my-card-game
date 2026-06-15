@@ -3,6 +3,9 @@
 # Records: turns, card plays, damage, block, status changes, relics, etc.
 extends Control
 
+const _CFConst = preload("res://src/custom/CFConst.gd")
+const SF := _CFConst.SCALE_FACTOR
+
 # Log entry structure: {turn: int, text: String, color: Color}
 var _entries: Array = []
 
@@ -33,36 +36,36 @@ func setup(viewport_size: Vector2) -> void:
 	# Main panel (expandable) - create FIRST so it's behind the button
 	_panel = Panel.new()
 	_panel.name = "LogPanel"
-	_panel.position = Vector2(viewport_size.x - 350, viewport_size.y - 280)
-	_panel.size = Vector2(330, 250)
+	_panel.position = Vector2(viewport_size.x - 525, viewport_size.y - 420)
+	_panel.size = Vector2(495, 375)
 	_panel.z_index = 99
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Let clicks pass through to cards below
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.08, 0.08, 0.12, 0.95)
 	panel_style.border_color = Color(0.4, 0.4, 0.5)
 	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(8)
-	panel_style.content_margin_left = 8
-	panel_style.content_margin_right = 8
-	panel_style.content_margin_top = 8
-	panel_style.content_margin_bottom = 8
+	panel_style.set_corner_radius_all(12)
+	panel_style.content_margin_left = 12
+	panel_style.content_margin_right = 12
+	panel_style.content_margin_top = 12
+	panel_style.content_margin_bottom = 12
 	_panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(_panel)
 
 	# Title
 	var title := Label.new()
 	title.text = "战斗日志"
-	title.position = Vector2(10, 8)
-	title.size = Vector2(100, 25)
-	title.add_theme_font_size_override("font_size", 18)
+	title.position = Vector2(15, 12)
+	title.size = Vector2(150, 38)
+	title.add_theme_font_size_override("font_size", 27)
 	title.add_theme_color_override("font_color", COLOR_TURN)
 	_panel.add_child(title)
 
 	# Scroll container
 	_scroll_container = ScrollContainer.new()
 	_scroll_container.name = "LogScroll"
-	_scroll_container.position = Vector2(10, 35)
-	_scroll_container.size = Vector2(310, 200)
+	_scroll_container.position = Vector2(15, 52)
+	_scroll_container.size = Vector2(465, 300)
 	_scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_panel.add_child(_scroll_container)
 
@@ -70,16 +73,16 @@ func setup(viewport_size: Vector2) -> void:
 	_log_container = VBoxContainer.new()
 	_log_container.name = "LogContainer"
 	_log_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_log_container.add_theme_constant_override("separation", 3)
+	_log_container.add_theme_constant_override("separation", 4)
 	_scroll_container.add_child(_log_container)
 
 	# Toggle button (small, always visible) - create LAST so it's on top
 	_toggle_button = Button.new()
 	_toggle_button.name = "LogToggle"
 	_toggle_button.text = "📜"
-	_toggle_button.position = Vector2(viewport_size.x - 50, viewport_size.y - 45)
-	_toggle_button.size = Vector2(40, 35)
-	_toggle_button.add_theme_font_size_override("font_size", 20)
+	_toggle_button.position = Vector2(viewport_size.x - 75, viewport_size.y - 68)
+	_toggle_button.size = Vector2(60, 52)
+	_toggle_button.add_theme_font_size_override("font_size", 30)
 	_toggle_button.z_index = 100
 	_toggle_button.mouse_filter = Control.MOUSE_FILTER_STOP  # MUST receive clicks
 	_toggle_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -87,7 +90,7 @@ func setup(viewport_size: Vector2) -> void:
 	toggle_normal.bg_color = Color(0.1, 0.1, 0.15, 0.9)
 	toggle_normal.border_color = Color(0.5, 0.5, 0.6)
 	toggle_normal.set_border_width_all(2)
-	toggle_normal.set_corner_radius_all(6)
+	toggle_normal.set_corner_radius_all(9)
 	_toggle_button.add_theme_stylebox_override("normal", toggle_normal)
 	var toggle_hover := toggle_normal.duplicate()
 	toggle_hover.bg_color = Color(0.15, 0.15, 0.2, 0.95)
@@ -121,10 +124,10 @@ func add_entry(turn: int, text: String, color: Color = COLOR_INFO) -> void:
 	# Create label for this entry
 	var label := Label.new()
 	label.text = "[T%d] %s" % [turn, text]
-	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_font_size_override("font_size", 20)
 	label.add_theme_color_override("font_color", color)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size = Vector2(280, 0)
+	label.custom_minimum_size = Vector2(420, 0)
 	_log_container.add_child(label)
 
 	# Scroll to bottom

@@ -14,7 +14,7 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [node name="Front" type="Panel"]
-custom_minimum_size = Vector2(150, 240)
+custom_minimum_size = Vector2(225, 360)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -26,7 +26,7 @@ theme_override_styles/panel = SubResource("1")
 script = ExtResource("2")
 
 [node name="Margin" type="MarginContainer" parent="."]
-custom_minimum_size = Vector2(150, 240)
+custom_minimum_size = Vector2(225, 360)
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -35,17 +35,17 @@ theme_override_constants/margin_left = 2
 theme_override_constants/margin_right = 2
 
 [node name="CardText" type="VBoxContainer" parent="Margin"]
-custom_minimum_size = Vector2(0, 139)
+custom_minimum_size = Vector2(0, 208)
 layout_mode = 2
 mouse_filter = 2
 
 [node name="TopBar" type="HBoxContainer" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 18)
+custom_minimum_size = Vector2(219, 27)
 layout_mode = 2
 mouse_filter = 2
 
 [node name="CostIcon" type="TextureRect" parent="Margin/CardText/TopBar"]
-custom_minimum_size = Vector2(14, 14)
+custom_minimum_size = Vector2(21, 21)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4")
@@ -53,13 +53,13 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="Cost" type="Label" parent="Margin/CardText/TopBar"]
-custom_minimum_size = Vector2(14, 14)
+custom_minimum_size = Vector2(21, 21)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.658824, 0.541176, 0, 1)
 text = "0"
 
 [node name="Name" type="Label" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 19)
+custom_minimum_size = Vector2(219, 28)
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_colors/font_color = Color(1, 0.4, 0, 1)
@@ -67,7 +67,7 @@ text = "Card Name"
 horizontal_alignment = 1
 
 [node name="Type" type="Label" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 13)
+custom_minimum_size = Vector2(219, 19)
 layout_mode = 2
 size_flags_vertical = 1
 text = "Type"
@@ -75,7 +75,7 @@ horizontal_alignment = 1
 uppercase = true
 
 [node name="Tags" type="Label" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 13)
+custom_minimum_size = Vector2(219, 19)
 layout_mode = 2
 size_flags_vertical = 1
 text = "Rarity"
@@ -91,12 +91,12 @@ text = "Card ability text."
 scroll_active = false
 
 [node name="BottomBar" type="HBoxContainer" parent="Margin/CardText"]
-custom_minimum_size = Vector2(146, 18)
+custom_minimum_size = Vector2(219, 27)
 layout_mode = 2
 mouse_filter = 2
 
 [node name="DamageIcon" type="TextureRect" parent="Margin/CardText/BottomBar"]
-custom_minimum_size = Vector2(14, 14)
+custom_minimum_size = Vector2(21, 21)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("5")
@@ -104,7 +104,7 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="Damage" type="Label" parent="Margin/CardText/BottomBar"]
-custom_minimum_size = Vector2(14, 14)
+custom_minimum_size = Vector2(21, 21)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
 text = "0"
@@ -115,7 +115,7 @@ size_flags_horizontal = 3
 mouse_filter = 2
 
 [node name="BlockIcon" type="TextureRect" parent="Margin/CardText/BottomBar"]
-custom_minimum_size = Vector2(14, 14)
+custom_minimum_size = Vector2(21, 21)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("6")
@@ -123,7 +123,7 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="Block" type="Label" parent="Margin/CardText/BottomBar"]
-custom_minimum_size = Vector2(14, 14)
+custom_minimum_size = Vector2(21, 21)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.6, 1, 1)
 text = "0"

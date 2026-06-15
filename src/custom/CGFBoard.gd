@@ -1,6 +1,8 @@
 # Game board for My Card Game (STS-style Roguelike Deckbuilder)
 extends Board
 
+const SF := CFConst.SCALE_FACTOR
+
 # Play mode: "drag" (STS classic, default) or "click"
 var play_mode: String = "drag"
 
@@ -252,9 +254,9 @@ func _create_combat_ui() -> void:
 	# --- Encounter progress label (top-left) ---
 	_encounter_label = Label.new()
 	_encounter_label.name = "EncounterLabel"
-	_encounter_label.position = Vector2(20, 10)
-	_encounter_label.size = Vector2(200, 30)
-	_encounter_label.add_theme_font_size_override("font_size", 20)
+	_encounter_label.position = Vector2(30, 15)
+	_encounter_label.size = Vector2(300, 45)
+	_encounter_label.add_theme_font_size_override("font_size", 30)
 	_encounter_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	var map_node: Dictionary = run_state.get_current_node()
 	var node_type: String = map_node.get("type", "combat")
@@ -265,14 +267,14 @@ func _create_combat_ui() -> void:
 
 	# Relic icons display (right of encounter label) with hover tooltip
 	var _RelicDB = load("res://src/custom/RelicDatabase.gd")
-	var relic_x := 230.0
+	var relic_x := 345.0
 	for relic_id in run_state.relics:
 		var rdata: Dictionary = _RelicDB.get_relic(relic_id)
 		var relic_icon := Label.new()
 		relic_icon.text = rdata.get("icon", "?")
-		relic_icon.position = Vector2(relic_x, 12)
-		relic_icon.size = Vector2(30, 30)
-		relic_icon.add_theme_font_size_override("font_size", 18)
+		relic_icon.position = Vector2(relic_x, 18)
+		relic_icon.size = Vector2(45, 45)
+		relic_icon.add_theme_font_size_override("font_size", 27)
 		relic_icon.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
 		relic_icon.mouse_filter = Control.MOUSE_FILTER_STOP
 		relic_icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -282,15 +284,15 @@ func _create_combat_ui() -> void:
 		relic_icon.connect("mouse_exited", Callable(self, "_hide_combat_relic_tooltip"))
 		add_child(relic_icon)
 		_combat_ui_nodes.append(relic_icon)
-		relic_x += 35
+		relic_x += 52
 
 	# Settings gear button (top-right)
 	var settings_btn := Button.new()
 	settings_btn.name = "SettingsButton"
 	settings_btn.text = "⚙"
-	settings_btn.position = Vector2(viewport_size.x - 55, 8)
-	settings_btn.size = Vector2(40, 34)
-	settings_btn.add_theme_font_size_override("font_size", 22)
+	settings_btn.position = Vector2(viewport_size.x - 82, 12)
+	settings_btn.size = Vector2(60, 51)
+	settings_btn.add_theme_font_size_override("font_size", 33)
 	settings_btn.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
 	settings_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
 	settings_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -303,13 +305,13 @@ func _create_combat_ui() -> void:
 	# --- Energy orb (bottom-left, near deck — STS style) ---
 	_energy_orb = Panel.new()
 	_energy_orb.name = "EnergyOrb"
-	_energy_orb.position = Vector2(cfc.NMAP.deck.position.x + 25, cfc.NMAP.deck.position.y - 95)
-	_energy_orb.size = Vector2(70, 70)
+	_energy_orb.position = Vector2(cfc.NMAP.deck.position.x + 37, cfc.NMAP.deck.position.y - 142)
+	_energy_orb.size = Vector2(105, 105)
 	var orb_style := StyleBoxFlat.new()
 	orb_style.bg_color = Color(0.08, 0.18, 0.45, 0.95)
 	orb_style.border_color = Color(0.3, 0.6, 1.0)
 	orb_style.set_border_width_all(3)
-	orb_style.set_corner_radius_all(35)
+	orb_style.set_corner_radius_all(52)
 	_energy_orb.add_theme_stylebox_override("panel", orb_style)
 
 	_energy_label = Label.new()
@@ -319,7 +321,7 @@ func _create_combat_ui() -> void:
 	_energy_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_energy_label.anchor_right = 1.0
 	_energy_label.anchor_bottom = 1.0
-	_energy_label.add_theme_font_size_override("font_size", 26)
+	_energy_label.add_theme_font_size_override("font_size", 39)
 	_energy_label.add_theme_color_override("font_color", Color(1, 0.9, 0.3))
 	_energy_orb.add_child(_energy_label)
 	add_child(_energy_orb)
@@ -329,21 +331,21 @@ func _create_combat_ui() -> void:
 	_turn_label = Label.new()
 	_turn_label.name = "TurnLabel"
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_turn_label.position = Vector2(cfc.NMAP.deck.position.x + 15, cfc.NMAP.deck.position.y - 22)
-	_turn_label.size = Vector2(90, 25)
-	_turn_label.add_theme_font_size_override("font_size", 18)
+	_turn_label.position = Vector2(cfc.NMAP.deck.position.x + 22, cfc.NMAP.deck.position.y - 33)
+	_turn_label.size = Vector2(135, 37)
+	_turn_label.add_theme_font_size_override("font_size", 27)
 	_turn_label.text = "Turn 0"
 	add_child(_turn_label)
 	_combat_ui_nodes.append(_turn_label)
 
 	# --- Enemy area (right side — STS style) ---
 	# --- Enemy area (right side — STS style) ---
-	var enemy_x := viewport_size.x / 2 + 120
-	var enemy_cy := viewport_size.y / 2 - 50
+	var enemy_x := viewport_size.x / 2 + 180
+	var enemy_cy := viewport_size.y / 2 - 75
 
 	# Enemy visual — use config-driven colors/size
 	var evis: Dictionary = encounter.get("visual", {})
-	var ev_size: Vector2 = evis.get("size", Vector2(150, 120))
+	var ev_size: Vector2 = evis.get("size", Vector2(225, 180))
 	var ev_color: Color = evis.get("color", Color(0.5, 0.1, 0.1, 0.9))
 	var ev_border: Color = evis.get("border_color", Color(0.85, 0.25, 0.25))
 	var ev_radius: int = evis.get("corner_radius", 12)
@@ -351,7 +353,7 @@ func _create_combat_ui() -> void:
 
 	_enemy_visual = Panel.new()
 	_enemy_visual.name = "EnemyVisual"
-	_enemy_visual.position = Vector2(enemy_x + 25, enemy_cy - ev_size.y / 2)
+	_enemy_visual.position = Vector2(enemy_x + 37, enemy_cy - ev_size.y / 2)
 	_enemy_visual.size = ev_size
 	var ev_style := StyleBoxFlat.new()
 	ev_style.bg_color = ev_color
@@ -366,9 +368,9 @@ func _create_combat_ui() -> void:
 	_enemy_intent_label = Label.new()
 	_enemy_intent_label.name = "EnemyIntentLabel"
 	_enemy_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - ev_size.y / 2 - 30)
-	_enemy_intent_label.size = Vector2(200, 20)
-	_enemy_intent_label.add_theme_font_size_override("font_size", 14)
+	_enemy_intent_label.position = Vector2(enemy_x, enemy_cy - ev_size.y / 2 - 45)
+	_enemy_intent_label.size = Vector2(300, 30)
+	_enemy_intent_label.add_theme_font_size_override("font_size", 21)
 	_enemy_intent_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
 	_enemy_intent_label.text = ""
 	add_child(_enemy_intent_label)
@@ -377,9 +379,9 @@ func _create_combat_ui() -> void:
 	_enemy_name_label = Label.new()
 	_enemy_name_label.name = "EnemyNameLabel"
 	_enemy_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_name_label.position = Vector2(enemy_x, enemy_cy - ev_size.y / 2 - 10)
-	_enemy_name_label.size = Vector2(200, 20)
-	_enemy_name_label.add_theme_font_size_override("font_size", 16)
+	_enemy_name_label.position = Vector2(enemy_x, enemy_cy - ev_size.y / 2 - 15)
+	_enemy_name_label.size = Vector2(300, 30)
+	_enemy_name_label.add_theme_font_size_override("font_size", 24)
 	_enemy_name_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	_enemy_name_label.text = combat_manager.enemy.display_name
 	add_child(_enemy_name_label)
@@ -388,8 +390,8 @@ func _create_combat_ui() -> void:
 	# Enemy HP bar (below enemy visual)
 	_enemy_hp_bar = ProgressBar.new()
 	_enemy_hp_bar.name = "EnemyHpBar"
-	_enemy_hp_bar.position = Vector2(enemy_x + 25, enemy_cy + ev_size.y / 2 + 8)
-	_enemy_hp_bar.size = Vector2(ev_size.x, 16)
+	_enemy_hp_bar.position = Vector2(enemy_x + 37, enemy_cy + ev_size.y / 2 + 12)
+	_enemy_hp_bar.size = Vector2(ev_size.x, 24)
 	_enemy_hp_bar.min_value = 0
 	_enemy_hp_bar.max_value = combat_manager.enemy.max_hp
 	_enemy_hp_bar.value = combat_manager.enemy.hp
@@ -408,9 +410,9 @@ func _create_combat_ui() -> void:
 	_enemy_hp_text = Label.new()
 	_enemy_hp_text.name = "EnemyHpText"
 	_enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + ev_size.y / 2 + 28)
-	_enemy_hp_text.size = Vector2(200, 22)
-	_enemy_hp_text.add_theme_font_size_override("font_size", 16)
+	_enemy_hp_text.position = Vector2(enemy_x, enemy_cy + ev_size.y / 2 + 42)
+	_enemy_hp_text.size = Vector2(300, 33)
+	_enemy_hp_text.add_theme_font_size_override("font_size", 24)
 	_enemy_hp_text.add_theme_color_override("font_color", Color.WHITE)
 	_enemy_hp_text.add_theme_color_override("font_outline_color", Color.BLACK)
 	_enemy_hp_text.add_theme_constant_override("outline_size", 2)
@@ -421,9 +423,9 @@ func _create_combat_ui() -> void:
 	_enemy_block_label = Label.new()
 	_enemy_block_label.name = "EnemyBlockLabel"
 	_enemy_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_block_label.position = Vector2(enemy_x + 60, enemy_cy + ev_size.y / 2 + 28)
-	_enemy_block_label.size = Vector2(200, 22)
-	_enemy_block_label.add_theme_font_size_override("font_size", 16)
+	_enemy_block_label.position = Vector2(enemy_x + 90, enemy_cy + ev_size.y / 2 + 42)
+	_enemy_block_label.size = Vector2(300, 33)
+	_enemy_block_label.add_theme_font_size_override("font_size", 24)
 	_enemy_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
 	_enemy_block_label.text = ""
 	add_child(_enemy_block_label)
@@ -432,21 +434,21 @@ func _create_combat_ui() -> void:
 	_enemy_status_label = Label.new()
 	_enemy_status_label.name = "EnemyStatusLabel"
 	_enemy_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_enemy_status_label.position = Vector2(enemy_x, enemy_cy + ev_size.y / 2 + 52)
-	_enemy_status_label.size = Vector2(200, 18)
-	_enemy_status_label.add_theme_font_size_override("font_size", 12)
+	_enemy_status_label.position = Vector2(enemy_x, enemy_cy + ev_size.y / 2 + 78)
+	_enemy_status_label.size = Vector2(300, 27)
+	_enemy_status_label.add_theme_font_size_override("font_size", 18)
 	_enemy_status_label.text = ""
 	add_child(_enemy_status_label)
 	_combat_ui_nodes.append(_enemy_status_label)
 	# --- Player area (left side — STS style) ---
-	var player_x := viewport_size.x / 2 - 320
-	var player_cy := viewport_size.y / 2 - 50
+	var player_x := viewport_size.x / 2 - 480
+	var player_cy := viewport_size.y / 2 - 75
 
 	# Player visual (geometric placeholder: blue rounded rectangle)
 	_player_visual = Panel.new()
 	_player_visual.name = "PlayerVisual"
-	_player_visual.position = Vector2(player_x + 25, player_cy - 60)
-	_player_visual.size = Vector2(150, 120)
+	_player_visual.position = Vector2(player_x + 37, player_cy - 90)
+	_player_visual.size = Vector2(225, 180)
 	var pv_style := StyleBoxFlat.new()
 	pv_style.bg_color = Color(0.1, 0.12, 0.4, 0.9)
 	pv_style.border_color = Color(0.3, 0.5, 0.9)
@@ -459,9 +461,9 @@ func _create_combat_ui() -> void:
 	_player_name_label = Label.new()
 	_player_name_label.name = "PlayerNameLabel"
 	_player_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_name_label.position = Vector2(player_x, player_cy - 82)
-	_player_name_label.size = Vector2(200, 20)
-	_player_name_label.add_theme_font_size_override("font_size", 16)
+	_player_name_label.position = Vector2(player_x, player_cy - 123)
+	_player_name_label.size = Vector2(300, 30)
+	_player_name_label.add_theme_font_size_override("font_size", 24)
 	_player_name_label.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
 	_player_name_label.text = "Player"
 	add_child(_player_name_label)
@@ -470,8 +472,8 @@ func _create_combat_ui() -> void:
 	# Player HP bar (below player visual)
 	_player_hp_bar = ProgressBar.new()
 	_player_hp_bar.name = "PlayerHpBar"
-	_player_hp_bar.position = Vector2(player_x + 25, player_cy + 68)
-	_player_hp_bar.size = Vector2(150, 16)
+	_player_hp_bar.position = Vector2(player_x + 37, player_cy + 102)
+	_player_hp_bar.size = Vector2(225, 24)
 	_player_hp_bar.min_value = 0
 	_player_hp_bar.max_value = combat_manager.player.max_hp
 	_player_hp_bar.value = combat_manager.player.hp
@@ -490,9 +492,9 @@ func _create_combat_ui() -> void:
 	_player_hp_text = Label.new()
 	_player_hp_text.name = "PlayerHpText"
 	_player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_hp_text.position = Vector2(player_x, player_cy + 88)
-	_player_hp_text.size = Vector2(200, 22)
-	_player_hp_text.add_theme_font_size_override("font_size", 16)
+	_player_hp_text.position = Vector2(player_x, player_cy + 132)
+	_player_hp_text.size = Vector2(300, 33)
+	_player_hp_text.add_theme_font_size_override("font_size", 24)
 	_player_hp_text.add_theme_color_override("font_color", Color.WHITE)
 	_player_hp_text.add_theme_color_override("font_outline_color", Color.BLACK)
 	_player_hp_text.add_theme_constant_override("outline_size", 2)
@@ -503,9 +505,9 @@ func _create_combat_ui() -> void:
 	_player_block_label = Label.new()
 	_player_block_label.name = "PlayerBlockLabel"
 	_player_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_block_label.position = Vector2(player_x + 60, player_cy + 88)
-	_player_block_label.size = Vector2(200, 22)
-	_player_block_label.add_theme_font_size_override("font_size", 16)
+	_player_block_label.position = Vector2(player_x + 90, player_cy + 132)
+	_player_block_label.size = Vector2(300, 33)
+	_player_block_label.add_theme_font_size_override("font_size", 24)
 	_player_block_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1))
 	_player_block_label.text = ""
 	add_child(_player_block_label)
@@ -514,9 +516,9 @@ func _create_combat_ui() -> void:
 	_player_status_label = Label.new()
 	_player_status_label.name = "PlayerStatusLabel"
 	_player_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_status_label.position = Vector2(player_x, player_cy + 112)
-	_player_status_label.size = Vector2(200, 18)
-	_player_status_label.add_theme_font_size_override("font_size", 12)
+	_player_status_label.position = Vector2(player_x, player_cy + 168)
+	_player_status_label.size = Vector2(300, 27)
+	_player_status_label.add_theme_font_size_override("font_size", 18)
 	_player_status_label.text = ""
 	add_child(_player_status_label)
 	_combat_ui_nodes.append(_player_status_label)
@@ -525,9 +527,9 @@ func _create_combat_ui() -> void:
 	_end_turn_button = Button.new()
 	_end_turn_button.name = "EndTurnButton"
 	_end_turn_button.text = "End Turn"
-	_end_turn_button.position = Vector2(viewport_size.x / 2 + 300, viewport_size.y - 260)
-	_end_turn_button.size = Vector2(120, 50)
-	_end_turn_button.add_theme_font_size_override("font_size", 18)
+	_end_turn_button.position = Vector2(viewport_size.x / 2 + 450, viewport_size.y - 390)
+	_end_turn_button.size = Vector2(180, 75)
+	_end_turn_button.add_theme_font_size_override("font_size", 27)
 	_style_end_turn_button(_end_turn_button)
 	_end_turn_button.connect("pressed", Callable(self, "_on_EndTurn_pressed"))
 	_end_turn_button.disabled = true
@@ -627,15 +629,15 @@ func _show_combat_relic_tooltip(anchor: Control, relic_id: String) -> void:
 	vbox.add_theme_constant_override("separation", 4)
 	var title := Label.new()
 	title.text = "%s %s" % [data.get("icon", ""), data.get("name", "")]
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	vbox.add_child(title)
 	var desc := Label.new()
 	desc.text = data.get("description", "")
-	desc.add_theme_font_size_override("font_size", 14)
+	desc.add_theme_font_size_override("font_size", 21)
 	desc.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.custom_minimum_size = Vector2(200, 0)
+	desc.custom_minimum_size = Vector2(300, 0)
 	vbox.add_child(desc)
 	tooltip.add_child(vbox)
 	add_child(tooltip)
@@ -643,8 +645,8 @@ func _show_combat_relic_tooltip(anchor: Control, relic_id: String) -> void:
 	# Position below anchor
 	await get_tree().process_frame
 	var vp_size: Vector2 = get_viewport().size
-	var tx: float = mini(anchor.global_position.x - 30, vp_size.x - tooltip.size.x - 10)
-	var ty: float = anchor.global_position.y + anchor.size.y + 5
+	var tx: float = mini(anchor.global_position.x - 45, vp_size.x - tooltip.size.x - 15)
+	var ty: float = anchor.global_position.y + anchor.size.y + 7
 	if ty + tooltip.size.y > vp_size.y:
 		ty = anchor.global_position.y - tooltip.size.y - 5
 	tooltip.position = Vector2(tx, ty)
@@ -745,9 +747,9 @@ func _show_turn_banner(text: String, color: Color) -> void:
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.position = Vector2(0, viewport_size.y / 2 - 40)
-	label.size = Vector2(viewport_size.x, 80)
-	label.add_theme_font_size_override("font_size", 42)
+	label.position = Vector2(0, viewport_size.y / 2 - 60)
+	label.size = Vector2(viewport_size.x, 120)
+	label.add_theme_font_size_override("font_size", 63)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	label.add_theme_constant_override("outline_size", 3)
@@ -939,9 +941,9 @@ func _do_rest() -> void:
 	var title := Label.new()
 	title.text = "🔥 休息站点"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 150, center_y - 150)
-	title.size = Vector2(300, 50)
-	title.add_theme_font_size_override("font_size", 32)
+	title.position = Vector2(center_x - 225, center_y - 225)
+	title.size = Vector2(450, 75)
+	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", Color(1, 0.7, 0.2))
 	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	title.add_theme_constant_override("outline_size", 2)
@@ -950,9 +952,9 @@ func _do_rest() -> void:
 	# Rest button (heal 30% HP)
 	var rest_btn := Button.new()
 	rest_btn.text = "❤️ 休息\n回复 %d HP" % int(run_state.player_max_hp * 0.3)
-	rest_btn.position = Vector2(center_x - 220, center_y - 50)
-	rest_btn.size = Vector2(200, 100)
-	rest_btn.add_theme_font_size_override("font_size", 18)
+	rest_btn.position = Vector2(center_x - 330, center_y - 75)
+	rest_btn.size = Vector2(300, 150)
+	rest_btn.add_theme_font_size_override("font_size", 27)
 	_style_rest_button(rest_btn, "rest")
 	rest_btn.connect("pressed", Callable(self, "_on_rest_choice_selected").bind("rest", overlay))
 	overlay.add_child(rest_btn)
@@ -960,9 +962,9 @@ func _do_rest() -> void:
 	# Forge button (upgrade a card)
 	var forge_btn := Button.new()
 	forge_btn.text = "⚒️ 锻造\n升级一张卡牌"
-	forge_btn.position = Vector2(center_x + 20, center_y - 50)
-	forge_btn.size = Vector2(200, 100)
-	forge_btn.add_theme_font_size_override("font_size", 18)
+	forge_btn.position = Vector2(center_x + 30, center_y - 75)
+	forge_btn.size = Vector2(300, 150)
+	forge_btn.add_theme_font_size_override("font_size", 27)
 	_style_rest_button(forge_btn, "forge")
 	forge_btn.connect("pressed", Callable(self, "_on_rest_choice_selected").bind("forge", overlay))
 	overlay.add_child(forge_btn)
@@ -972,7 +974,7 @@ func _style_rest_button(btn: Button, type: String) -> void:
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color(0.15, 0.15, 0.25)
 	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(10)
+	normal.set_corner_radius_all(15)
 	normal.content_margin_left = 15
 	normal.content_margin_right = 15
 	normal.content_margin_top = 10
@@ -1012,9 +1014,9 @@ func _execute_rest_heal() -> void:
 	var toast := Label.new()
 	toast.text = "❤️ 休息恢复 %d HP!" % heal_amount
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.position = Vector2(get_viewport().size.x / 2.0 - 150, get_viewport().size.y / 2.0 - 20)
-	toast.size = Vector2(300, 40)
-	toast.add_theme_font_size_override("font_size", 24)
+	toast.position = Vector2(get_viewport().size.x / 2.0 - 225, get_viewport().size.y / 2.0 - 30)
+	toast.size = Vector2(450, 60)
+	toast.add_theme_font_size_override("font_size", 36)
 	toast.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
 	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	toast.add_theme_constant_override("outline_size", 2)
@@ -1059,9 +1061,9 @@ func _show_relic_toast(icon: String, relic_name: String) -> void:
 	var toast := Label.new()
 	toast.text = "%s 获得遗物: %s!" % [icon, relic_name]
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.position = Vector2(get_viewport().size.x / 2.0 - 180, get_viewport().size.y / 2.0 + 30)
-	toast.size = Vector2(360, 40)
-	toast.add_theme_font_size_override("font_size", 20)
+	toast.position = Vector2(get_viewport().size.x / 2.0 - 270, get_viewport().size.y / 2.0 + 45)
+	toast.size = Vector2(540, 60)
+	toast.add_theme_font_size_override("font_size", 30)
 	toast.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
 	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	toast.add_theme_constant_override("outline_size", 2)
@@ -1237,12 +1239,12 @@ func _spawn_floating_text(text: String, pos: Vector2, color: Color) -> void:
 	var label := Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_font_size_override("font_size", 33)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
-	label.global_position = pos - Vector2(30, 20)
+	label.global_position = pos - Vector2(45, 30)
 	label.z_index = 100
 	add_child(label)
 	# Float up and fade out
@@ -1368,7 +1370,7 @@ func _set_enemy_highlight(enabled: bool) -> void:
 func get_enemy_drop_rect() -> Rect2:
 	if not _enemy_visual:
 		return Rect2()
-	return Rect2(_enemy_visual.global_position, _enemy_visual.size).grow(30)
+	return Rect2(_enemy_visual.global_position, _enemy_visual.size).grow(45)
 
 
 # Format status effects as a compact string.
@@ -1452,7 +1454,7 @@ func open_settings() -> void:
 
 	var panel := Panel.new()
 	panel.name = "SettingsPanel"
-	var panel_size := Vector2(400, 300)
+	var panel_size := Vector2(600, 450)
 	panel.position = (Vector2(get_viewport().size) - panel_size) / 2
 	panel.size = panel_size
 	panel.z_index = 501
@@ -1467,17 +1469,17 @@ func open_settings() -> void:
 	var title := Label.new()
 	title.text = "设置"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(0, 20)
-	title.size = Vector2(panel_size.x, 40)
-	title.add_theme_font_size_override("font_size", 28)
+	title.position = Vector2(0, 30)
+	title.size = Vector2(panel_size.x, 60)
+	title.add_theme_font_size_override("font_size", 42)
 	title.add_theme_color_override("font_color", Color(1, 0.9, 0.7))
 	panel.add_child(title)
 
 	var close_btn := Button.new()
 	close_btn.text = "关闭"
-	close_btn.position = Vector2(panel_size.x / 2 - 60, panel_size.y - 60)
-	close_btn.size = Vector2(120, 40)
-	close_btn.add_theme_font_size_override("font_size", 18)
+	close_btn.position = Vector2(panel_size.x / 2 - 90, panel_size.y - 90)
+	close_btn.size = Vector2(180, 60)
+	close_btn.add_theme_font_size_override("font_size", 27)
 	close_btn.z_index = 502
 	close_btn.connect("pressed", Callable(self, "_close_settings").bind(overlay))
 	panel.add_child(close_btn)

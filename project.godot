@@ -23,7 +23,6 @@ config/icon="res://icon.png"
 
 
 
-
 cfc="*res://src/core/CFControl.gd"
 
 [debug]
@@ -32,9 +31,10 @@ gdscript/warnings/native_method_override=1
 
 [display]
 
-window/size/viewport_width=1280
-window/size/viewport_height=720
+window/size/viewport_width=1920
+window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [editor_plugins]
 

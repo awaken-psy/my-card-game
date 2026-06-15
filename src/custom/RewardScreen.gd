@@ -91,9 +91,9 @@ func _build_reward_list() -> void:
 	title.name = "RewardTitle"
 	title.text = "★ 战斗奖励 ★"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, center_y - 170)
-	title.size = Vector2(400, 50)
-	title.add_theme_font_size_override("font_size", 32)
+	title.position = Vector2(center_x - 300, center_y - 255)
+	title.size = Vector2(600, 75)
+	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	title.add_theme_constant_override("outline_size", 2)
@@ -102,9 +102,9 @@ func _build_reward_list() -> void:
 	# Reward entries container
 	var entries_vbox := VBoxContainer.new()
 	entries_vbox.name = "RewardEntries"
-	entries_vbox.position = Vector2(center_x - 160, center_y - 90)
-	entries_vbox.size = Vector2(320, 200)
-	entries_vbox.add_theme_constant_override("separation", 14)
+	entries_vbox.position = Vector2(center_x - 240, center_y - 135)
+	entries_vbox.size = Vector2(480, 300)
+	entries_vbox.add_theme_constant_override("separation", 21)
 
 	# Card reward entry (clickable)
 	var card_entry := _create_list_entry("🃏  卡牌奖励", "选择一张卡牌加入牌组", true)
@@ -124,9 +124,9 @@ func _build_reward_list() -> void:
 	var skip_button := Button.new()
 	skip_button.name = "SkipButton"
 	skip_button.text = "跳过所有奖励"
-	skip_button.position = Vector2(center_x - 100, center_y + 150)
-	skip_button.size = Vector2(200, 45)
-	skip_button.add_theme_font_size_override("font_size", 16)
+	skip_button.position = Vector2(center_x - 150, center_y + 225)
+	skip_button.size = Vector2(300, 68)
+	skip_button.add_theme_font_size_override("font_size", 24)
 	_style_button_secondary(skip_button)
 	skip_button.connect("pressed", Callable(self, "_on_skip_pressed"))
 	add_child(skip_button)
@@ -138,16 +138,16 @@ func _build_reward_list() -> void:
 func _create_list_entry(title_text: String, subtitle_text: String, clickable: bool) -> Control:
 	if clickable:
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(320, 70)
+		btn.custom_minimum_size = Vector2(480, 105)
 		var normal := StyleBoxFlat.new()
 		normal.bg_color = Color(0.15, 0.15, 0.25)
 		normal.border_color = Color(0.7, 0.6, 0.3)
 		normal.set_border_width_all(2)
-		normal.set_corner_radius_all(10)
-		normal.content_margin_left = 20
-		normal.content_margin_right = 20
-		normal.content_margin_top = 12
-		normal.content_margin_bottom = 12
+		normal.set_corner_radius_all(15)
+		normal.content_margin_left = 30
+		normal.content_margin_right = 30
+		normal.content_margin_top = 18
+		normal.content_margin_bottom = 18
 		var hover := normal.duplicate()
 		hover.bg_color = Color(0.22, 0.22, 0.38)
 		hover.border_color = Color(1, 0.85, 0.3)
@@ -164,38 +164,38 @@ func _create_list_entry(title_text: String, subtitle_text: String, clickable: bo
 		btn.text = "%s\n[color=gray]%s[/color]" % [title_text, subtitle_text]
 		# Fallback: plain text (BBCode not supported on Button by default)
 		btn.text = title_text
-		btn.add_theme_font_size_override("font_size", 20)
+		btn.add_theme_font_size_override("font_size", 30)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		return btn
 	else:
 		var panel := Panel.new()
-		panel.custom_minimum_size = Vector2(320, 70)
+		panel.custom_minimum_size = Vector2(480, 105)
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.1, 0.1, 0.15, 0.7)
 		style.border_color = Color(0.35, 0.35, 0.35)
 		style.set_border_width_all(1)
-		style.set_corner_radius_all(10)
-		style.content_margin_left = 20
-		style.content_margin_right = 20
-		style.content_margin_top = 12
-		style.content_margin_bottom = 12
+		style.set_corner_radius_all(15)
+		style.content_margin_left = 30
+		style.content_margin_right = 30
+		style.content_margin_top = 18
+		style.content_margin_bottom = 18
 		panel.add_theme_stylebox_override("panel", style)
 		var vbox := VBoxContainer.new()
 		vbox.anchor_right = 1.0
 		vbox.anchor_bottom = 1.0
-		vbox.offset_left = 20
-		vbox.offset_right = -20
-		vbox.offset_top = 12
-		vbox.offset_bottom = -12
-		vbox.add_theme_constant_override("separation", 2)
+		vbox.offset_left = 30
+		vbox.offset_right = -30
+		vbox.offset_top = 18
+		vbox.offset_bottom = -18
+		vbox.add_theme_constant_override("separation", 3)
 		var t := Label.new()
 		t.text = title_text
-		t.add_theme_font_size_override("font_size", 18)
+		t.add_theme_font_size_override("font_size", 27)
 		t.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 		vbox.add_child(t)
 		var s := Label.new()
 		s.text = subtitle_text
-		s.add_theme_font_size_override("font_size", 12)
+		s.add_theme_font_size_override("font_size", 18)
 		s.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
 		vbox.add_child(s)
 		panel.add_child(vbox)
@@ -221,9 +221,9 @@ func _build_card_selection() -> void:
 	title.name = "CardSelectTitle"
 	title.text = "★ 选择一张卡牌 ★"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, 50)
-	title.size = Vector2(400, 50)
-	title.add_theme_font_size_override("font_size", 28)
+	title.position = Vector2(center_x - 300, 75)
+	title.size = Vector2(600, 75)
+	title.add_theme_font_size_override("font_size", 42)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	title.add_theme_constant_override("outline_size", 2)
@@ -233,10 +233,10 @@ func _build_card_selection() -> void:
 	var card_scale := 1.5
 	var card_width: float = _CFConst.CARD_SIZE.x * card_scale
 	var card_height: float = _CFConst.CARD_SIZE.y * card_scale
-	var gap: float = 30.0
+	var gap: float = 45.0
 	var total_width: float = _reward_card_names.size() * card_width + (_reward_card_names.size() - 1) * gap
 	var start_x: float = center_x - total_width / 2.0
-	var target_y: float = 130.0
+	var target_y: float = 195.0
 
 	var card_nodes: Array = []
 	var target_positions: Array = []
@@ -253,7 +253,7 @@ func _build_card_selection() -> void:
 		card.set_process(false)
 		card.set_is_faceup(true, true)
 		card.scale = Vector2(card_scale, card_scale)
-		card.position = Vector2(card_x, _viewport_size.y + 50) # start below screen
+		card.position = Vector2(card_x, _viewport_size.y + 75) # start below screen
 		# Hide manipulation buttons
 		var mb = card.get_node_or_null("Control/ManipulationButtons")
 		if mb:
@@ -264,13 +264,13 @@ func _build_card_selection() -> void:
 		# Selection highlight border (initially invisible)
 		var highlight := Panel.new()
 		highlight.name = "Highlight_" + card_name
-		highlight.position = Vector2(card_x - 4, target_y - 4)
-		highlight.size = Vector2(card_width + 8, card_height + 8)
+		highlight.position = Vector2(card_x - 6, target_y - 6)
+		highlight.size = Vector2(card_width + 12, card_height + 12)
 		var h_style := StyleBoxFlat.new()
 		h_style.bg_color = Color(0, 0, 0, 0)
 		h_style.border_color = Color(1, 0.85, 0.2, 0)
 		h_style.set_border_width_all(4)
-		h_style.set_corner_radius_all(8)
+		h_style.set_corner_radius_all(12)
 		highlight.add_theme_stylebox_override("panel", h_style)
 		highlight.z_index = 6
 		highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -301,14 +301,14 @@ func _build_card_selection() -> void:
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 	# Bottom buttons
-	var btn_y: float = target_y + card_height + 30
+	var btn_y: float = target_y + card_height + 45
 
 	var confirm_btn := Button.new()
 	confirm_btn.name = "ConfirmButton"
 	confirm_btn.text = "确认选择"
-	confirm_btn.position = Vector2(center_x - 70, btn_y)
-	confirm_btn.size = Vector2(140, 45)
-	confirm_btn.add_theme_font_size_override("font_size", 16)
+	confirm_btn.position = Vector2(center_x - 105, btn_y)
+	confirm_btn.size = Vector2(210, 68)
+	confirm_btn.add_theme_font_size_override("font_size", 24)
 	confirm_btn.disabled = true
 	_style_button_primary(confirm_btn)
 	confirm_btn.connect("pressed", Callable(self, "_on_confirm_card"))
@@ -317,9 +317,9 @@ func _build_card_selection() -> void:
 	var back_btn := Button.new()
 	back_btn.name = "BackButton"
 	back_btn.text = "返回"
-	back_btn.position = Vector2(center_x - 50, btn_y + 55)
-	back_btn.size = Vector2(100, 35)
-	back_btn.add_theme_font_size_override("font_size", 14)
+	back_btn.position = Vector2(center_x - 75, btn_y + 82)
+	back_btn.size = Vector2(150, 52)
+	back_btn.add_theme_font_size_override("font_size", 21)
 	_style_button_secondary(back_btn)
 	back_btn.connect("pressed", Callable(self, "_on_card_selection_back"))
 	add_child(back_btn)
@@ -390,16 +390,16 @@ func _build_result_screen(is_victory: bool, selected_card: String) -> void:
 
 	var title := Label.new()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, center_y - 100)
-	title.size = Vector2(400, 50)
-	title.add_theme_font_size_override("font_size", 36)
+	title.position = Vector2(center_x - 300, center_y - 150)
+	title.size = Vector2(600, 75)
+	title.add_theme_font_size_override("font_size", 54)
 	add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.position = Vector2(center_x - 250, center_y - 40)
-	subtitle.size = Vector2(500, 30)
-	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.position = Vector2(center_x - 375, center_y - 60)
+	subtitle.size = Vector2(750, 45)
+	subtitle.add_theme_font_size_override("font_size", 27)
 	add_child(subtitle)
 
 	if is_victory:
@@ -412,9 +412,9 @@ func _build_result_screen(is_victory: bool, selected_card: String) -> void:
 
 		var continue_button := Button.new()
 		continue_button.text = "Continue"
-		continue_button.position = Vector2(center_x - 120, center_y + 20)
-		continue_button.size = Vector2(240, 50)
-		continue_button.add_theme_font_size_override("font_size", 18)
+		continue_button.position = Vector2(center_x - 180, center_y + 30)
+		continue_button.size = Vector2(360, 75)
+		continue_button.add_theme_font_size_override("font_size", 27)
 		_style_button_primary(continue_button)
 		continue_button.connect("pressed", Callable(self, "_on_continue_pressed"))
 		add_child(continue_button)
@@ -426,9 +426,9 @@ func _build_result_screen(is_victory: bool, selected_card: String) -> void:
 
 		var return_button := Button.new()
 		return_button.text = "返回主菜单"
-		return_button.position = Vector2(center_x - 120, center_y + 20)
-		return_button.size = Vector2(240, 50)
-		return_button.add_theme_font_size_override("font_size", 18)
+		return_button.position = Vector2(center_x - 180, center_y + 30)
+		return_button.size = Vector2(360, 75)
+		return_button.add_theme_font_size_override("font_size", 27)
 		_style_button_secondary(return_button)
 		return_button.connect("pressed", Callable(self, "_on_return_pressed"))
 		add_child(return_button)
@@ -441,35 +441,35 @@ func _build_run_complete_screen(remaining_hp: int, max_hp: int) -> void:
 	var title := Label.new()
 	title.text = "🎉 Run Complete! 🎉"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, center_y - 80)
-	title.size = Vector2(400, 50)
-	title.add_theme_font_size_override("font_size", 36)
+	title.position = Vector2(center_x - 300, center_y - 120)
+	title.size = Vector2(600, 75)
+	title.add_theme_font_size_override("font_size", 54)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = "你击败了全部 %d 个敌人!" % _SetDefinition.CARDS.size() # placeholder
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.position = Vector2(center_x - 200, center_y - 25)
-	subtitle.size = Vector2(400, 30)
-	subtitle.add_theme_font_size_override("font_size", 20)
+	subtitle.position = Vector2(center_x - 300, center_y - 38)
+	subtitle.size = Vector2(600, 45)
+	subtitle.add_theme_font_size_override("font_size", 30)
 	subtitle.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
 	add_child(subtitle)
 
 	var hp_label := Label.new()
 	hp_label.text = "剩余 HP: %d/%d" % [remaining_hp, max_hp]
 	hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hp_label.position = Vector2(center_x - 150, center_y + 20)
+	hp_label.position = Vector2(center_x - 225, center_y + 30)
 	hp_label.size = Vector2(300, 30)
-	hp_label.add_theme_font_size_override("font_size", 18)
+	hp_label.add_theme_font_size_override("font_size", 27)
 	hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	add_child(hp_label)
 
 	var return_button := Button.new()
 	return_button.text = "返回主菜单"
-	return_button.position = Vector2(center_x - 120, center_y + 70)
-	return_button.size = Vector2(240, 50)
-	return_button.add_theme_font_size_override("font_size", 18)
+	return_button.position = Vector2(center_x - 180, center_y + 105)
+	return_button.size = Vector2(360, 75)
+	return_button.add_theme_font_size_override("font_size", 27)
 	_style_button_secondary(return_button)
 	return_button.connect("pressed", Callable(self, "_on_return_pressed"))
 	add_child(return_button)
@@ -535,11 +535,11 @@ func _style_button_primary(btn: Button) -> void:
 	normal.bg_color = Color(0.15, 0.15, 0.25)
 	normal.border_color = Color(0.7, 0.6, 0.3)
 	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(8)
-	normal.content_margin_left = 12
-	normal.content_margin_right = 12
-	normal.content_margin_top = 8
-	normal.content_margin_bottom = 8
+	normal.set_corner_radius_all(12)
+	normal.content_margin_left = 18
+	normal.content_margin_right = 18
+	normal.content_margin_top = 12
+	normal.content_margin_bottom = 12
 
 	var hover := normal.duplicate()
 	hover.bg_color = Color(0.22, 0.22, 0.38)
@@ -569,11 +569,11 @@ func _style_button_secondary(btn: Button) -> void:
 	normal.bg_color = Color(0.12, 0.12, 0.18)
 	normal.border_color = Color(0.5, 0.5, 0.5)
 	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(6)
-	normal.content_margin_left = 10
-	normal.content_margin_right = 10
-	normal.content_margin_top = 6
-	normal.content_margin_bottom = 6
+	normal.set_corner_radius_all(9)
+	normal.content_margin_left = 15
+	normal.content_margin_right = 15
+	normal.content_margin_top = 9
+	normal.content_margin_bottom = 9
 
 	var hover := normal.duplicate()
 	hover.bg_color = Color(0.18, 0.18, 0.28)

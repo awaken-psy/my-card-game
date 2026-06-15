@@ -9,14 +9,16 @@ signal node_selected(floor_index: int, node_index: int)
 
 const _MapGenerator = preload("res://src/custom/MapGenerator.gd")
 const _RelicDatabase = preload("res://src/custom/RelicDatabase.gd")
+const _CFConst = preload("res://src/custom/CFConst.gd")
+const SF := _CFConst.SCALE_FACTOR
 
 var _viewport_size: Vector2 = Vector2(1280, 720)
 var _run_state: RefCounted
 
 # Layout constants
-const FLOOR_HEIGHT := 80
-const NODE_RADIUS := 28
-const MAP_PADDING_Y := 60
+const FLOOR_HEIGHT := 120
+const NODE_RADIUS := 42
+const MAP_PADDING_Y := 90
 const MAP_WIDTH_RATIO := 0.6  # fraction of viewport width used for nodes
 
 # Node buttons for interaction
@@ -74,9 +76,9 @@ func _build_map() -> void:
 	title.name = "MapTitle"
 	title.text = "🗺️ 选择路线"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(_viewport_size.x / 2.0 - 150, 10)
-	title.size = Vector2(300, 35)
-	title.add_theme_font_size_override("font_size", 24)
+	title.position = Vector2(_viewport_size.x / 2.0 - 225, 15)
+	title.size = Vector2(450, 52)
+	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	title.z_index = 10
 	add_child(title)
@@ -84,8 +86,8 @@ func _build_map() -> void:
 	# Map content area with scrolling
 	_scroll = ScrollContainer.new()
 	_scroll.name = "MapScroll"
-	_scroll.position = Vector2(0, 50)
-	_scroll.size = Vector2(_viewport_size.x, _viewport_size.y - 50)
+	_scroll.position = Vector2(0, 75)
+	_scroll.size = Vector2(_viewport_size.x, _viewport_size.y - 75)
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	add_child(_scroll)
@@ -155,7 +157,7 @@ func _build_map() -> void:
 			var icon: String = node_config.get("icon", "●")
 			var color: Color = node_config.get("color", Color.GRAY)
 			btn.text = icon
-			btn.add_theme_font_size_override("font_size", 20)
+			btn.add_theme_font_size_override("font_size", 30)
 			btn.mouse_filter = Control.MOUSE_FILTER_STOP
 			btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
@@ -188,16 +190,16 @@ func _build_info_bar() -> void:
 	bar.name = "InfoBar"
 	bar.color = Color(0, 0, 0, 0.6)
 	bar.position = Vector2(0, 0)
-	bar.size = Vector2(_viewport_size.x, 50)
+	bar.size = Vector2(_viewport_size.x, 75)
 	bar.z_index = 10
 	add_child(bar)
 
 	# HP
 	var hp_label := Label.new()
 	hp_label.text = "❤️ %d/%d" % [_run_state.player_hp, _run_state.player_max_hp]
-	hp_label.position = Vector2(20, 12)
-	hp_label.size = Vector2(120, 30)
-	hp_label.add_theme_font_size_override("font_size", 18)
+	hp_label.position = Vector2(30, 18)
+	hp_label.size = Vector2(180, 45)
+	hp_label.add_theme_font_size_override("font_size", 27)
 	hp_label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	hp_label.z_index = 11
 	add_child(hp_label)
@@ -205,9 +207,9 @@ func _build_info_bar() -> void:
 	# Gold
 	var gold_label := Label.new()
 	gold_label.text = "💰 %d" % _run_state.gold
-	gold_label.position = Vector2(150, 12)
-	gold_label.size = Vector2(100, 30)
-	gold_label.add_theme_font_size_override("font_size", 18)
+	gold_label.position = Vector2(225, 18)
+	gold_label.size = Vector2(150, 45)
+	gold_label.add_theme_font_size_override("font_size", 27)
 	gold_label.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	gold_label.z_index = 11
 	add_child(gold_label)
@@ -216,23 +218,23 @@ func _build_info_bar() -> void:
 	var total: int = _run_state.get_total_floors()
 	var floor_label := Label.new()
 	floor_label.text = "层 %d/%d" % [_run_state.get_floor_number(), total]
-	floor_label.position = Vector2(260, 12)
-	floor_label.size = Vector2(100, 30)
-	floor_label.add_theme_font_size_override("font_size", 16)
+	floor_label.position = Vector2(390, 18)
+	floor_label.size = Vector2(150, 45)
+	floor_label.add_theme_font_size_override("font_size", 24)
 	floor_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	floor_label.z_index = 11
 	add_child(floor_label)
 
 	# Relics (with hover tooltip)
 	_relic_tooltip = null
-	var relic_x: int = 370
+	var relic_x: int = 555
 	for relic_id in _run_state.relics:
 		var relic_data: Dictionary = _RelicDatabase.get_relic(relic_id)
 		var relic_label := Label.new()
 		relic_label.text = relic_data.get("icon", "?")
-		relic_label.position = Vector2(relic_x, 12)
-		relic_label.size = Vector2(30, 30)
-		relic_label.add_theme_font_size_override("font_size", 18)
+		relic_label.position = Vector2(relic_x, 18)
+		relic_label.size = Vector2(45, 45)
+		relic_label.add_theme_font_size_override("font_size", 27)
 		relic_label.z_index = 11
 		relic_label.mouse_filter = Control.MOUSE_FILTER_STOP
 		relic_label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -240,15 +242,15 @@ func _build_info_bar() -> void:
 		relic_label.connect("mouse_entered", Callable(self, "_show_relic_tooltip").bind(relic_label, rid))
 		relic_label.connect("mouse_exited", Callable(self, "_hide_relic_tooltip"))
 		add_child(relic_label)
-		relic_x += 35
+		relic_x += 52
 
 	# Settings gear button (top-right)
 	var settings_btn := Button.new()
 	settings_btn.name = "SettingsButton"
 	settings_btn.text = "⚙"
-	settings_btn.position = Vector2(_viewport_size.x - 55, 8)
-	settings_btn.size = Vector2(40, 34)
-	settings_btn.add_theme_font_size_override("font_size", 22)
+	settings_btn.position = Vector2(_viewport_size.x - 82, 12)
+	settings_btn.size = Vector2(60, 51)
+	settings_btn.add_theme_font_size_override("font_size", 33)
 	settings_btn.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
 	settings_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
 	settings_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -292,21 +294,21 @@ func _show_relic_tooltip(anchor: Control, relic_id: String) -> void:
 	style.border_color = Color(0.7, 0.6, 0.3)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(8)
-	style.content_margin_left = 12
-	style.content_margin_right = 12
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
+	style.content_margin_left = 18
+	style.content_margin_right = 18
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
 	tooltip.add_theme_stylebox_override("panel", style)
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 4)
+	vbox.add_theme_constant_override("separation", 6)
 	var title := Label.new()
 	title.text = "%s %s" % [data.get("icon", ""), data.get("name", "")]
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	vbox.add_child(title)
 	var desc := Label.new()
 	desc.text = data.get("description", "")
-	desc.add_theme_font_size_override("font_size", 14)
+	desc.add_theme_font_size_override("font_size", 21)
 	desc.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(200, 0)
@@ -316,8 +318,8 @@ func _show_relic_tooltip(anchor: Control, relic_id: String) -> void:
 	_relic_tooltip = tooltip
 	# Position below the anchor, clamped to viewport
 	await get_tree().process_frame
-	var tx: float = mini(anchor.global_position.x - 30, _viewport_size.x - tooltip.size.x - 10)
-	var ty: float = anchor.global_position.y + anchor.size.y + 5
+	var tx: float = mini(anchor.global_position.x - 45, _viewport_size.x - tooltip.size.x - 15)
+	var ty: float = anchor.global_position.y + anchor.size.y + 8
 	if ty + tooltip.size.y > _viewport_size.y:
 		ty = anchor.global_position.y - tooltip.size.y - 5
 	tooltip.position = Vector2(tx, ty)

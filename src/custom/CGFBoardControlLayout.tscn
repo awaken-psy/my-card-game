@@ -142,7 +142,7 @@ offset_bottom = 148.0
 theme_override_styles/panel = SubResource("3")
 
 [node name="HandArea" type="MarginContainer" parent="."]
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 0
 anchor_top = 1.0
 anchor_right = 1.0
@@ -155,7 +155,7 @@ size_flags_horizontal = 3
 layout_mode = 2
 
 [node name="DeckControl" type="MarginContainer" parent="HandArea/HBC"]
-custom_minimum_size = Vector2(75, 0)
+custom_minimum_size = Vector2(112, 0)
 layout_mode = 2
 theme_override_constants/margin_left = 15
 theme_override_constants/margin_right = 15
@@ -171,7 +171,7 @@ size_flags_vertical = 3
 layout_mode = 2
 
 [node name="Deck" parent="HandArea/HBC/DeckControl/VBoxContainer/Control" instance=ExtResource("2")]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.75, 0.75)
 script = ExtResource("4")
 pile_name = "Deck"
 placement = 9
@@ -185,7 +185,7 @@ excess_cards = 0
 placement = 9
 
 [node name="DiscardControl" type="MarginContainer" parent="HandArea/HBC"]
-custom_minimum_size = Vector2(75, 0)
+custom_minimum_size = Vector2(112, 0)
 layout_mode = 2
 theme_override_constants/margin_left = 15
 theme_override_constants/margin_right = 15
@@ -201,7 +201,7 @@ size_flags_vertical = 3
 layout_mode = 2
 
 [node name="Discard" parent="HandArea/HBC/DiscardControl/VBC/Control" instance=ExtResource("2")]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.75, 0.75)
 script = ExtResource("1")
 pile_name = "Discard"
 faceup_cards = true

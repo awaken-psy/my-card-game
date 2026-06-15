@@ -177,9 +177,9 @@ func _build_forge() -> void:
 	title.name = "ForgeTitle"
 	title.text = "⚒️ 锻造 — 升级卡牌"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, 30)
-	title.size = Vector2(400, 50)
-	title.add_theme_font_size_override("font_size", 32)
+	title.position = Vector2(center_x - 300, 45)
+	title.size = Vector2(600, 75)
+	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", Color(1, 0.7, 0.2))
 	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	title.add_theme_constant_override("outline_size", 2)
@@ -190,9 +190,9 @@ func _build_forge() -> void:
 		var msg := Label.new()
 		msg.text = "没有可升级的卡牌"
 		msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		msg.position = Vector2(center_x - 200, center_y - 25)
-		msg.size = Vector2(400, 50)
-		msg.add_theme_font_size_override("font_size", 24)
+		msg.position = Vector2(center_x - 300, center_y - 38)
+		msg.size = Vector2(600, 75)
+		msg.add_theme_font_size_override("font_size", 36)
 		msg.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 		add_child(msg)
 	else:
@@ -203,9 +203,9 @@ func _build_forge() -> void:
 	var close_btn := Button.new()
 	close_btn.name = "CloseButton"
 	close_btn.text = "取消"
-	close_btn.position = Vector2(center_x - 80, _viewport_size.y - 70)
-	close_btn.size = Vector2(160, 45)
-	close_btn.add_theme_font_size_override("font_size", 18)
+	close_btn.position = Vector2(center_x - 120, _viewport_size.y - 105)
+	close_btn.size = Vector2(240, 68)
+	close_btn.add_theme_font_size_override("font_size", 27)
 	_style_button_secondary(close_btn)
 	close_btn.connect("pressed", Callable(self, "_on_cancel_pressed"))
 	add_child(close_btn)
@@ -213,10 +213,10 @@ func _build_forge() -> void:
 
 func _build_card_grid(center_x: float, center_y: float) -> void:
 	# Card panel dimensions (Control-based, not Area2D)
-	var card_width: float = 160.0
-	var card_height: float = 250.0
-	var arrow_width: float = 30.0  # Space for arrow between cards
-	var pair_gap: float = 50.0  # Gap between card pairs
+	var card_width: float = 240.0
+	var card_height: float = 375.0
+	var arrow_width: float = 45.0  # Space for arrow between cards
+	var pair_gap: float = 75.0  # Gap between card pairs
 
 	var display_cards: Array = _upgradeable_cards.slice(0, 5)
 	var pair_width: float = card_width * 2 + arrow_width  # base + arrow + upgrade
@@ -247,9 +247,9 @@ func _build_card_grid(center_x: float, center_y: float) -> void:
 		# Arrow between cards
 		var arrow := Label.new()
 		arrow.text = "→"
-		arrow.position = Vector2(card_width + 5, card_height / 2.0 - 20)
-		arrow.size = Vector2(20, 40)
-		arrow.add_theme_font_size_override("font_size", 30)
+		arrow.position = Vector2(card_width + 8, card_height / 2.0 - 30)
+		arrow.size = Vector2(30, 60)
+		arrow.add_theme_font_size_override("font_size", 45)
 		arrow.add_theme_color_override("font_color", Color(1, 0.7, 0.2))
 		arrow.z_index = 10
 		container.add_child(arrow)
@@ -280,9 +280,9 @@ func _build_card_grid(center_x: float, center_y: float) -> void:
 		var name_label := Label.new()
 		name_label.text = "%s → %s" % [card_info["base_name"], card_info["upgrade_name"]]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.position = Vector2(pair_x, target_y + card_height + 10)
-		name_label.size = Vector2(pair_width, 30)
-		name_label.add_theme_font_size_override("font_size", 14)
+		name_label.position = Vector2(pair_x, target_y + card_height + 15)
+		name_label.size = Vector2(pair_width, 45)
+		name_label.add_theme_font_size_override("font_size", 21)
 		name_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 		add_child(name_label)
 
@@ -301,14 +301,14 @@ func _create_card_panel(card_name: String, abilities: String, is_upgrade: bool,
 	panel.add_theme_stylebox_override("panel", style)
 
 	# --- Content layout ---
-	var margin := 10.0
+	var margin := 15.0
 	var content_w := width - margin * 2
 	var content_h := height - margin * 2
 
 	var vbox := VBoxContainer.new()
 	vbox.position = Vector2(margin, margin)
 	vbox.size = Vector2(content_w, content_h)
-	vbox.add_theme_constant_override("separation", 6)
+	vbox.add_theme_constant_override("separation", 9)
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# Card name (top, centered)
@@ -317,10 +317,10 @@ func _create_card_panel(card_name: String, abilities: String, is_upgrade: bool,
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.size = Vector2(content_w, 0)
 	if is_upgrade:
-		name_label.add_theme_font_size_override("font_size", 18)
+		name_label.add_theme_font_size_override("font_size", 27)
 		name_label.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	else:
-		name_label.add_theme_font_size_override("font_size", 16)
+		name_label.add_theme_font_size_override("font_size", 24)
 		name_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	vbox.add_child(name_label)
 
@@ -329,7 +329,7 @@ func _create_card_panel(card_name: String, abilities: String, is_upgrade: bool,
 	type_label.text = card_type
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	type_label.size = Vector2(content_w, 0)
-	type_label.add_theme_font_size_override("font_size", 12)
+	type_label.add_theme_font_size_override("font_size", 18)
 	type_label.add_theme_color_override("font_color", _get_card_type_color(card_type, is_upgrade))
 	vbox.add_child(type_label)
 
@@ -344,7 +344,7 @@ func _create_card_panel(card_name: String, abilities: String, is_upgrade: bool,
 		desc.text = abilities
 		desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		desc.size = Vector2(content_w, 0)
-		desc.add_theme_font_size_override("font_size", 11)
+		desc.add_theme_font_size_override("font_size", 17)
 		desc.add_theme_color_override("font_color",
 			Color(0.7, 0.7, 0.7) if not is_upgrade else Color(0.95, 0.95, 0.95))
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -380,11 +380,11 @@ func _make_card_style(card_type: String, is_upgrade: bool) -> StyleBoxFlat:
 	else:
 		style.border_color = Color(0.35, 0.35, 0.4)
 		style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
+	style.set_corner_radius_all(15)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 9
+	style.content_margin_bottom = 9
 	return style
 
 
@@ -423,7 +423,7 @@ func _style_click_area(btn: Button, _index: int) -> void:
 	normal.bg_color = Color(0, 0, 0, 0.0)
 	normal.border_color = Color(1, 0.7, 0.2)
 	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(8)
+	normal.set_corner_radius_all(12)
 
 	var hover := normal.duplicate()
 	hover.bg_color = Color(1, 0.7, 0.2, 0.15)
@@ -439,7 +439,7 @@ func _style_button_secondary(btn: Button) -> void:
 	normal.bg_color = Color(0.15, 0.15, 0.2)
 	normal.border_color = Color(0.4, 0.4, 0.5)
 	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(8)
+	normal.set_corner_radius_all(12)
 	var hover := normal.duplicate()
 	hover.bg_color = Color(0.25, 0.25, 0.35)
 	hover.border_color = Color(0.6, 0.6, 0.7)
@@ -485,9 +485,9 @@ func _show_forge_success(card_name: String) -> void:
 	var toast := Label.new()
 	toast.text = "⚔️ 卡牌已升级: %s" % card_name
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.position = Vector2(center_x - 200, center_y + 200)
-	toast.size = Vector2(400, 50)
-	toast.add_theme_font_size_override("font_size", 24)
+	toast.position = Vector2(center_x - 300, center_y + 300)
+	toast.size = Vector2(600, 75)
+	toast.add_theme_font_size_override("font_size", 36)
 	toast.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
 	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	toast.add_theme_constant_override("outline_size", 2)

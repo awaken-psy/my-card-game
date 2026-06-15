@@ -11,6 +11,8 @@ signal shop_closed
 
 const _SetDefinition = preload("res://src/custom/cards/sets/SetDefinition_MyCardGame.gd")
 const _RelicDatabase = preload("res://src/custom/RelicDatabase.gd")
+const _CFConst = preload("res://src/custom/CFConst.gd")
+const SF := _CFConst.SCALE_FACTOR
 
 var _viewport_size: Vector2 = Vector2(1280, 720)
 var _run_state: RefCounted
@@ -69,9 +71,9 @@ func _build_shop() -> void:
 	title.name = "ShopTitle"
 	title.text = "💰 商店"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, 30)
-	title.size = Vector2(400, 50)
-	title.add_theme_font_size_override("font_size", 36)
+	title.position = Vector2(center_x - 300, 45)
+	title.size = Vector2(600, 75)
+	title.add_theme_font_size_override("font_size", 54)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	title.add_theme_constant_override("outline_size", 2)
@@ -82,28 +84,28 @@ func _build_shop() -> void:
 	gold_label.name = "GoldLabel"
 	gold_label.text = "💰 金币: %d" % _run_state.gold
 	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	gold_label.position = Vector2(_viewport_size.x - 220, 35)
-	gold_label.size = Vector2(200, 40)
-	gold_label.add_theme_font_size_override("font_size", 24)
+	gold_label.position = Vector2(_viewport_size.x - 330, 52)
+	gold_label.size = Vector2(300, 60)
+	gold_label.add_theme_font_size_override("font_size", 36)
 	gold_label.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	add_child(gold_label)
 
 	# --- Card for sale section ---
-	_build_card_section(center_x, center_y - 80)
+	_build_card_section(center_x, center_y - 120)
 
 	# --- Services section (heal, remove) ---
-	_build_services_section(center_x, center_y + 120)
+	_build_services_section(center_x, center_y + 180)
 
 	# --- Relic section ---
-	_build_relic_section(center_x, center_y + 230)
+	_build_relic_section(center_x, center_y + 345)
 
 	# Leave button
 	var leave_btn := Button.new()
 	leave_btn.name = "LeaveButton"
 	leave_btn.text = "离开商店"
-	leave_btn.position = Vector2(center_x - 80, _viewport_size.y - 80)
-	leave_btn.size = Vector2(160, 45)
-	leave_btn.add_theme_font_size_override("font_size", 18)
+	leave_btn.position = Vector2(center_x - 120, _viewport_size.y - 120)
+	leave_btn.size = Vector2(240, 68)
+	leave_btn.add_theme_font_size_override("font_size", 27)
 	_style_button_secondary(leave_btn)
 	leave_btn.connect("pressed", Callable(self, "_on_leave_pressed"))
 	add_child(leave_btn)
@@ -114,9 +116,9 @@ func _build_card_section(center_x: float, start_y: float) -> void:
 	var section_title := Label.new()
 	section_title.text = "🃏 购买卡牌"
 	section_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	section_title.position = Vector2(center_x - 200, start_y - 30)
-	section_title.size = Vector2(400, 25)
-	section_title.add_theme_font_size_override("font_size", 20)
+	section_title.position = Vector2(center_x - 300, start_y - 45)
+	section_title.size = Vector2(600, 38)
+	section_title.add_theme_font_size_override("font_size", 30)
 	section_title.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	add_child(section_title)
 
@@ -129,8 +131,8 @@ func _build_card_section(center_x: float, start_y: float) -> void:
 	pool.shuffle()
 	var sale_cards: Array = pool.slice(0, mini(5, pool.size()))
 
-	var card_width: float = 130.0
-	var gap: float = 15.0
+	var card_width: float = 195.0
+	var gap: float = 22.0
 	var total_width: int = sale_cards.size() * card_width + (sale_cards.size() - 1) * gap
 	var start_x: float = center_x - total_width / 2.0
 
@@ -145,8 +147,8 @@ func _build_card_section(center_x: float, start_y: float) -> void:
 		btn.name = "CardSlot_%d" % i
 		btn.text = "%s\n💰%d" % [card_name, price]
 		btn.position = Vector2(x, start_y)
-		btn.size = Vector2(card_width, 60)
-		btn.add_theme_font_size_override("font_size", 14)
+		btn.size = Vector2(card_width, 90)
+		btn.add_theme_font_size_override("font_size", 21)
 		_style_card_button(btn, rarity)
 		btn.connect("pressed", Callable(self, "_on_buy_card").bind(i))
 		add_child(btn)
@@ -156,9 +158,9 @@ func _build_services_section(center_x: float, start_y: float) -> void:
 	var section_title := Label.new()
 	section_title.text = "🔧 服务"
 	section_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	section_title.position = Vector2(center_x - 200, start_y - 25)
-	section_title.size = Vector2(400, 25)
-	section_title.add_theme_font_size_override("font_size", 20)
+	section_title.position = Vector2(center_x - 300, start_y - 38)
+	section_title.size = Vector2(600, 38)
+	section_title.add_theme_font_size_override("font_size", 30)
 	section_title.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	add_child(section_title)
 
@@ -167,9 +169,9 @@ func _build_services_section(center_x: float, start_y: float) -> void:
 	heal_btn.name = "HealButton"
 	var heal_amount: int = int(_run_state.player_max_hp * 0.3)
 	heal_btn.text = "❤️ 回复 %d HP  (💰%d)" % [heal_amount, PRICE_HEAL]
-	heal_btn.position = Vector2(center_x - 170, start_y + 5)
-	heal_btn.size = Vector2(160, 50)
-	heal_btn.add_theme_font_size_override("font_size", 15)
+	heal_btn.position = Vector2(center_x - 255, start_y + 8)
+	heal_btn.size = Vector2(240, 75)
+	heal_btn.add_theme_font_size_override("font_size", 22)
 	_style_button_primary(heal_btn)
 	heal_btn.connect("pressed", Callable(self, "_on_heal_pressed"))
 	add_child(heal_btn)
@@ -178,9 +180,9 @@ func _build_services_section(center_x: float, start_y: float) -> void:
 	var remove_btn := Button.new()
 	remove_btn.name = "RemoveButton"
 	remove_btn.text = "🗑️ 删除卡牌  (💰%d)" % PRICE_REMOVE
-	remove_btn.position = Vector2(center_x + 10, start_y + 5)
-	remove_btn.size = Vector2(160, 50)
-	remove_btn.add_theme_font_size_override("font_size", 15)
+	remove_btn.position = Vector2(center_x + 15, start_y + 8)
+	remove_btn.size = Vector2(240, 75)
+	remove_btn.add_theme_font_size_override("font_size", 22)
 	_style_button_primary(remove_btn)
 	remove_btn.connect("pressed", Callable(self, "_on_remove_card_pressed"))
 	add_child(remove_btn)
@@ -193,9 +195,9 @@ func _build_relic_section(center_x: float, start_y: float) -> void:
 	var section_title := Label.new()
 	section_title.text = "✨ 遗物"
 	section_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	section_title.position = Vector2(center_x - 200, start_y - 25)
-	section_title.size = Vector2(400, 25)
-	section_title.add_theme_font_size_override("font_size", 20)
+	section_title.position = Vector2(center_x - 300, start_y - 38)
+	section_title.size = Vector2(600, 38)
+	section_title.add_theme_font_size_override("font_size", 30)
 	section_title.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	add_child(section_title)
 
@@ -203,9 +205,9 @@ func _build_relic_section(center_x: float, start_y: float) -> void:
 		var no_relic := Label.new()
 		no_relic.text = "（已售罄）"
 		no_relic.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		no_relic.position = Vector2(center_x - 80, start_y + 5)
-		no_relic.size = Vector2(160, 40)
-		no_relic.add_theme_font_size_override("font_size", 16)
+		no_relic.position = Vector2(center_x - 120, start_y + 8)
+		no_relic.size = Vector2(240, 60)
+		no_relic.add_theme_font_size_override("font_size", 24)
 		no_relic.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 		add_child(no_relic)
 		return
@@ -216,9 +218,9 @@ func _build_relic_section(center_x: float, start_y: float) -> void:
 	var relic_btn := Button.new()
 	relic_btn.name = "RelicButton"
 	relic_btn.text = "%s %s\n%s  (💰%d)" % [relic_data["icon"], relic_data["name"], relic_data["description"], _relic_price]
-	relic_btn.position = Vector2(center_x - 170, start_y + 5)
-	relic_btn.size = Vector2(340, 60)
-	relic_btn.add_theme_font_size_override("font_size", 14)
+	relic_btn.position = Vector2(center_x - 255, start_y + 8)
+	relic_btn.size = Vector2(510, 90)
+	relic_btn.add_theme_font_size_override("font_size", 21)
 	_style_button_primary(relic_btn)
 	relic_btn.connect("pressed", Callable(self, "_on_buy_relic"))
 	add_child(relic_btn)
@@ -326,9 +328,9 @@ func _show_remove_card_picker() -> void:
 	var title := Label.new()
 	title.text = "🗑️ 选择要删除的卡牌"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(center_x - 200, 80)
-	title.size = Vector2(400, 40)
-	title.add_theme_font_size_override("font_size", 24)
+	title.position = Vector2(center_x - 300, 120)
+	title.size = Vector2(600, 60)
+	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	title.z_index = 51
 	add_child(title)
@@ -336,14 +338,14 @@ func _show_remove_card_picker() -> void:
 	# List all deck cards
 	var scroll := ScrollContainer.new()
 	scroll.name = "CardPickerScroll"
-	scroll.position = Vector2(center_x - 200, 140)
-	scroll.size = Vector2(400, 400)
+	scroll.position = Vector2(center_x - 300, 210)
+	scroll.size = Vector2(600, 600)
 	scroll.z_index = 51
 	add_child(scroll)
 
 	var vbox := VBoxContainer.new()
 	vbox.name = "CardPickerVBox"
-	vbox.add_theme_constant_override("separation", 8)
+	vbox.add_theme_constant_override("separation", 12)
 	scroll.add_child(vbox)
 
 	# Group cards by name for cleaner display
@@ -355,8 +357,8 @@ func _show_remove_card_picker() -> void:
 		var count: int = card_counts[card_name]
 		var btn := Button.new()
 		btn.text = "%s ×%d" % [card_name, count]
-		btn.custom_minimum_size = Vector2(380, 40)
-		btn.add_theme_font_size_override("font_size", 16)
+		btn.custom_minimum_size = Vector2(570, 60)
+		btn.add_theme_font_size_override("font_size", 24)
 		_style_button_primary(btn)
 		btn.connect("pressed", Callable(self, "_on_remove_card_selected").bind(card_name))
 		vbox.add_child(btn)
@@ -364,9 +366,9 @@ func _show_remove_card_picker() -> void:
 	# Cancel button
 	var cancel_btn := Button.new()
 	cancel_btn.text = "取消"
-	cancel_btn.position = Vector2(center_x - 60, 560)
-	cancel_btn.size = Vector2(120, 40)
-	cancel_btn.add_theme_font_size_override("font_size", 16)
+	cancel_btn.position = Vector2(center_x - 90, 840)
+	cancel_btn.size = Vector2(180, 60)
+	cancel_btn.add_theme_font_size_override("font_size", 24)
 	cancel_btn.z_index = 51
 	_style_button_secondary(cancel_btn)
 	cancel_btn.connect("pressed", Callable(self, "_on_picker_cancel"))
@@ -414,9 +416,9 @@ func _show_toast(text: String) -> void:
 	toast.name = "Toast"
 	toast.text = text
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.position = Vector2(_viewport_size.x / 2.0 - 150, _viewport_size.y - 130)
+	toast.position = Vector2(_viewport_size.x / 2.0 - 225, _viewport_size.y - 195)
 	toast.size = Vector2(300, 35)
-	toast.add_theme_font_size_override("font_size", 18)
+	toast.add_theme_font_size_override("font_size", 27)
 	toast.add_theme_color_override("font_color", Color(1, 0.9, 0.3))
 	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	toast.add_theme_constant_override("outline_size", 2)
@@ -436,11 +438,11 @@ func _style_button_primary(btn: Button) -> void:
 	normal.bg_color = Color(0.15, 0.15, 0.25)
 	normal.border_color = Color(0.7, 0.6, 0.3)
 	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(8)
-	normal.content_margin_left = 10
-	normal.content_margin_right = 10
-	normal.content_margin_top = 6
-	normal.content_margin_bottom = 6
+	normal.set_corner_radius_all(12)
+	normal.content_margin_left = 15
+	normal.content_margin_right = 15
+	normal.content_margin_top = 9
+	normal.content_margin_bottom = 9
 
 	var hover: StyleBoxFlat = normal.duplicate()
 	hover.bg_color = Color(0.22, 0.22, 0.38)
@@ -467,7 +469,7 @@ func _style_button_secondary(btn: Button) -> void:
 	normal.bg_color = Color(0.12, 0.12, 0.18)
 	normal.border_color = Color(0.5, 0.5, 0.5)
 	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(6)
+	normal.set_corner_radius_all(9)
 
 	var hover: StyleBoxFlat = normal.duplicate()
 	hover.bg_color = Color(0.18, 0.18, 0.28)
@@ -493,7 +495,7 @@ func _style_card_button(btn: Button, rarity: String) -> void:
 	normal.bg_color = Color(0.1, 0.1, 0.18)
 	normal.border_color = border_color
 	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(8)
+	normal.set_corner_radius_all(12)
 
 	var hover: StyleBoxFlat = normal.duplicate()
 	hover.bg_color = Color(0.18, 0.18, 0.3)

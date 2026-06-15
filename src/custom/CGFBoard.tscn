@@ -31,7 +31,7 @@ theme = ExtResource("12")
 script = ExtResource("5")
 
 [node name="Deck" parent="." instance=ExtResource("2")]
-position = Vector2(0, 475)
+position = Vector2(0, 712)
 script = ExtResource("4")
 pile_name = "Deck"
 placement = 8
@@ -46,7 +46,7 @@ offset_right = 18.0
 offset_bottom = 24.0
 
 [node name="Discard" parent="." instance=ExtResource("2")]
-position = Vector2(1124, 475)
+position = Vector2(1686, 712)
 script = ExtResource("1")
 faceup_cards = true
 placement = 6
@@ -64,7 +64,7 @@ offset_right = 18.0
 offset_bottom = 24.0
 
 [node name="Hand" parent="." instance=ExtResource("3")]
-position = Vector2(155, 480)
+position = Vector2(232, 720)
 
 [node name="Counters" parent="." instance=ExtResource("6")]
 layout_mode = 0

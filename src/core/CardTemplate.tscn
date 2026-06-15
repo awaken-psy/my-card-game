@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://d1rsjrmjo6acw" path="res://src/core/Highlight.tscn" id="6"]
 
 [sub_resource type="RectangleShape2D" id="1"]
-size = Vector2(150, 240)
+size = Vector2(225, 360)
 
 [sub_resource type="StyleBoxFlat" id="2"]
 bg_color = Color(0.584314, 0.6, 0.647059, 1)
@@ -21,11 +21,11 @@ collision_mask = 2147483651
 script = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(75, 120)
+position = Vector2(112, 180)
 shape = SubResource("1")
 
 [node name="Control" type="Control" parent="."]
-custom_minimum_size = Vector2(150, 240)
+custom_minimum_size = Vector2(225, 360)
 layout_mode = 3
 anchors_preset = 0
 

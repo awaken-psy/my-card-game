@@ -5,7 +5,7 @@ const menu_switch_time = 0.35
 # Design resolution (matches project.godot viewport_width/height).
 # canvas_items stretch mode scales the canvas, so all positions/sizes
 # must use this constant, NOT get_viewport().size (which returns window size).
-const DESIGN_SIZE := Vector2(1280, 720)
+const DESIGN_SIZE := CFConst.DESIGN_RESOLUTION
 
 @onready var v_buttons := $MainMenu/VBox/Center/VButtons
 @onready var main_menu := $MainMenu
