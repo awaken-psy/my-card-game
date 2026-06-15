@@ -2299,6 +2299,18 @@ func _process_card_state() -> void:
 			set_focus(true,check_play_costs())
 			set_control_mouse_filters(true)
 			buttons.set_active(false)
+			# Kill any in-flight IN_HAND settle-tween so the focus tween below
+			# can start right away and straighten rotation→0 in parallel with
+			# the zoom. We only do this BEFORE the focus tween has started
+			# (_focus_completed == false); once the focus tween is running we
+			# must NOT kill it (this case runs every frame). Without this,
+			# hovering an off-center card while its oval settle-animation is
+			# still playing leaves the guard `not (tween and tween.is_running())`
+			# false, the focus tween is skipped entirely, and the card enlarges
+			# but stays tilted — exactly the "only the center card straightens"
+			# symptom in issue #1.
+			if not _focus_completed and tween and tween.is_running():
+				tween.kill()
 			# warning-ignore:return_value_discarded
 			#is_running()
 			#NOTE: Used to be false, false to prevent tween running
@@ -2356,6 +2368,12 @@ func _process_card_state() -> void:
 				# to avoid a deadlock
 				tween = create_tween()
 				tween.stop()
+				# Focus zoom (position+scale) and straighten (rotation→0) must run
+				# simultaneously. Without parallel mode Godot 4 runs the three
+				# tween_property calls sequentially, so the card enlarges *first*
+				# (still tilted) and only straightens afterwards — a visible
+				# two-step "zoom then snap" instead of a single smooth motion.
+				tween.set_parallel(true)
 				_tween = weakref(tween)
 				_add_tween_position(expected_position, _target_position, focus_tween_duration)
 				_add_tween_scale(scale, Vector2(1,1) * focused_scale, focus_tween_duration)
