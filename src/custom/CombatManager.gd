@@ -127,15 +127,19 @@ func _enemy_turn() -> void:
 	if enemy.is_dead():
 		emit_signal("enemy_intent_changed", {})
 		return
-	# Brief pause to let player see the intent before execution
-	await get_tree().create_timer(0.3).timeout
+	# Pause to let the player read the enemy intent before execution.
+	# Tuned (issue #3) to also cover the first half of the turn banner.
+	await get_tree().create_timer(0.5).timeout
 	# Execute the pre-chosen intent
 	board.audio_manager.play_sfx("enemy_attack")
 	enemy_ai.execute_intent(enemy, player, self)
 	# Clear intent display after execution
 	emit_signal("enemy_intent_changed", {})
-	# Brief pause after execution for visual feedback
-	await get_tree().create_timer(0.2).timeout
+	# Pause after execution so the player registers the damage and the enemy
+	# turn banner finishes its full lifetime before the player banner shows
+	# (issue #3: prevents banner overlap). Total enemy-turn wait ≈ banner
+	# lifetime (see CGFBoard.BANNER_TOTAL_TIME).
+	await get_tree().create_timer(0.6).timeout
 
 
 # Check if a card can be played (enough energy + player turn + not resolving).

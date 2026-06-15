@@ -50,6 +50,18 @@ var _enemy_highlight_tween: Tween = null
 # Full-screen red flash overlay for player damage feedback.
 var _hit_overlay: ColorRect = null
 
+# --- Turn transition banner state (issue #3 fix) ---
+# Total banner lifetime = BANNER_FADE_IN + BANNER_HOLD + BANNER_FADE_OUT.
+# Tuned so the enemy turn wait in CombatManager._enemy_turn fully covers it.
+const BANNER_FADE_IN := 0.3
+const BANNER_HOLD := 0.5
+const BANNER_FADE_OUT := 0.3
+const BANNER_TOTAL_TIME := BANNER_FADE_IN + BANNER_HOLD + BANNER_FADE_OUT  # 1.1s
+# Holds the currently-displayed banner tween + nodes so a new banner can
+# forcibly clean up the previous one (prevents overlap, issue #3).
+var _current_banner_tween: Tween = null
+var _current_banner_nodes: Array = []
+
 # M11: Map and Shop screens
 var _map_screen: Control
 var _shop_screen: Control
@@ -731,6 +743,11 @@ func _on_combat_ended() -> void:
 
 
 func _show_turn_banner(text: String, color: Color) -> void:
+	# Strict ordering (issue #3): forcibly kill + free any banner that is still
+	# on screen before showing the new one. This guarantees the previous banner
+	# ("敌人回合") has fully disappeared before ("我的回合") appears, regardless
+	# of how fast the turn flow advances.
+	_kill_current_banner()
 	var viewport_size := Vector2(get_viewport().size)
 	# Semi-transparent overlay to block input during banner
 	var overlay := ColorRect.new()
@@ -757,21 +774,55 @@ func _show_turn_banner(text: String, color: Color) -> void:
 	label.scale = Vector2(1.5, 1.5)
 	label.modulate.a = 0.0
 	add_child(label)
+	# Track this banner so the next _show_turn_banner can clean it up.
+	_current_banner_nodes = [overlay, label]
 	# Animation: appear → hold → fade out
 	var tween := create_tween()
-	# Phase 1: scale in + fade in (0.3s)
-	tween.tween_property(overlay, "modulate:a", 1.0, 0.3)
-	tween.parallel().tween_property(label, "modulate:a", 1.0, 0.3)
-	tween.parallel().tween_property(label, "scale", Vector2(1.0, 1.0), 0.3)\
+	# Phase 1: scale in + fade in (BANNER_FADE_IN)
+	tween.tween_property(overlay, "modulate:a", 1.0, BANNER_FADE_IN)
+	tween.parallel().tween_property(label, "modulate:a", 1.0, BANNER_FADE_IN)
+	tween.parallel().tween_property(label, "scale", Vector2(1.0, 1.0), BANNER_FADE_IN)\
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	# Phase 2: hold (0.4s)
-	tween.tween_interval(0.4)
-	# Phase 3: fade out (0.3s)
-	tween.tween_property(overlay, "modulate:a", 0.0, 0.3)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.3)
-	# Cleanup
+	# Phase 2: hold (BANNER_HOLD)
+	tween.tween_interval(BANNER_HOLD)
+	# Phase 3: fade out (BANNER_FADE_OUT)
+	tween.tween_property(overlay, "modulate:a", 0.0, BANNER_FADE_OUT)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, BANNER_FADE_OUT)
+	# Cleanup: free nodes and clear our references
 	tween.tween_callback(overlay.queue_free)
 	tween.tween_callback(label.queue_free)
+	tween.tween_callback(_clear_banner_refs)
+	_current_banner_tween = tween
+
+
+# Kill the in-flight banner tween (if any) and free its nodes immediately.
+# Used by _show_turn_banner to guarantee strict ordering, and by tests.
+func _kill_current_banner() -> void:
+	if _current_banner_tween and _current_banner_tween.is_valid():
+		_current_banner_tween.kill()
+	_current_banner_tween = null
+	for node in _current_banner_nodes:
+		if is_instance_valid(node):
+			# Remove from tree immediately (queue_free alone is deferred to
+			# frame end) so a replacement banner can reuse the same node name
+			# without Godot auto-renaming it (@Class@ID). True strict ordering.
+			if node.get_parent():
+				node.get_parent().remove_child(node)
+			node.queue_free()
+	_current_banner_nodes = []
+
+
+# Called by the banner tween once it finishes normally.
+func _clear_banner_refs() -> void:
+	_current_banner_tween = null
+	_current_banner_nodes = []
+
+
+# Total lifetime of a turn banner in seconds (issue #3):
+# fade_in + hold + fade_out. CombatManager._enemy_turn waits at least this long
+# so the enemy banner has fully disappeared before the player banner shows.
+func get_banner_total_time() -> float:
+	return BANNER_TOTAL_TIME
 
 
 func _on_player_turn_banner() -> void:
